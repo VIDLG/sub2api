@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+import { type ColumnDef } from '@tanstack/react-table'
+import { useDebounceFn } from 'ahooks'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
-import type { UserSubscription, AdminGroup, PaginatedResponse } from '@/types'
+import type { UserSubscription, AdminGroup } from '@/types'
 import { PlusIcon, SearchIcon, RefreshIcon } from '@/components/icons'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -10,8 +13,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DataTable } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
 
-const PAGE_SIZE = 20
+// ==================== Types ====================
+
+type SubscriptionFilters = {
+  status?: 'active' | 'expired' | 'revoked'
+  group_id?: number
+  search?: string
+}
+
+interface SimpleUser {
+  id: number
+  email: string
+}
+
+// ==================== Helpers ====================
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return '-'
@@ -40,38 +58,46 @@ const STATUS_COLORS: Record<string, string> = {
   revoked: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
-interface SimpleUser {
-  id: number
-  email: string
-}
+// ==================== Query Key ====================
+
+const SUBSCRIPTIONS_QUERY_KEY = ['admin', 'subscriptions']
+
+// ==================== Component ====================
 
 export default function SubscriptionsView() {
   const { t } = useTranslation()
   const showError = useAppStore((s) => s.showError)
   const showSuccess = useAppStore((s) => s.showSuccess)
 
-  // ==================== List State ====================
-  const [subscriptions, setSubscriptions] = useState<UserSubscription[]>([])
-  const [loading, setLoading] = useState(false)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal] = useState(0)
+  // ==================== Data Table Query ====================
 
-  // Filters
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'revoked'>('all')
-  const [groupFilter, setGroupFilter] = useState<number | 'all'>('all')
+  const {
+    data: subscriptions,
+    pagination,
+    isLoading,
+    filters,
+    setPage,
+    setFilter,
+    refresh,
+  } = useDataTableQuery<UserSubscription, SubscriptionFilters>({
+    queryKey: SUBSCRIPTIONS_QUERY_KEY,
+    queryFn: (page, pageSize, filters, options) =>
+      adminAPI.subscriptions.list(page, pageSize, filters, options),
+  })
 
-  // Groups for filter/select
-  const [allGroups, setAllGroups] = useState<AdminGroup[]>([])
+  // ==================== Groups ====================
 
-  const abortRef = useRef<AbortController | null>(null)
+  const { data: allGroups = [] } = useQuery<AdminGroup[]>({
+    queryKey: ['admin', 'groups', 'all'],
+    queryFn: () => adminAPI.groups.getAll(),
+  })
 
   // ==================== Dialog State ====================
+
   const [showAssignDialog, setShowAssignDialog] = useState(false)
   const [showExtendDialog, setShowExtendDialog] = useState(false)
   const [showRevokeDialog, setShowRevokeDialog] = useState(false)
   const [selectedSub, setSelectedSub] = useState<UserSubscription | null>(null)
-  const [saving, setSaving] = useState(false)
 
   // Assign form
   const [assignForm, setAssignForm] = useState({
@@ -82,117 +108,95 @@ export default function SubscriptionsView() {
   const [userSearch, setUserSearch] = useState('')
   const [userResults, setUserResults] = useState<SimpleUser[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
-  const userSearchRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Extend form
   const [extendDays, setExtendDays] = useState(30)
 
-  // ==================== Data Loading ====================
-  const loadGroups = useCallback(async () => {
+  // Debounced user search
+  const { run: searchUsersDebounced } = useDebounceFn(async (value: string) => {
+    setSearchingUsers(true)
     try {
-      const groups = await adminAPI.groups.getAll()
-      setAllGroups(groups)
+      const results = await adminAPI.usage.searchUsers(value.trim())
+      setUserResults(results)
     } catch {
       // silent
+    } finally {
+      setSearchingUsers(false)
     }
-  }, [])
+  }, { wait: 300 })
 
-  const loadSubscriptions = useCallback(
-    async (currentPage: number) => {
-      abortRef.current?.abort()
-      const controller = new AbortController()
-      abortRef.current = controller
+  // ==================== Mutations ====================
 
-      setLoading(true)
-      try {
-        const filters: {
-          status?: 'active' | 'expired' | 'revoked'
-          group_id?: number
-        } = {}
-        if (statusFilter !== 'all') filters.status = statusFilter
-        if (groupFilter !== 'all') filters.group_id = groupFilter
-
-        const res: PaginatedResponse<UserSubscription> = await adminAPI.subscriptions.list(
-          currentPage,
-          PAGE_SIZE,
-          filters,
-          { signal: controller.signal }
-        )
-        setSubscriptions(res.items)
-        setTotalPages(res.pages)
-        setTotal(res.total)
-      } catch (err: any) {
-        if (err?.name !== 'AbortError' && err?.name !== 'CanceledError') {
-          showError(t('Failed to load subscriptions'))
-        }
-      } finally {
-        setLoading(false)
-      }
-    },
-    [statusFilter, groupFilter, showError, t]
-  )
-
-  useEffect(() => {
-    loadGroups()
-  }, [loadGroups])
-
-  useEffect(() => {
-    loadSubscriptions(page)
-    return () => {
-      abortRef.current?.abort()
-    }
-  }, [page, statusFilter, groupFilter]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const refresh = () => loadSubscriptions(page)
-
-  // ==================== User Search ====================
-  const handleUserSearch = useCallback(
-    (value: string) => {
-      setUserSearch(value)
-      if (userSearchRef.current) clearTimeout(userSearchRef.current)
-      if (!value.trim()) {
-        setUserResults([])
-        return
-      }
-      userSearchRef.current = setTimeout(async () => {
-        setSearchingUsers(true)
-        try {
-          const results = await adminAPI.usage.searchUsers(value.trim())
-          setUserResults(results)
-        } catch {
-          // silent
-        } finally {
-          setSearchingUsers(false)
-        }
-      }, 300)
-    },
-    []
-  )
-
-  // ==================== Actions ====================
-  const handleAssign = async () => {
-    if (!assignForm.user_id || !assignForm.group_id) {
-      showError(t('Please select a user and group'))
-      return
-    }
-    setSaving(true)
-    try {
-      await adminAPI.subscriptions.assign({
-        user_id: assignForm.user_id,
-        group_id: assignForm.group_id,
-        validity_days: assignForm.validity_days > 0 ? assignForm.validity_days : undefined,
-      })
+  const assignMutation = useTableMutation({
+    mutationFn: (value: { user_id: number; group_id: number; validity_days?: number }) =>
+      adminAPI.subscriptions.assign({
+        user_id: value.user_id,
+        group_id: value.group_id,
+        validity_days: value.validity_days,
+      }),
+    queryKey: SUBSCRIPTIONS_QUERY_KEY,
+    onSuccess: () => {
       showSuccess(t('Subscription assigned successfully'))
       setShowAssignDialog(false)
       setAssignForm({ user_id: 0, group_id: 0, validity_days: 30 })
       setUserSearch('')
       setUserResults([])
-      refresh()
-    } catch (err: any) {
-      showError(err?.response?.data?.detail || err?.message || t('Failed to assign subscription'))
-    } finally {
-      setSaving(false)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err, t('Failed to assign subscription')))
+    },
+  })
+
+  const extendMutation = useTableMutation({
+    mutationFn: ({ id, days }: { id: number; days: number }) =>
+      adminAPI.subscriptions.extend(id, { days }),
+    queryKey: SUBSCRIPTIONS_QUERY_KEY,
+    onSuccess: () => {
+      showSuccess(t('Subscription extended successfully'))
+      setShowExtendDialog(false)
+      setSelectedSub(null)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err, t('Failed to extend subscription')))
+    },
+  })
+
+  const revokeMutation = useTableMutation({
+    mutationFn: (id: number) => adminAPI.subscriptions.revoke(id),
+    queryKey: SUBSCRIPTIONS_QUERY_KEY,
+    onSuccess: () => {
+      showSuccess(t('Subscription revoked successfully'))
+      setShowRevokeDialog(false)
+      setSelectedSub(null)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err, t('Failed to revoke subscription')))
+    },
+  })
+
+  // ==================== User Search ====================
+
+  const handleUserSearch = (value: string) => {
+    setUserSearch(value)
+    if (!value.trim()) {
+      setUserResults([])
+      return
     }
+    searchUsersDebounced(value.trim())
+  }
+
+  // ==================== Actions ====================
+
+  const handleAssign = () => {
+    if (!assignForm.user_id || !assignForm.group_id) {
+      showError(t('Please select a user and group'))
+      return
+    }
+    assignMutation.mutate({
+      user_id: assignForm.user_id,
+      group_id: assignForm.group_id,
+      validity_days: assignForm.validity_days > 0 ? assignForm.validity_days : undefined,
+    })
   }
 
   const openExtend = (sub: UserSubscription) => {
@@ -201,20 +205,9 @@ export default function SubscriptionsView() {
     setShowExtendDialog(true)
   }
 
-  const handleExtend = async () => {
+  const handleExtend = () => {
     if (!selectedSub || extendDays <= 0) return
-    setSaving(true)
-    try {
-      await adminAPI.subscriptions.extend(selectedSub.id, { days: extendDays })
-      showSuccess(t('Subscription extended successfully'))
-      setShowExtendDialog(false)
-      setSelectedSub(null)
-      refresh()
-    } catch (err: any) {
-      showError(err?.response?.data?.detail || err?.message || t('Failed to extend subscription'))
-    } finally {
-      setSaving(false)
-    }
+    extendMutation.mutate({ id: selectedSub.id, days: extendDays })
   }
 
   const confirmRevoke = (sub: UserSubscription) => {
@@ -222,30 +215,144 @@ export default function SubscriptionsView() {
     setShowRevokeDialog(true)
   }
 
-  const handleRevoke = async () => {
+  const handleRevoke = () => {
     if (!selectedSub) return
-    setSaving(true)
-    try {
-      await adminAPI.subscriptions.revoke(selectedSub.id)
-      showSuccess(t('Subscription revoked successfully'))
-      setShowRevokeDialog(false)
-      setSelectedSub(null)
-      refresh()
-    } catch (err: any) {
-      showError(err?.response?.data?.detail || err?.message || t('Failed to revoke subscription'))
-    } finally {
-      setSaving(false)
-    }
+    revokeMutation.mutate(selectedSub.id)
   }
 
+  // ==================== Columns ====================
+
+  const columns: ColumnDef<UserSubscription>[] = [
+    {
+      accessorKey: 'user',
+      header: () => t('User'),
+      cell: ({ row }) => (
+        <span className="font-medium text-gray-900 dark:text-white">
+          {row.original.user?.email || `User #${row.original.user_id}`}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'group',
+      header: () => t('Group'),
+      cell: ({ row }) => (
+        <span className="text-gray-700 dark:text-gray-300">
+          {row.original.group?.name || `Group #${row.original.group_id}`}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: () => t('Status'),
+      size: 100,
+      cell: ({ row }) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[row.original.status] || ''}`}
+        >
+          {row.original.status}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'daily_usage_usd',
+      header: () => t('Daily'),
+      size: 80,
+      cell: ({ row }) => (
+        <span className="text-gray-700 dark:text-gray-300 text-xs">
+          {formatCost(row.original.daily_usage_usd)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'weekly_usage_usd',
+      header: () => t('Weekly'),
+      size: 80,
+      cell: ({ row }) => (
+        <span className="text-gray-700 dark:text-gray-300 text-xs">
+          {formatCost(row.original.weekly_usage_usd)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'monthly_usage_usd',
+      header: () => t('Monthly'),
+      size: 80,
+      cell: ({ row }) => (
+        <span className="text-gray-700 dark:text-gray-300 text-xs">
+          {formatCost(row.original.monthly_usage_usd)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'expires_at',
+      header: () => t('Expires'),
+      size: 160,
+      cell: ({ row }) => (
+        <span className="text-gray-500 dark:text-gray-400 text-xs">
+          {formatDate(row.original.expires_at)}
+        </span>
+      ),
+    },
+    {
+      id: 'remaining',
+      header: () => t('Remaining'),
+      size: 100,
+      cell: ({ row }) => (
+        <span
+          className={`text-xs font-medium ${
+            row.original.expires_at && new Date(row.original.expires_at).getTime() < Date.now()
+              ? 'text-red-500'
+              : 'text-green-600 dark:text-green-400'
+          }`}
+        >
+          {daysRemaining(row.original.expires_at)}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <span className="text-right block">{t('Actions')}</span>,
+      size: 160,
+      cell: ({ row }) => {
+        const sub = row.original
+        return (
+          <div className="flex items-center justify-end gap-1">
+            {sub.status === 'active' && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openExtend(sub)}
+                  title={t('Extend')}
+                >
+                  {t('Extend')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => confirmRevoke(sub)}
+                  className="text-red-500 hover:text-red-700"
+                  title={t('Revoke')}
+                >
+                  {t('Revoke')}
+                </Button>
+              </>
+            )}
+          </div>
+        )
+      },
+    },
+  ]
+
   // ==================== Render ====================
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
           {t('Subscription Management')}
-          <span className="ml-2 text-sm font-normal text-gray-500">({total})</span>
+          <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
         </h1>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
@@ -269,7 +376,10 @@ export default function SubscriptionsView() {
       {/* Filters */}
       <div className="card p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(1) }}>
+          <Select
+            value={filters.status ?? 'all'}
+            onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v)}
+          >
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
@@ -281,8 +391,8 @@ export default function SubscriptionsView() {
             </SelectContent>
           </Select>
           <Select
-            value={groupFilter === 'all' ? 'all' : String(groupFilter)}
-            onValueChange={(v) => { setGroupFilter(v === 'all' ? 'all' : Number(v)); setPage(1) }}
+            value={filters.group_id != null ? String(filters.group_id) : 'all'}
+            onValueChange={(v) => setFilter('group_id', v === 'all' ? undefined : Number(v))}
           >
             <SelectTrigger className="w-auto">
               <SelectValue />
@@ -298,129 +408,13 @@ export default function SubscriptionsView() {
       </div>
 
       {/* Table */}
-      <div className="card overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="spinner" />
-          </div>
-        ) : subscriptions.length === 0 ? (
-          <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-            {t('No subscriptions found')}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-medium uppercase text-gray-500 dark:border-gray-700 dark:bg-dark-700 dark:text-gray-400">
-                  <th className="px-4 py-3">{t('User')}</th>
-                  <th className="px-4 py-3">{t('Group')}</th>
-                  <th className="px-4 py-3">{t('Status')}</th>
-                  <th className="px-4 py-3">{t('Daily')}</th>
-                  <th className="px-4 py-3">{t('Weekly')}</th>
-                  <th className="px-4 py-3">{t('Monthly')}</th>
-                  <th className="px-4 py-3">{t('Expires')}</th>
-                  <th className="px-4 py-3">{t('Remaining')}</th>
-                  <th className="px-4 py-3 text-right">{t('Actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {subscriptions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-dark-700">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                      {sub.user?.email || `User #${sub.user_id}`}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                      {sub.group?.name || `Group #${sub.group_id}`}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[sub.status] || ''}`}
-                      >
-                        {sub.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300 text-xs">
-                      {formatCost(sub.daily_usage_usd)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300 text-xs">
-                      {formatCost(sub.weekly_usage_usd)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300 text-xs">
-                      {formatCost(sub.monthly_usage_usd)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
-                      {formatDate(sub.expires_at)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs font-medium ${
-                          sub.expires_at && new Date(sub.expires_at).getTime() < Date.now()
-                            ? 'text-red-500'
-                            : 'text-green-600 dark:text-green-400'
-                        }`}
-                      >
-                        {daysRemaining(sub.expires_at)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {sub.status === 'active' && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openExtend(sub)}
-                              title={t('Extend')}
-                            >
-                              {t('Extend')}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => confirmRevoke(sub)}
-                              className="text-red-500 hover:text-red-700"
-                              title={t('Revoke')}
-                            >
-                              {t('Revoke')}
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {t('Page')} {page} / {totalPages} ({total} {t('total')})
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                {t('Previous')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-              >
-                {t('Next')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={subscriptions}
+        loading={isLoading}
+        pagination={pagination}
+        onPageChange={setPage}
+      />
 
       {/* Assign Subscription Dialog */}
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
@@ -514,11 +508,11 @@ export default function SubscriptionsView() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAssignDialog(false)} disabled={saving}>
+            <Button variant="outline" onClick={() => setShowAssignDialog(false)} disabled={assignMutation.isPending}>
               {t('Cancel')}
             </Button>
-            <Button onClick={handleAssign} disabled={saving}>
-              {saving ? <div className="spinner h-4 w-4" /> : t('Assign')}
+            <Button onClick={handleAssign} disabled={assignMutation.isPending}>
+              {assignMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Assign')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -545,11 +539,11 @@ export default function SubscriptionsView() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowExtendDialog(false)} disabled={saving}>
+            <Button variant="outline" onClick={() => setShowExtendDialog(false)} disabled={extendMutation.isPending}>
               {t('Cancel')}
             </Button>
-            <Button onClick={handleExtend} disabled={saving}>
-              {saving ? <div className="spinner h-4 w-4" /> : t('Extend')}
+            <Button onClick={handleExtend} disabled={extendMutation.isPending}>
+              {extendMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Extend')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -568,13 +562,13 @@ export default function SubscriptionsView() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={revokeMutation.isPending}>{t('Cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRevoke}
-              disabled={saving}
+              disabled={revokeMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
             >
-              {saving ? <div className="spinner h-4 w-4" /> : t('Revoke')}
+              {revokeMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Revoke')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

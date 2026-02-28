@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+import { type ColumnDef } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
-import type { RedeemCode, RedeemCodeType, AdminGroup, PaginatedResponse } from '@/types'
+import type { RedeemCode, RedeemCodeType, AdminGroup } from '@/types'
 import {
   PlusIcon,
   SearchIcon,
@@ -33,8 +35,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DataTable } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
 
-const PAGE_SIZE = 20
+// ==================== Types ====================
+
+type RedeemFilters = {
+  type?: RedeemCodeType
+  status?: 'active' | 'used' | 'expired' | 'unused'
+  search?: string
+}
+
+// ==================== Helpers ====================
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return '-'
@@ -45,6 +57,8 @@ function maskCode(code: string): string {
   if (code.length <= 8) return code
   return code.slice(0, 4) + '****' + code.slice(-4)
 }
+
+// ==================== Constants ====================
 
 const TYPE_COLORS: Record<RedeemCodeType, string> = {
   balance: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -60,28 +74,39 @@ const STATUS_COLORS: Record<string, string> = {
   expired: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
+// ==================== Query Key ====================
+
+const REDEEM_QUERY_KEY = ['admin', 'redeem']
+
+// ==================== Component ====================
+
 export default function RedeemView() {
   const { t } = useTranslation()
   const showError = useAppStore((s) => s.showError)
   const showSuccess = useAppStore((s) => s.showSuccess)
 
-  // ==================== List State ====================
-  const [codes, setCodes] = useState<RedeemCode[]>([])
-  const [loading, setLoading] = useState(false)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal] = useState(0)
-
-  // Filters
-  const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState<'all' | RedeemCodeType>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'used' | 'expired' | 'unused'>('all')
-
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
+  // Data table query
+  const {
+    data: codes,
+    pagination,
+    isLoading,
+    search,
+    filters,
+    setPage,
+    setFilter,
+    setSearch,
+    refresh,
+  } = useDataTableQuery<RedeemCode, RedeemFilters>({
+    queryKey: REDEEM_QUERY_KEY,
+    queryFn: (page, pageSize, filters, options) =>
+      adminAPI.redeem.list(page, pageSize, filters, options),
+  })
 
   // Groups for subscription type
-  const [allGroups, setAllGroups] = useState<AdminGroup[]>([])
+  const { data: allGroups = [] } = useQuery<AdminGroup[]>({
+    queryKey: ['admin', 'groups', 'all'],
+    queryFn: () => adminAPI.groups.getAll(),
+  })
 
   // ==================== Dialog State ====================
   const [showGenerateDialog, setShowGenerateDialog] = useState(false)
@@ -102,82 +127,26 @@ export default function RedeemView() {
   // Generated codes result
   const [generatedCodes, setGeneratedCodes] = useState<RedeemCode[]>([])
 
-  // Copy state
+  // Copy state (used in column cell renderers)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
-  // ==================== Data Loading ====================
-  const loadGroups = useCallback(async () => {
-    try {
-      const groups = await adminAPI.groups.getAll()
-      setAllGroups(groups)
-    } catch {
-      // silent
-    }
-  }, [])
+  // ==================== Mutations ====================
 
-  const loadCodes = useCallback(
-    async (currentPage: number, searchTerm: string) => {
-      abortRef.current?.abort()
-      const controller = new AbortController()
-      abortRef.current = controller
-
-      setLoading(true)
-      try {
-        const filters: {
-          type?: RedeemCodeType
-          status?: 'active' | 'used' | 'expired' | 'unused'
-          search?: string
-        } = {}
-        if (typeFilter !== 'all') filters.type = typeFilter
-        if (statusFilter !== 'all') filters.status = statusFilter
-        if (searchTerm.trim()) filters.search = searchTerm.trim()
-
-        const res: PaginatedResponse<RedeemCode> = await adminAPI.redeem.list(
-          currentPage,
-          PAGE_SIZE,
-          filters,
-          { signal: controller.signal }
-        )
-        setCodes(res.items)
-        setTotalPages(res.pages)
-        setTotal(res.total)
-      } catch (err: any) {
-        if (err?.name !== 'AbortError' && err?.name !== 'CanceledError') {
-          showError(t('Failed to load redeem codes'))
-        }
-      } finally {
-        setLoading(false)
-      }
+  const deleteMutation = useTableMutation({
+    mutationFn: (id: number) => adminAPI.redeem.delete(id),
+    queryKey: REDEEM_QUERY_KEY,
+    onSuccess: () => {
+      showSuccess(t('Redeem code deleted'))
+      setShowDeleteDialog(false)
+      setSelectedCode(null)
     },
-    [typeFilter, statusFilter, showError, t]
-  )
-
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearch(value)
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      debounceRef.current = setTimeout(() => {
-        setPage(1)
-        loadCodes(1, value)
-      }, 300)
+    onError: (err) => {
+      showError(extractErrorMessage(err, t('Failed to delete code')))
     },
-    [loadCodes]
-  )
-
-  useEffect(() => {
-    loadGroups()
-  }, [loadGroups])
-
-  useEffect(() => {
-    loadCodes(page, search)
-    return () => {
-      abortRef.current?.abort()
-    }
-  }, [page, typeFilter, statusFilter]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const refresh = () => loadCodes(page, search)
+  })
 
   // ==================== Actions ====================
+
   const handleGenerate = async () => {
     if (genForm.count < 1 || genForm.value <= 0) {
       showError(t('Invalid count or value'))
@@ -201,8 +170,8 @@ export default function RedeemView() {
       setShowResultDialog(true)
       showSuccess(t('Generated') + ` ${result.length} ` + t('codes successfully'))
       refresh()
-    } catch (err: any) {
-      showError(err?.response?.data?.detail || err?.message || t('Failed to generate codes'))
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err as Error, t('Failed to generate codes')))
     } finally {
       setSaving(false)
     }
@@ -241,59 +210,144 @@ export default function RedeemView() {
 
   const handleExportCodes = async () => {
     try {
-      const filters: { type?: RedeemCodeType; status?: 'active' | 'used' | 'expired' } = {}
-      if (typeFilter !== 'all') filters.type = typeFilter
-      if (statusFilter !== 'all' && statusFilter !== 'unused') {
-        filters.status = statusFilter as 'active' | 'used' | 'expired'
+      const exportFilters: { type?: RedeemCodeType; status?: 'active' | 'used' | 'expired' } = {}
+      if (filters.type) exportFilters.type = filters.type as RedeemCodeType
+      if (filters.status && filters.status !== 'unused') {
+        exportFilters.status = filters.status as 'active' | 'used' | 'expired'
       }
-      const blob = await adminAPI.redeem.exportCodes(filters)
+      const blob = await adminAPI.redeem.exportCodes(exportFilters)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = `redeem-codes-export-${Date.now()}.csv`
       a.click()
       URL.revokeObjectURL(url)
-    } catch (err: any) {
-      showError(err?.response?.data?.detail || err?.message || t('Failed to export codes'))
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err as Error, t('Failed to export codes')))
     }
   }
 
-  const confirmDelete = (code: RedeemCode) => {
-    setSelectedCode(code)
-    setShowDeleteDialog(true)
-  }
+  // ==================== Columns ====================
 
-  const handleDelete = async () => {
-    if (!selectedCode) return
-    setSaving(true)
-    try {
-      await adminAPI.redeem.delete(selectedCode.id)
-      showSuccess(t('Redeem code deleted'))
-      setShowDeleteDialog(false)
-      setSelectedCode(null)
-      refresh()
-    } catch (err: any) {
-      showError(err?.response?.data?.detail || err?.message || t('Failed to delete code'))
-    } finally {
-      setSaving(false)
-    }
-  }
+  const columns: ColumnDef<RedeemCode>[] = [
+    {
+      accessorKey: 'code',
+      header: () => t('Code'),
+      cell: ({ row }) => {
+        const code = row.original
+        return (
+          <div className="flex items-center gap-1">
+            <span className="font-mono text-xs text-gray-900 dark:text-white">
+              {maskCode(code.code)}
+            </span>
+            <Button
+              variant="ghost"
+              onClick={() => handleCopyCode(code.code)}
+              className="p-0.5 h-auto"
+              title={t('Copy')}
+            >
+              {copiedCode === code.code ? (
+                <CheckIcon className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <ClipboardIcon className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'type',
+      header: () => t('Type'),
+      size: 120,
+      cell: ({ row }) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[row.original.type] || ''}`}
+        >
+          {row.original.type}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'value',
+      header: () => t('Value'),
+      size: 100,
+      cell: ({ row }) => (
+        <span className="text-gray-700 dark:text-gray-300">
+          {row.original.type === 'balance' ? `$${row.original.value}` : row.original.value}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: () => t('Status'),
+      size: 100,
+      cell: ({ row }) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[row.original.status] || ''}`}
+        >
+          {row.original.status}
+        </span>
+      ),
+    },
+    {
+      id: 'used_by',
+      header: () => t('Used By'),
+      size: 150,
+      cell: ({ row }) => (
+        <span className="text-gray-500 dark:text-gray-400 text-xs">
+          {row.original.user?.email || (row.original.used_by ? `User #${row.original.used_by}` : '-')}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'used_at',
+      header: () => t('Used At'),
+      size: 160,
+      cell: ({ row }) => (
+        <span className="text-gray-500 dark:text-gray-400 text-xs">
+          {formatDate(row.original.used_at)}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <span className="text-right block">{t('Actions')}</span>,
+      size: 80,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSelectedCode(row.original)
+              setShowDeleteDialog(true)
+            }}
+            className="text-red-500 hover:text-red-700 p-1 h-auto"
+            title={t('Delete')}
+          >
+            <TrashIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
   // ==================== Render ====================
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
           {t('Redeem Code Management')}
-          <span className="ml-2 text-sm font-normal text-gray-500">({total})</span>
+          <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
         </h1>
         <div className="flex items-center gap-2">
           <Button variant="ghost" onClick={handleExportCodes} className="flex items-center gap-1 text-sm" title={t('Export CSV')}>
             <DownloadIcon className="h-4 w-4" />
             {t('Export')}
           </Button>
-          <Button variant="ghost" onClick={refresh} className="btn-icon" title={t('Refresh')}>
+          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
             <RefreshIcon className="h-4 w-4" />
           </Button>
           <Button
@@ -317,12 +371,15 @@ export default function RedeemView() {
             <Input
               type="text"
               value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder={t('Search codes...')}
               className="pl-9"
             />
           </div>
-          <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as any); setPage(1) }}>
+          <Select
+            value={filters.type ?? 'all'}
+            onValueChange={(v) => setFilter('type', v === 'all' ? undefined : v)}
+          >
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
@@ -333,7 +390,10 @@ export default function RedeemView() {
               <SelectItem value="subscription">{t('Subscription')}</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(1) }}>
+          <Select
+            value={filters.status ?? 'all'}
+            onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v)}
+          >
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
@@ -349,118 +409,13 @@ export default function RedeemView() {
       </div>
 
       {/* Table */}
-      <div className="card overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="spinner" />
-          </div>
-        ) : codes.length === 0 ? (
-          <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-            {t('No redeem codes found')}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-medium uppercase text-gray-500 dark:border-gray-700 dark:bg-dark-700 dark:text-gray-400">
-                  <th className="px-4 py-3">{t('Code')}</th>
-                  <th className="px-4 py-3">{t('Type')}</th>
-                  <th className="px-4 py-3">{t('Value')}</th>
-                  <th className="px-4 py-3">{t('Status')}</th>
-                  <th className="px-4 py-3">{t('Used By')}</th>
-                  <th className="px-4 py-3">{t('Used At')}</th>
-                  <th className="px-4 py-3 text-right">{t('Actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {codes.map((code) => (
-                  <tr key={code.id} className="hover:bg-gray-50 dark:hover:bg-dark-700">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <span className="font-mono text-xs text-gray-900 dark:text-white">
-                          {maskCode(code.code)}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleCopyCode(code.code)}
-                          className="p-0.5 h-auto"
-                          title={t('Copy')}
-                        >
-                          {copiedCode === code.code ? (
-                            <CheckIcon className="h-3.5 w-3.5 text-green-500" />
-                          ) : (
-                            <ClipboardIcon className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[code.type] || ''}`}
-                      >
-                        {code.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                      {code.type === 'balance' ? `$${code.value}` : code.value}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[code.status] || ''}`}
-                      >
-                        {code.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
-                      {code.user?.email || (code.used_by ? `User #${code.used_by}` : '-')}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
-                      {formatDate(code.used_at)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button
-                        variant="ghost"
-                        onClick={() => confirmDelete(code)}
-                        className="text-red-500 hover:text-red-700 p-1 h-auto"
-                        title={t('Delete')}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {t('Page')} {page} / {totalPages} ({total} {t('total')})
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="text-sm disabled:opacity-50"
-              >
-                {t('Previous')}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="text-sm disabled:opacity-50"
-              >
-                {t('Next')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={codes}
+        loading={isLoading}
+        pagination={pagination}
+        onPageChange={setPage}
+      />
 
       {/* Generate Codes Dialog */}
       <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
@@ -612,7 +567,7 @@ export default function RedeemView() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setSelectedCode(null) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Delete Redeem Code')}</AlertDialogTitle>
@@ -623,13 +578,13 @@ export default function RedeemView() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>{t('Cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
-              disabled={saving}
+              onClick={() => selectedCode && deleteMutation.mutate(selectedCode.id)}
+              disabled={deleteMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
             >
-              {saving ? <div className="spinner h-4 w-4" /> : t('Delete')}
+              {deleteMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

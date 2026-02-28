@@ -128,8 +128,48 @@ go generate ./cmd/server   # 重新生成 Wire DI 代码（wire_gen.go）
 
 **两个前端（部署时选择其一）：**
 
-- `frontend/` — 上游项目（Wei-Shaw/sub2api）的 Vue 3 实现，功能完善。保留此目录以便合并上游更新，一般不在此目录做自定义开发。
-- `frontend-react/` — 我们对 Vue 实现的 React 复刻，也是自定义功能的开发目标。**日常开发应在此目录进行。**
+- `frontend/` — 原项目（Wei-Shaw/sub2api）的 Vue 3 实现，功能完善。保留此目录以便从上上游合并更新，一般不在此目录做自定义开发。
+- `frontend-react/` — 我们对 Vue 实现的 React 复刻，也是自定义功能的开发目标。**日常开发应在此目录进行。frontend-react 开发在 VIDLG/sub2api（upstream）进行。**
+
+**React 前端与 Vue 前端的关系：**
+- 整体 UI 布局和功能与 Vue 的 `frontend/` 保持一致（功能对齐）
+- UI 细节不要求完全相同，每个小的 UI 组件可以替换为更好的 React 生态库
+- 自定义功能优先在 React 前端开发
+
+**React 前端技术栈选型：**
+- 样式：TailwindCSS v4 + clsx + tailwind-merge
+- UI 组件库：shadcn/ui（Radix UI + CVA）
+- 状态管理：Zustand
+- Hooks 工具库：ahooks
+- 数据请求：@tanstack/react-query + Axios
+- 表单：@tanstack/react-form + @tanstack/zod-form-adapter + Zod
+- 路由：@tanstack/react-router
+- 表格：@tanstack/react-table
+- 国际化：i18next + react-i18next（en/zh）
+- 主题：next-themes（明暗模式）
+- 通知：Sonner
+- 图标：lucide-react
+
+**shadcn/ui 组件管理规范：**
+- `components/ui/` 目录下的组件由 shadcn CLI 管理（`pnpm dlx shadcn@latest add <组件名>`），不要手动创建
+- 更新组件使用 `--overwrite` 标志覆盖
+- shadcn 组件文件名使用 kebab-case（如 `alert-dialog.tsx`、`date-range-picker.tsx`），这是 shadcn 默认约定
+- 项目其他文件使用 PascalCase（组件/视图：`UsersView.tsx`）或 camelCase（hooks/工具：`useTheme.ts`）
+- 这两种命名风格在各自范围内保持统一即可
+
+**架构现状与重构方向（优先级从高到低）：**
+
+1. ~~**@tanstack/react-table：**~~ ✅ 已完成 (2026-02-28) — 创建了 `DataTable` 通用组件 + `useDataTableQuery` / `useTableMutation` hooks，已迁移全部 9 个表格页面（8 个 admin + 1 个 user）。消除了 ~3000+ 行手写 table HTML、手动分页、防抖、AbortController 代码。
+2. ~~**@tanstack/react-query：**~~ ✅ 已完成 (2026-02-28) — 所有表格页面已改用 useQuery + useMutation + invalidateQueries 模式，从 5 个页面扩展到 14 个页面。
+3. ~~**废弃依赖清理：**~~ ✅ 已完成 — react-router-dom 已移除。
+4. ~~**shadcn 组件补充：**~~ ✅ 已添加 table、checkbox、skeleton。
+5. ~~**ahooks 引入：**~~ ✅ 已完成 (2026-02-28) — 已安装 ahooks 并替换手动防抖、mount/unmount 逻辑。移除了未使用的 @reactuses/core。优化了 RegisterView（2 个防抖）、SubscriptionsView（用户搜索防抖）、PromoCodesView（useUpdateEffect）。
+6. **表单验证增强：** Zod adapter 已安装但部分表单未接入，应统一使用 zodValidator 做字段级实时校验。
+7. **Zustand 优化：** 可引入 persist 中间件统一 localStorage 持久化逻辑。
+
+**已迁移的表格页面（2026-02-28）：**
+- Admin: UsersView, AccountsView, GroupsView, SubscriptionsView, ProxiesView, AnnouncementsView, RedeemView, PromoCodesView
+- User: KeysView
 
 ```
 frontend/          - Vue 3（上游，TailwindCSS）— 仅同步上游，不做自定义修改
@@ -140,11 +180,20 @@ frontend/          - Vue 3（上游，TailwindCSS）— 仅同步上游，不做
     components/    - 可复用组件
     router/        - Vue Router
 
-frontend-react/    - React（我们的主前端，TailwindCSS）— 自定义功能在此开发
+frontend-react/    - React（我们的主前端）— 自定义功能在此开发
   src/
-    api/           - API 客户端（axios）
-    pages/         - 页面组件
-    components/    - 可复用组件
+    api/           - API 客户端（Axios，拦截器处理认证/token 刷新）
+    stores/        - Zustand 状态管理（auth, app, subscriptions, adminSettings, onboarding）
+    views/         - 页面组件（admin/, auth/, user/）
+    components/
+      ui/          - shadcn/ui 组件
+      layout/      - 布局组件（AppLayout, AppSidebar, AppHeader）
+      common/      - 通用组件
+    hooks/         - 自定义 hooks
+    router/        - TanStack Router 配置（lazy loading + 路由守卫）
+    i18n/          - 国际化（locales/en.ts, zh.ts）
+    lib/           - 工具函数（cn() 等）
+    types/         - TypeScript 类型定义
 ```
 
 **构建输出：**
@@ -324,14 +373,30 @@ ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=pass123 ./server
 
 ## Git 工作流
 
-```bash
-# 远程仓库
-origin      - 你的 fork
-upstream    - Wei-Shaw/sub2api（主上游）
+**仓库关系：**
 
-# 与上游同步
+- **Wei-Shaw/sub2api** — 原项目（仅 Vue，无 React）
+- **VIDLG/sub2api** (upstream) — 开发 React 前端的主仓库，接收 frontend-react 相关的 PR
+- **daleydeng/sub2api** (origin) — 你的 fork
+
+```bash
+# 远程仓库配置
+origin      - daleydeng/sub2api（你的 fork）
+upstream    - VIDLG/sub2api（React 前端开发的主仓库）
+
+# 提交 PR 到 upstream
+just pr-upstream "PR title" "PR description"
+# 或手动
+gh pr create --repo VIDLG/sub2api --base main --head daleydeng:main --title "..." --body "..." --web
+
+# 与 upstream 同步
 git fetch upstream
 git merge upstream/main
+
+# 同步上上游（Wei-Shaw/sub2api）的 Vue 更新（可选，当需要 Vue 前端的上游更新时）
+git remote add origin-upstream https://github.com/Wei-Shaw/sub2api.git
+git fetch origin-upstream
+git merge origin-upstream/main
 ```
 
 ## 文档

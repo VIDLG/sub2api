@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate, Link, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useForm } from '@tanstack/react-form'
+import { useDebounceFn, useMount } from 'ahooks'
 import AuthLayout from '@/components/layout/AuthLayout'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
@@ -36,44 +37,51 @@ export default function RegisterView() {
 
   const [promoValidating, setPromoValidating] = useState(false)
   const [promoValidation, setPromoValidation] = useState({ valid: false, invalid: false, bonusAmount: null as number | null, message: '' })
-  const promoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [invitationValidating, setInvitationValidating] = useState(false)
   const [invitationValidation, setInvitationValidation] = useState({ valid: false, invalid: false, message: '' })
-  const invitationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const validatePromoCodeDebounced = useCallback(async (code: string) => {
+  const validatePromoCodeImpl = useCallback(async (code: string) => {
     if (!code.trim()) return
     setPromoValidating(true)
     try {
       const result = await validatePromoCode(code)
-      if (result.valid) setPromoValidation({ valid: true, invalid: false, bonusAmount: result.bonus_amount || 0, message: '' })
-      else setPromoValidation({ valid: false, invalid: true, bonusAmount: null, message: getPromoErrorMessage(result.error_code) })
-    } catch { setPromoValidation({ valid: false, invalid: true, bonusAmount: null, message: t('auth.promoCodeInvalid') }) }
-    finally { setPromoValidating(false) }
+      if (result.valid) {
+        setPromoValidation({ valid: true, invalid: false, bonusAmount: result.bonus_amount || 0, message: '' })
+      } else {
+        const errorMessage = (() => {
+          switch (result.error_code) {
+            case 'PROMO_CODE_NOT_FOUND': return t('auth.promoCodeNotFound')
+            case 'PROMO_CODE_EXPIRED': return t('auth.promoCodeExpired')
+            case 'PROMO_CODE_DISABLED': return t('auth.promoCodeDisabled')
+            case 'PROMO_CODE_MAX_USED': return t('auth.promoCodeMaxUsed')
+            case 'PROMO_CODE_ALREADY_USED': return t('auth.promoCodeAlreadyUsed')
+            default: return t('auth.promoCodeInvalid')
+          }
+        })()
+        setPromoValidation({ valid: false, invalid: true, bonusAmount: null, message: errorMessage })
+      }
+    } catch {
+      setPromoValidation({ valid: false, invalid: true, bonusAmount: null, message: t('auth.promoCodeInvalid') })
+    } finally {
+      setPromoValidating(false)
+    }
   }, [t])
 
-  function getPromoErrorMessage(errorCode?: string): string {
-    switch (errorCode) {
-      case 'PROMO_CODE_NOT_FOUND': return t('auth.promoCodeNotFound')
-      case 'PROMO_CODE_EXPIRED': return t('auth.promoCodeExpired')
-      case 'PROMO_CODE_DISABLED': return t('auth.promoCodeDisabled')
-      case 'PROMO_CODE_MAX_USED': return t('auth.promoCodeMaxUsed')
-      case 'PROMO_CODE_ALREADY_USED': return t('auth.promoCodeAlreadyUsed')
-      default: return t('auth.promoCodeInvalid')
-    }
-  }
+  const { run: validatePromoCodeDebounced } = useDebounceFn(validatePromoCodeImpl, { wait: 500 })
 
-  const validateInvitationCodeDebounced = useCallback(async (code: string) => {
+  const validateInvitationCodeImpl = useCallback(async (code: string) => {
     setInvitationValidating(true)
     try {
       const result = await validateInvitationCode(code)
       if (result.valid) setInvitationValidation({ valid: true, invalid: false, message: '' })
-      else setInvitationValidation({ valid: false, invalid: true, message: t('auth.invitationCodeInvalid') })
-    } catch { setInvitationValidation({ valid: false, invalid: true, message: t('auth.invitationCodeInvalid') }) }
+      else setInvitationValidation({ valid: false, invalid: true, message: t('auth.invitationCodeInvalid') }) }
+    catch { setInvitationValidation({ valid: false, invalid: true, message: t('auth.invitationCodeInvalid') }) }
     finally { setInvitationValidating(false) }
   }, [t])
 
-  useEffect(() => {
+  const { run: validateInvitationCodeDebounced } = useDebounceFn(validateInvitationCodeImpl, { wait: 500 })
+
+  useMount(() => {
     getPublicSettings()
       .then(async (settings) => {
         setRegistrationEnabled(settings.registration_enabled)
@@ -87,33 +95,29 @@ export default function RegisterView() {
           const promoParam = searchParams.get('promo')
           if (promoParam) {
             form.setFieldValue('promoCode', promoParam)
-            await validatePromoCodeDebounced(promoParam)
+            await validatePromoCodeImpl(promoParam)
           }
         }
       })
       .catch((error) => console.error('Failed to load public settings:', error))
       .finally(() => setSettingsLoaded(true))
-  }, [])
-
-  useEffect(() => () => {
-    if (promoTimeoutRef.current) clearTimeout(promoTimeoutRef.current)
-    if (invitationTimeoutRef.current) clearTimeout(invitationTimeoutRef.current)
-  }, [])
+  })
 
   function handlePromoCodeInput(value: string) {
     form.setFieldValue('promoCode', value)
     setPromoValidation({ valid: false, invalid: false, bonusAmount: null, message: '' })
-    if (!value.trim()) { setPromoValidating(false); return }
-    if (promoTimeoutRef.current) clearTimeout(promoTimeoutRef.current)
-    promoTimeoutRef.current = setTimeout(() => validatePromoCodeDebounced(value.trim()), 500)
+    if (!value.trim()) {
+      setPromoValidating(false)
+      return
+    }
+    validatePromoCodeDebounced(value.trim())
   }
 
   function handleInvitationCodeInput(value: string) {
     form.setFieldValue('invitationCode', value)
     setInvitationValidation({ valid: false, invalid: false, message: '' })
     if (!value.trim()) return
-    if (invitationTimeoutRef.current) clearTimeout(invitationTimeoutRef.current)
-    invitationTimeoutRef.current = setTimeout(() => validateInvitationCodeDebounced(value.trim()), 500)
+    validateInvitationCodeDebounced(value.trim())
   }
 
   const form = useForm({

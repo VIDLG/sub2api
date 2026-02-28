@@ -156,3 +156,9 @@ test-vue:
 [working-directory('backend')]
 test-backend:
     pixi run go test ./...
+
+# ── Git & Collaboration ──────────────────────────
+
+# Create PR to upstream (VIDLG/sub2api) from current branch
+pr-upstream title body:
+    gh pr create --repo VIDLG/sub2api --base main --head daleydeng:$(git branch --show-current) --title "{{ title }}" --body "{{ body }}" --web

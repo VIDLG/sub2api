@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
+import { type ColumnDef } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { keysAPI } from '@/api/keys'
 import { usageAPI, type BatchApiKeysUsageResponse } from '@/api/usage'
@@ -35,6 +37,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DataTable } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+
+// ==================== Helpers ====================
 
 function maskKey(key: string): string {
   if (key.length <= 12) return key
@@ -63,30 +69,76 @@ function statusColor(status: string): string {
   }
 }
 
+// ==================== Query Keys ====================
+
+const KEYS_QUERY_KEY = ['user', 'keys']
+
+// ==================== Component ====================
+
 export default function KeysView() {
   const { t } = useTranslation()
   const showError = useAppStore((s) => s.showError)
   const showSuccess = useAppStore((s) => s.showSuccess)
 
-  const [keys, setKeys] = useState<ApiKey[]>([])
-  const [loading, setLoading] = useState(false)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal] = useState(0)
-  const pageSize = 10
-  const [usageStats, setUsageStats] = useState<BatchApiKeysUsageResponse['stats']>({})
-  const [groups, setGroups] = useState<Group[]>([])
-  const [copiedId, setCopiedId] = useState<number | null>(null)
+  // Data table query (no filters — API doesn't support them)
+  const {
+    data: keys,
+    pagination,
+    isLoading,
+    setPage,
+    refresh,
+  } = useDataTableQuery<ApiKey, Record<string, never>>({
+    queryKey: KEYS_QUERY_KEY,
+    queryFn: (page, pageSize, _filters, options) =>
+      keysAPI.list(page, pageSize, options),
+    pageSize: 10,
+  })
 
+  // Batch usage stats — depends on keys data
+  const { data: usageData } = useQuery<BatchApiKeysUsageResponse>({
+    queryKey: ['user', 'keys-usage', keys.map((k) => k.id)],
+    queryFn: () => usageAPI.getDashboardApiKeysUsage(keys.map((k) => k.id)),
+    enabled: keys.length > 0,
+  })
+  const usageStats = usageData?.stats ?? {}
+
+  // Available groups
+  const { data: groups = [] } = useQuery<Group[]>({
+    queryKey: ['user', 'groups', 'available'],
+    queryFn: () => userGroupsAPI.getAvailable(),
+  })
+
+  // Dialog state
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [selectedKey, setSelectedKey] = useState<ApiKey | null>(null)
+  const [copiedId, setCopiedId] = useState<number | null>(null)
 
+  // Manual loading states for create/edit (form-based)
   const [creating, setCreating] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
 
+  // Mutations
+  const deleteMutation = useTableMutation<number>({
+    mutationFn: (id) => keysAPI.delete(id),
+    queryKey: KEYS_QUERY_KEY,
+    onSuccess: () => {
+      showSuccess(t('keys.deleted', 'API key deleted'))
+      setShowDeleteDialog(false)
+      setSelectedKey(null)
+    },
+    onError: (err) => showError(extractErrorMessage(err, t('keys.deleteFailed', 'Failed to delete API key'))),
+  })
+
+  const toggleStatusMutation = useTableMutation<{ id: number; status: 'active' | 'inactive' }>({
+    mutationFn: ({ id, status }) => keysAPI.toggleStatus(id, status),
+    queryKey: KEYS_QUERY_KEY,
+    onSuccess: () => showSuccess(t('keys.statusUpdated', 'Status updated')),
+    onError: (err) => showError(extractErrorMessage(err, t('keys.statusUpdateFailed', 'Failed to update status'))),
+  })
+
+  // Forms
   const createForm = useForm({
     defaultValues: {
       name: '',
@@ -111,46 +163,12 @@ export default function KeysView() {
   const { Field: CreateForm_Field } = createForm
   const { Field: EditForm_Field } = editForm
 
-  const abortRef = useRef<AbortController | null>(null)
-
-  const loadKeys = useCallback(async () => {
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-    setLoading(true)
-    try {
-      const res = await keysAPI.list(page, pageSize, { signal: controller.signal })
-      setKeys(res.items || [])
-      setTotalPages(res.pages)
-      setTotal(res.total)
-      const ids = (res.items || []).map((k) => k.id)
-      if (ids.length > 0) {
-        try {
-          const usage = await usageAPI.getDashboardApiKeysUsage(ids, { signal: controller.signal })
-          setUsageStats(usage.stats || {})
-        } catch { }
-      }
-    } catch (err) {
-      if ((err as { name?: string }).name !== 'CanceledError' && (err as { code?: string }).code !== 'ERR_CANCELED') {
-        showError(t('keys.loadFailed', 'Failed to load API keys'))
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [page, pageSize, showError, t])
-
-  const loadGroups = useCallback(async () => {
-    try {
-      const data = await userGroupsAPI.getAvailable()
-      setGroups(data || [])
-    } catch { }
-  }, [])
-
-  useEffect(() => {
-    loadKeys()
-    loadGroups()
-    return () => { abortRef.current?.abort() }
-  }, [loadKeys, loadGroups])
+  // Helpers
+  const getGroupName = useCallback((groupId: number | null): string => {
+    if (!groupId) return t('keys.default', 'Default')
+    const group = groups.find((g) => g.id === groupId)
+    return group?.name || `#${groupId}`
+  }, [groups, t])
 
   const copyToClipboard = useCallback(async (key: ApiKey) => {
     try {
@@ -162,17 +180,7 @@ export default function KeysView() {
     }
   }, [showError, t])
 
-  const toggleStatus = useCallback(async (key: ApiKey) => {
-    const newStatus = key.status === 'active' ? 'inactive' : 'active'
-    try {
-      await keysAPI.toggleStatus(key.id, newStatus)
-      showSuccess(t('keys.statusUpdated', 'Status updated'))
-      loadKeys()
-    } catch {
-      showError(t('keys.statusUpdateFailed', 'Failed to update status'))
-    }
-  }, [loadKeys, showError, showSuccess, t])
-
+  // Create handler (manual async — form-based)
   const handleCreate = useCallback(async () => {
     const values = createForm.store.state.values
     if (!values.name.trim()) { showError(t('keys.nameRequired', 'Key name is required')); return }
@@ -190,14 +198,15 @@ export default function KeysView() {
       showSuccess(t('keys.created', 'API key created successfully'))
       setShowCreateDialog(false)
       createForm.reset()
-      loadKeys()
-    } catch (err) {
-      showError((err as { response?: { data?: { error?: string } } }).response?.data?.error || t('keys.createFailed', 'Failed to create API key'))
+      refresh()
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err as Error, t('keys.createFailed', 'Failed to create API key')))
     } finally {
       setCreating(false)
     }
-  }, [createForm, loadKeys, showError, showSuccess, t])
+  }, [createForm, refresh, showError, showSuccess, t])
 
+  // Edit handler (manual async — form-based)
   const openEdit = useCallback((key: ApiKey) => {
     setSelectedKey(key)
     editForm.reset({
@@ -226,35 +235,123 @@ export default function KeysView() {
       })
       showSuccess(t('keys.updated', 'API key updated'))
       setShowEditDialog(false)
-      loadKeys()
-    } catch (err) {
-      showError((err as { response?: { data?: { error?: string } } }).response?.data?.error || t('keys.updateFailed', 'Failed to update API key'))
+      refresh()
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err as Error, t('keys.updateFailed', 'Failed to update API key')))
     } finally {
       setSaving(false)
     }
-  }, [selectedKey, editForm, loadKeys, showError, showSuccess, t])
+  }, [selectedKey, editForm, refresh, showError, showSuccess, t])
 
-  const handleDelete = useCallback(async () => {
-    if (!selectedKey) return
-    setDeleting(true)
-    try {
-      await keysAPI.delete(selectedKey.id)
-      showSuccess(t('keys.deleted', 'API key deleted'))
-      setShowDeleteDialog(false)
-      setSelectedKey(null)
-      loadKeys()
-    } catch {
-      showError(t('keys.deleteFailed', 'Failed to delete API key'))
-    } finally {
-      setDeleting(false)
-    }
-  }, [selectedKey, loadKeys, showError, showSuccess, t])
+  // ==================== Column Definitions ====================
 
-  const getGroupName = useCallback((groupId: number | null): string => {
-    if (!groupId) return t('keys.default', 'Default')
-    const group = groups.find((g) => g.id === groupId)
-    return group?.name || `#${groupId}`
-  }, [groups, t])
+  const columns: ColumnDef<ApiKey>[] = [
+    {
+      accessorKey: 'name',
+      header: () => t('keys.name', 'Name'),
+      cell: ({ row }) => {
+        const key = row.original
+        return (
+          <div>
+            <div className="font-medium text-gray-900 dark:text-white">{key.name}</div>
+            {key.expires_at && <div className="text-xs text-gray-400 dark:text-gray-500">{t('keys.expires', 'Expires')}: {formatDate(key.expires_at)}</div>}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'key',
+      header: () => t('keys.key', 'Key'),
+      cell: ({ row }) => {
+        const key = row.original
+        return (
+          <div className="flex items-center gap-2">
+            <code className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700 dark:bg-dark-700 dark:text-gray-300">{maskKey(key.key)}</code>
+            <button onClick={() => copyToClipboard(key)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title={t('keys.copy', 'Copy')}>
+              {copiedId === key.id ? <CheckIcon className="h-4 w-4 text-green-500" /> : <ClipboardIcon className="h-4 w-4" />}
+            </button>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'group_id',
+      header: () => t('keys.group', 'Group'),
+      cell: ({ row }) => (
+        <span className="text-gray-600 dark:text-gray-400">{getGroupName(row.original.group_id)}</span>
+      ),
+    },
+    {
+      id: 'usage',
+      header: () => t('keys.usage', 'Usage'),
+      cell: ({ row }) => {
+        const usage = usageStats[String(row.original.id)]
+        return (
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {usage ? (
+              <>
+                <div>{t('keys.today', 'Today')}: ${formatCost(usage.today_actual_cost || 0)}</div>
+                <div>{t('common.total', 'Total')}: ${formatCost(usage.total_actual_cost || 0)}</div>
+              </>
+            ) : <span>-</span>}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'quota',
+      header: () => t('keys.quota', 'Quota'),
+      cell: ({ row }) => {
+        const key = row.original
+        if (key.quota <= 0) {
+          return <span className="text-xs text-gray-400 dark:text-gray-500">{t('keys.unlimited', 'Unlimited')}</span>
+        }
+        const quotaPercent = Math.min(100, (key.quota_used / key.quota) * 100)
+        return (
+          <div className="w-24">
+            <div className="mb-1 flex justify-between text-xs">
+              <span className="text-gray-500 dark:text-gray-400">${formatCost(key.quota_used)}</span>
+              <span className="text-gray-400 dark:text-gray-500">${formatCost(key.quota)}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-dark-700">
+              <div className={`h-full rounded-full transition-all ${quotaPercent >= 90 ? 'bg-red-500' : quotaPercent >= 70 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${quotaPercent}%` }} />
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'status',
+      header: () => t('keys.status', 'Status'),
+      cell: ({ row }) => {
+        const key = row.original
+        return (
+          <button
+            onClick={() => toggleStatusMutation.mutate({ id: key.id, status: key.status === 'active' ? 'inactive' : 'active' })}
+            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor(key.status)}`}
+          >
+            {t(`keys.status_${key.status}`, key.status)}
+          </button>
+        )
+      },
+    },
+    {
+      id: 'actions',
+      header: () => t('common.actions', 'Actions'),
+      size: 100,
+      cell: ({ row }) => {
+        const key = row.original
+        return (
+          <div className="flex items-center gap-2">
+            <button onClick={() => openEdit(key)} className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400">{t('common.edit', 'Edit')}</button>
+            <button onClick={() => { setSelectedKey(key); setShowDeleteDialog(true) }} className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400"><TrashIcon className="h-4 w-4" /></button>
+          </div>
+        )
+      },
+    },
+  ]
+
+  // ==================== Render ====================
 
   return (
     <div className="space-y-6">
@@ -264,7 +361,7 @@ export default function KeysView() {
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('keys.description', 'Manage your API keys for accessing the service.')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={loadKeys} title={t('common.refresh', 'Refresh')}>
+          <Button variant="ghost" size="icon" onClick={refresh} title={t('common.refresh', 'Refresh')}>
             <RefreshIcon className="h-5 w-5" />
           </Button>
           <Button onClick={() => { createForm.reset(); setShowCreateDialog(true) }}>
@@ -274,99 +371,15 @@ export default function KeysView() {
         </div>
       </div>
 
-      <div className="card overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-12"><div className="spinner" /></div>
-        ) : keys.length === 0 ? (
-          <div className="py-12 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('keys.empty', 'No API keys yet. Create your first one.')}</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-medium uppercase text-gray-500 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-400">
-                  <th className="px-4 py-3">{t('keys.name', 'Name')}</th>
-                  <th className="px-4 py-3">{t('keys.key', 'Key')}</th>
-                  <th className="px-4 py-3">{t('keys.group', 'Group')}</th>
-                  <th className="px-4 py-3">{t('keys.usage', 'Usage')}</th>
-                  <th className="px-4 py-3">{t('keys.quota', 'Quota')}</th>
-                  <th className="px-4 py-3">{t('keys.status', 'Status')}</th>
-                  <th className="px-4 py-3">{t('common.actions', 'Actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {keys.map((key) => {
-                  const usage = usageStats[String(key.id)]
-                  const quotaPercent = key.quota > 0 ? Math.min(100, (key.quota_used / key.quota) * 100) : 0
-                  return (
-                    <tr key={key.id} className="border-b border-gray-50 transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-800/50">
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900 dark:text-white">{key.name}</div>
-                        {key.expires_at && <div className="text-xs text-gray-400 dark:text-gray-500">{t('keys.expires', 'Expires')}: {formatDate(key.expires_at)}</div>}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <code className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700 dark:bg-dark-700 dark:text-gray-300">{maskKey(key.key)}</code>
-                          <button onClick={() => copyToClipboard(key)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title={t('keys.copy', 'Copy')}>
-                            {copiedId === key.id ? <CheckIcon className="h-4 w-4 text-green-500" /> : <ClipboardIcon className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{getGroupName(key.group_id)}</td>
-                      <td className="px-4 py-3">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {usage ? <><div>{t('keys.today', 'Today')}: ${formatCost(usage.today_actual_cost || 0)}</div><div>{t('common.total', 'Total')}: ${formatCost(usage.total_actual_cost || 0)}</div></> : <span>-</span>}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {key.quota > 0 ? (
-                          <div className="w-24">
-                            <div className="mb-1 flex justify-between text-xs">
-                              <span className="text-gray-500 dark:text-gray-400">${formatCost(key.quota_used)}</span>
-                              <span className="text-gray-400 dark:text-gray-500">${formatCost(key.quota)}</span>
-                            </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-dark-700">
-                              <div className={`h-full rounded-full transition-all ${quotaPercent >= 90 ? 'bg-red-500' : quotaPercent >= 70 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${quotaPercent}%` }} />
-                            </div>
-                          </div>
-                        ) : <span className="text-xs text-gray-400 dark:text-gray-500">{t('keys.unlimited', 'Unlimited')}</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => toggleStatus(key)} className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor(key.status)}`}>
-                          {t(`keys.status_${key.status}`, key.status)}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => openEdit(key)} className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400">{t('common.edit', 'Edit')}</button>
-                          <button onClick={() => { setSelectedKey(key); setShowDeleteDialog(true) }} className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400"><TrashIcon className="h-4 w-4" /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-dark-700">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{t('common.showing', 'Showing')} {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)} {t('common.of', 'of')} {total}</span>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>{t('common.prev', 'Prev')}</Button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1).map((p, idx, arr) => (
-                <span key={p}>
-                  {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-gray-400">...</span>}
-                  <Button variant={p === page ? 'default' : 'ghost'} size="sm" onClick={() => setPage(p)}>{p}</Button>
-                </span>
-              ))}
-              <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>{t('common.next', 'Next')}</Button>
-            </div>
-          </div>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={keys}
+        loading={isLoading}
+        pagination={pagination}
+        onPageChange={setPage}
+      />
 
+      {/* Create Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{t('keys.createTitle', 'Create API Key')}</DialogTitle></DialogHeader>
@@ -431,6 +444,7 @@ export default function KeysView() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{t('keys.editTitle', 'Edit API Key')}</DialogTitle></DialogHeader>
@@ -511,6 +525,7 @@ export default function KeysView() {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setSelectedKey(null) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -522,8 +537,8 @@ export default function KeysView() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700">
-              {deleting ? <span className="flex items-center gap-2"><div className="spinner h-4 w-4" />{t('common.deleting', 'Deleting...')}</span> : t('common.delete', 'Delete')}
+            <AlertDialogAction onClick={() => selectedKey && deleteMutation.mutate(selectedKey.id)} disabled={deleteMutation.isPending} className="bg-red-600 hover:bg-red-700">
+              {deleteMutation.isPending ? <span className="flex items-center gap-2"><div className="spinner h-4 w-4" />{t('common.deleting', 'Deleting...')}</span> : t('common.delete', 'Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
