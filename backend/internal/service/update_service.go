@@ -290,10 +290,13 @@ func (s *UpdateService) fetchLatestRelease(ctx context.Context) (*UpdateInfo, er
 		}
 	}
 
+	// Source builds cannot be auto-updated; developers use git pull instead.
+	hasUpdate := s.buildType != "source" && compareVersions(s.currentVersion, latestVersion) < 0
+
 	return &UpdateInfo{
 		CurrentVersion: s.currentVersion,
 		LatestVersion:  latestVersion,
-		HasUpdate:      compareVersions(s.currentVersion, latestVersion) < 0,
+		HasUpdate:      hasUpdate,
 		ReleaseInfo: &ReleaseInfo{
 			Name:        release.Name,
 			Body:        release.Body,
@@ -486,10 +489,12 @@ func (s *UpdateService) getFromCache(ctx context.Context) (*UpdateInfo, error) {
 		return nil, fmt.Errorf("cache expired")
 	}
 
+	hasUpdate := s.buildType != "source" && compareVersions(s.currentVersion, cached.Latest) < 0
+
 	return &UpdateInfo{
 		CurrentVersion: s.currentVersion,
 		LatestVersion:  cached.Latest,
-		HasUpdate:      compareVersions(s.currentVersion, cached.Latest) < 0,
+		HasUpdate:      hasUpdate,
 		ReleaseInfo:    cached.ReleaseInfo,
 		Cached:         true,
 		BuildType:      s.buildType,
@@ -511,8 +516,14 @@ func (s *UpdateService) saveToCache(ctx context.Context, info *UpdateInfo) {
 	_ = s.cache.SetUpdateInfo(ctx, string(data), time.Duration(updateCacheTTL)*time.Second)
 }
 
-// compareVersions compares two semantic versions
+// compareVersions compares two semantic versions.
+// Non-release builds (e.g. "main", "dev") are considered ahead of any tagged release.
 func compareVersions(current, latest string) int {
+	norm := strings.TrimPrefix(current, "v")
+	if norm == "" || len(norm) == 0 || norm[0] < '0' || norm[0] > '9' {
+		return 1
+	}
+
 	currentParts := parseVersion(current)
 	latestParts := parseVersion(latest)
 
