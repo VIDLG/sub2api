@@ -25,8 +25,8 @@ import (
 
 // Config paths
 const (
-	ConfigFileName      = "config.yaml"
-	InstallLockFile     = ".installed"
+	ConfigFileName       = "config.yaml"
+	InstallLockFile      = ".installed"
 	DefaultDockerDataDir = "/app/data" // Docker volume mount point
 )
 

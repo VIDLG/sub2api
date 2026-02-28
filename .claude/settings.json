@@ -11,6 +11,14 @@
           {
             "type": "command",
             "command": "just check-react 2>&1 | tail -20"
+          },
+          {
+            "type": "command",
+            "command": "just fmt-go 2>&1 | tail -5"
+          },
+          {
+            "type": "command",
+            "command": "just check-vue 2>&1 | tail -20"
           }
         ]
       }
