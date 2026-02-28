@@ -1,5 +1,11 @@
 <template>
-  <div class="relative">
+  <div class="relative flex items-center gap-1.5">
+    <!-- Framework indicator -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" class="h-4 w-4 flex-shrink-0">
+      <path fill="#42B883" d="M78.8,10L64,35.4L49.2,10H0l64,110l64-110C128,10,78.8,10,78.8,10z" />
+      <path fill="#35495E" d="M78.8,10L64,35.4L49.2,10H25.6L64,76l38.4-66H78.8z" />
+    </svg>
+
     <!-- Admin: Full version badge with dropdown -->
     <template v-if="isAdmin">
       <button
@@ -31,7 +37,7 @@
         <div
           v-if="dropdownOpen"
           ref="dropdownRef"
-          class="absolute left-0 z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
+          class="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
         >
           <!-- Header with refresh button -->
           <div
