@@ -10,7 +10,7 @@ import type {
   UsageStatsResponse,
   PaginatedResponse,
   TrendDataPoint,
-  ModelStat
+  ModelStat,
 } from '@/types'
 
 // ==================== Dashboard Types ====================
@@ -68,11 +68,11 @@ export interface ModelStatsResponse {
 export async function list(
   page: number = 1,
   pageSize: number = 20,
-  apiKeyId?: number
+  apiKeyId?: number,
 ): Promise<PaginatedResponse<UsageLog>> {
   const params: UsageQueryParams = {
     page,
-    page_size: pageSize
+    page_size: pageSize,
   }
 
   if (apiKeyId !== undefined) {
@@ -80,7 +80,7 @@ export async function list(
   }
 
   const { data } = await apiClient.get<PaginatedResponse<UsageLog>>('/usage', {
-    params
+    params,
   })
   return data
 }
@@ -92,11 +92,11 @@ export async function list(
  */
 export async function query(
   params: UsageQueryParams,
-  config: { signal?: AbortSignal } = {}
+  config: { signal?: AbortSignal } = {},
 ): Promise<PaginatedResponse<UsageLog>> {
   const { data } = await apiClient.get<PaginatedResponse<UsageLog>>('/usage', {
     ...config,
-    params
+    params,
   })
   return data
 }
@@ -109,7 +109,7 @@ export async function query(
  */
 export async function getStats(
   period: string = 'today',
-  apiKeyId?: number
+  apiKeyId?: number,
 ): Promise<UsageStatsResponse> {
   const params: Record<string, unknown> = { period }
 
@@ -118,7 +118,7 @@ export async function getStats(
   }
 
   const { data } = await apiClient.get<UsageStatsResponse>('/usage/stats', {
-    params
+    params,
   })
   return data
 }
@@ -133,11 +133,11 @@ export async function getStats(
 export async function getStatsByDateRange(
   startDate: string,
   endDate: string,
-  apiKeyId?: number
+  apiKeyId?: number,
 ): Promise<UsageStatsResponse> {
   const params: Record<string, unknown> = {
     start_date: startDate,
-    end_date: endDate
+    end_date: endDate,
   }
 
   if (apiKeyId !== undefined) {
@@ -145,7 +145,7 @@ export async function getStatsByDateRange(
   }
 
   const { data } = await apiClient.get<UsageStatsResponse>('/usage/stats', {
-    params
+    params,
   })
   return data
 }
@@ -160,13 +160,13 @@ export async function getStatsByDateRange(
 export async function getByDateRange(
   startDate: string,
   endDate: string,
-  apiKeyId?: number
+  apiKeyId?: number,
 ): Promise<PaginatedResponse<UsageLog>> {
   const params: UsageQueryParams = {
     start_date: startDate,
     end_date: endDate,
     page: 1,
-    page_size: 100
+    page_size: 100,
   }
 
   if (apiKeyId !== undefined) {
@@ -174,7 +174,7 @@ export async function getByDateRange(
   }
 
   const { data } = await apiClient.get<PaginatedResponse<UsageLog>>('/usage', {
-    params
+    params,
   })
   return data
 }
@@ -243,16 +243,16 @@ export async function getDashboardApiKeysUsage(
   apiKeyIds: number[],
   options?: {
     signal?: AbortSignal
-  }
+  },
 ): Promise<BatchApiKeysUsageResponse> {
   const { data } = await apiClient.post<BatchApiKeysUsageResponse>(
     '/usage/dashboard/api-keys-usage',
     {
-      api_key_ids: apiKeyIds
+      api_key_ids: apiKeyIds,
     },
     {
-      signal: options?.signal
-    }
+      signal: options?.signal,
+    },
   )
   return data
 }
@@ -268,7 +268,7 @@ export const usageAPI = {
   getDashboardStats,
   getDashboardTrend,
   getDashboardModels,
-  getDashboardApiKeysUsage
+  getDashboardApiKeysUsage,
 }
 
 export default usageAPI

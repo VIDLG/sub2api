@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { availableLocales, setLocale } from '@/i18n'
 import { ChevronDownIcon, CheckIcon } from '@/components/icons'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export default function LocaleSwitcher() {
   const { i18n } = useTranslation()
@@ -40,11 +45,17 @@ export default function LocaleSwitcher() {
             key={locale.code}
             disabled={switching}
             onClick={() => handleSelect(locale.code)}
-            className={locale.code === currentCode ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400' : ''}
+            className={
+              locale.code === currentCode
+                ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                : ''
+            }
           >
             <span className="text-base">{locale.flag}</span>
             <span>{locale.name}</span>
-            {locale.code === currentCode && <CheckIcon className="ml-auto h-4 w-4 text-primary-500" />}
+            {locale.code === currentCode && (
+              <CheckIcon className="ml-auto h-4 w-4 text-primary-500" />
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

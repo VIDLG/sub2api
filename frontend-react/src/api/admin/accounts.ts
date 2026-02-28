@@ -17,7 +17,7 @@ import type {
   AdminDataPayload,
   AdminDataImportResult,
   CheckMixedChannelRequest,
-  CheckMixedChannelResponse
+  CheckMixedChannelResponse,
 } from '@/types'
 
 /**
@@ -39,15 +39,15 @@ export async function list(
   },
   options?: {
     signal?: AbortSignal
-  }
+  },
 ): Promise<PaginatedResponse<Account>> {
   const { data } = await apiClient.get<PaginatedResponse<Account>>('/admin/accounts', {
     params: {
       page,
       page_size: pageSize,
-      ...filters
+      ...filters,
     },
-    signal: options?.signal
+    signal: options?.signal,
   })
   return data
 }
@@ -70,7 +70,7 @@ export async function listWithEtag(
   options?: {
     signal?: AbortSignal
     etag?: string | null
-  }
+  },
 ): Promise<AccountListWithEtagResult> {
   const headers: Record<string, string> = {}
   if (options?.etag) {
@@ -81,11 +81,11 @@ export async function listWithEtag(
     params: {
       page,
       page_size: pageSize,
-      ...filters
+      ...filters,
     },
     headers,
     signal: options?.signal,
-    validateStatus: (status) => (status >= 200 && status < 300) || status === 304
+    validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
   })
 
   const etagHeader = typeof response.headers?.etag === 'string' ? response.headers.etag : null
@@ -93,14 +93,14 @@ export async function listWithEtag(
     return {
       notModified: true,
       etag: etagHeader,
-      data: null
+      data: null,
     }
   }
 
   return {
     notModified: false,
     etag: etagHeader,
-    data: response.data
+    data: response.data,
   }
 }
 
@@ -139,9 +139,12 @@ export async function update(id: number, updates: UpdateAccountRequest): Promise
  * Check mixed-channel risk for account-group binding.
  */
 export async function checkMixedChannelRisk(
-  payload: CheckMixedChannelRequest
+  payload: CheckMixedChannelRequest,
 ): Promise<CheckMixedChannelResponse> {
-  const { data } = await apiClient.post<CheckMixedChannelResponse>('/admin/accounts/check-mixed-channel', payload)
+  const { data } = await apiClient.post<CheckMixedChannelResponse>(
+    '/admin/accounts/check-mixed-channel',
+    payload,
+  )
   return data
 }
 
@@ -201,7 +204,7 @@ export async function refreshCredentials(id: number): Promise<Account> {
  */
 export async function getStats(id: number, days: number = 30): Promise<AccountUsageStatsResponse> {
   const { data } = await apiClient.get<AccountUsageStatsResponse>(`/admin/accounts/${id}/stats`, {
-    params: { days }
+    params: { days },
   })
   return data
 }
@@ -232,9 +235,7 @@ export async function getUsage(id: number): Promise<AccountUsageInfo> {
  * @returns Updated account
  */
 export async function clearRateLimit(id: number): Promise<Account> {
-  const { data } = await apiClient.post<Account>(
-    `/admin/accounts/${id}/clear-rate-limit`
-  )
+  const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/clear-rate-limit`)
   return data
 }
 
@@ -245,7 +246,7 @@ export async function clearRateLimit(id: number): Promise<Account> {
  */
 export async function getTempUnschedulableStatus(id: number): Promise<TempUnschedulableStatus> {
   const { data } = await apiClient.get<TempUnschedulableStatus>(
-    `/admin/accounts/${id}/temp-unschedulable`
+    `/admin/accounts/${id}/temp-unschedulable`,
   )
   return data
 }
@@ -257,7 +258,7 @@ export async function getTempUnschedulableStatus(id: number): Promise<TempUnsche
  */
 export async function resetTempUnschedulable(id: number): Promise<{ message: string }> {
   const { data } = await apiClient.delete<{ message: string }>(
-    `/admin/accounts/${id}/temp-unschedulable`
+    `/admin/accounts/${id}/temp-unschedulable`,
   )
   return data
 }
@@ -270,7 +271,7 @@ export async function resetTempUnschedulable(id: number): Promise<{ message: str
  */
 export async function generateAuthUrl(
   endpoint: string,
-  config: { proxy_id?: number }
+  config: { proxy_id?: number },
 ): Promise<{ auth_url: string; session_id: string }> {
   const { data } = await apiClient.post<{ auth_url: string; session_id: string }>(endpoint, config)
   return data
@@ -284,7 +285,7 @@ export async function generateAuthUrl(
  */
 export async function exchangeCode(
   endpoint: string,
-  exchangeData: { session_id: string; code: string; state?: string; proxy_id?: number }
+  exchangeData: { session_id: string; code: string; state?: string; proxy_id?: number },
 ): Promise<Record<string, unknown>> {
   const { data } = await apiClient.post<Record<string, unknown>>(endpoint, exchangeData)
   return data
@@ -338,14 +339,14 @@ export async function batchUpdateCredentials(request: {
  */
 export async function bulkUpdate(
   accountIds: number[],
-  updates: Record<string, unknown>
+  updates: Record<string, unknown>,
 ): Promise<{
   success: number
   failed: number
   success_ids?: number[]
   failed_ids?: number[]
   results: Array<{ account_id: number; success: boolean; error?: string }>
-  }> {
+}> {
   const { data } = await apiClient.post<{
     success: number
     failed: number
@@ -354,7 +355,7 @@ export async function bulkUpdate(
     results: Array<{ account_id: number; success: boolean; error?: string }>
   }>('/admin/accounts/bulk-update', {
     account_ids: accountIds,
-    ...updates
+    ...updates,
   })
   return data
 }
@@ -377,7 +378,7 @@ export async function getTodayStats(id: number): Promise<WindowStats> {
  */
 export async function setSchedulable(id: number, schedulable: boolean): Promise<Account> {
   const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/schedulable`, {
-    schedulable
+    schedulable,
   })
   return data
 }
@@ -410,7 +411,10 @@ export async function previewFromCrs(params: {
   username: string
   password: string
 }): Promise<PreviewFromCRSResult> {
-  const { data } = await apiClient.post<PreviewFromCRSResult>('/admin/accounts/sync/crs/preview', params)
+  const { data } = await apiClient.post<PreviewFromCRSResult>(
+    '/admin/accounts/sync/crs/preview',
+    params,
+  )
   return data
 }
 
@@ -482,7 +486,7 @@ export async function importData(payload: {
 }): Promise<AdminDataImportResult> {
   const { data } = await apiClient.post<AdminDataImportResult>('/admin/accounts/data', {
     data: payload.data,
-    skip_default_group_bind: payload.skip_default_group_bind
+    skip_default_group_bind: payload.skip_default_group_bind,
   })
   return data
 }
@@ -493,7 +497,7 @@ export async function importData(payload: {
  */
 export async function getAntigravityDefaultModelMapping(): Promise<Record<string, string>> {
   const { data } = await apiClient.get<Record<string, string>>(
-    '/admin/accounts/antigravity/default-model-mapping'
+    '/admin/accounts/antigravity/default-model-mapping',
   )
   return data
 }
@@ -507,10 +511,10 @@ export async function getAntigravityDefaultModelMapping(): Promise<Record<string
 export async function refreshOpenAIToken(
   refreshToken: string,
   proxyId?: number | null,
-  endpoint: string = '/admin/openai/refresh-token'
+  endpoint: string = '/admin/openai/refresh-token',
 ): Promise<Record<string, unknown>> {
   const payload: { refresh_token: string; proxy_id?: number } = {
-    refresh_token: refreshToken
+    refresh_token: refreshToken,
   }
   if (proxyId) {
     payload.proxy_id = proxyId
@@ -529,10 +533,10 @@ export async function refreshOpenAIToken(
 export async function validateSoraSessionToken(
   sessionToken: string,
   proxyId?: number | null,
-  endpoint: string = '/admin/sora/st2at'
+  endpoint: string = '/admin/sora/st2at',
 ): Promise<Record<string, unknown>> {
   const payload: { session_token: string; proxy_id?: number } = {
-    session_token: sessionToken
+    session_token: sessionToken,
   }
   if (proxyId) {
     payload.proxy_id = proxyId
@@ -572,7 +576,7 @@ export const accountsAPI = {
   syncFromCrs,
   exportData,
   importData,
-  getAntigravityDefaultModelMapping
+  getAntigravityDefaultModelMapping,
 }
 
 export default accountsAPI

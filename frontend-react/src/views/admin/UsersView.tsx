@@ -27,7 +27,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DataTable } from '@/components/data-table'
 import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
 
@@ -82,8 +88,12 @@ export default function UsersView() {
   // ==================== Mutations ====================
 
   const createMutation = useTableMutation({
-    mutationFn: (value: { email: string; password: string; balance: number; concurrency: number }) =>
-      adminAPI.users.create(value),
+    mutationFn: (value: {
+      email: string
+      password: string
+      balance: number
+      concurrency: number
+    }) => adminAPI.users.create(value),
     queryKey: USERS_QUERY_KEY,
     onSuccess: () => {
       showSuccess(t('User created successfully'))
@@ -96,8 +106,17 @@ export default function UsersView() {
   })
 
   const updateMutation = useTableMutation({
-    mutationFn: ({ id, ...updates }: { id: number; balance: number; concurrency: number; role: 'admin' | 'user'; status: 'active' | 'disabled'; notes: string }) =>
-      adminAPI.users.update(id, updates),
+    mutationFn: ({
+      id,
+      ...updates
+    }: {
+      id: number
+      balance: number
+      concurrency: number
+      role: 'admin' | 'user'
+      status: 'active' | 'disabled'
+      notes: string
+    }) => adminAPI.users.update(id, updates),
     queryKey: USERS_QUERY_KEY,
     onSuccess: () => {
       showSuccess(t('User updated successfully'))
@@ -146,7 +165,13 @@ export default function UsersView() {
   })
 
   const editForm = useForm({
-    defaultValues: { balance: 0, concurrency: 1, role: 'user' as 'admin' | 'user', status: 'active' as 'active' | 'disabled', notes: '' },
+    defaultValues: {
+      balance: 0,
+      concurrency: 1,
+      role: 'user' as 'admin' | 'user',
+      status: 'active' as 'active' | 'disabled',
+      notes: '',
+    },
     onSubmit: async ({ value }) => {
       if (!selectedUser) return
       updateMutation.mutate({ id: selectedUser.id, ...value })
@@ -183,11 +208,13 @@ export default function UsersView() {
       header: () => t('Role'),
       size: 100,
       cell: ({ row }) => (
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-          row.original.role === 'admin'
-            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-        }`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+            row.original.role === 'admin'
+              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+          }`}
+        >
           {row.original.role}
         </span>
       ),
@@ -217,11 +244,13 @@ export default function UsersView() {
       header: () => t('Status'),
       size: 100,
       cell: ({ row }) => (
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-          row.original.status === 'active'
-            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-        }`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+            row.original.status === 'active'
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+          }`}
+        >
           {row.original.status}
         </span>
       ),
@@ -231,7 +260,9 @@ export default function UsersView() {
       header: () => t('Created'),
       size: 160,
       cell: ({ row }) => (
-        <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(row.original.created_at)}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {formatDate(row.original.created_at)}
+        </span>
       ),
     },
     {
@@ -242,11 +273,18 @@ export default function UsersView() {
         const user = row.original
         return (
           <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>{t('Edit')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
+              {t('Edit')}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => toggleStatusMutation.mutate({ id: user.id, status: user.status === 'active' ? 'disabled' : 'active' })}
+              onClick={() =>
+                toggleStatusMutation.mutate({
+                  id: user.id,
+                  status: user.status === 'active' ? 'disabled' : 'active',
+                })
+              }
             >
               {user.status === 'active' ? t('Disable') : t('Enable')}
             </Button>
@@ -254,7 +292,10 @@ export default function UsersView() {
               variant="ghost"
               size="sm"
               className="text-red-500 hover:text-red-700"
-              onClick={() => { setSelectedUser(user); setShowDeleteDialog(true) }}
+              onClick={() => {
+                setSelectedUser(user)
+                setShowDeleteDialog(true)
+              }}
             >
               <TrashIcon className="h-4 w-4" />
             </Button>
@@ -271,12 +312,21 @@ export default function UsersView() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {t('User Management')} <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
+          {t('User Management')}{' '}
+          <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
         </h1>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}><RefreshIcon className="h-4 w-4" /></Button>
-          <Button onClick={() => { createForm.reset(); setShowCreateDialog(true) }}>
-            <PlusIcon className="mr-2 h-4 w-4" />{t('Create User')}
+          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
+            <RefreshIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => {
+              createForm.reset()
+              setShowCreateDialog(true)
+            }}
+          >
+            <PlusIcon className="mr-2 h-4 w-4" />
+            {t('Create User')}
           </Button>
         </div>
       </div>
@@ -286,18 +336,37 @@ export default function UsersView() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[200px] flex-1">
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('Search by email...')} className="pl-9" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('Search by email...')}
+              className="pl-9"
+            />
           </div>
-          <Select value={filters.role ?? 'all'} onValueChange={(v) => setFilter('role', v === 'all' ? undefined : v as 'admin' | 'user')}>
-            <SelectTrigger className="w-auto"><SelectValue /></SelectTrigger>
+          <Select
+            value={filters.role ?? 'all'}
+            onValueChange={(v) =>
+              setFilter('role', v === 'all' ? undefined : (v as 'admin' | 'user'))
+            }
+          >
+            <SelectTrigger className="w-auto">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('All Roles')}</SelectItem>
               <SelectItem value="admin">{t('Admin')}</SelectItem>
               <SelectItem value="user">{t('User')}</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={filters.status ?? 'all'} onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v as 'active' | 'disabled')}>
-            <SelectTrigger className="w-auto"><SelectValue /></SelectTrigger>
+          <Select
+            value={filters.status ?? 'all'}
+            onValueChange={(v) =>
+              setFilter('status', v === 'all' ? undefined : (v as 'active' | 'disabled'))
+            }
+          >
+            <SelectTrigger className="w-auto">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="active">{t('Active')}</SelectItem>
@@ -319,13 +388,26 @@ export default function UsersView() {
       {/* Create Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>{t('Create User')}</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); createForm.handleSubmit() }} className="space-y-5 py-2">
+          <DialogHeader>
+            <DialogTitle>{t('Create User')}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              createForm.handleSubmit()
+            }}
+            className="space-y-5 py-2"
+          >
             <CreateField name="email">
               {(field) => (
                 <div className="space-y-2">
                   <Label>{t('Email')} *</Label>
-                  <Input type="email" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} placeholder="user@example.com" />
+                  <Input
+                    type="email"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="user@example.com"
+                  />
                 </div>
               )}
             </CreateField>
@@ -333,7 +415,11 @@ export default function UsersView() {
               {(field) => (
                 <div className="space-y-2">
                   <Label>{t('Password')} *</Label>
-                  <Input type="password" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
+                  <Input
+                    type="password"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
                 </div>
               )}
             </CreateField>
@@ -342,7 +428,12 @@ export default function UsersView() {
                 {(field) => (
                   <div className="space-y-2">
                     <Label>{t('Balance')} ($)</Label>
-                    <Input type="number" step="0.01" value={field.state.value} onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)} />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)}
+                    />
                   </div>
                 )}
               </CreateField>
@@ -350,14 +441,25 @@ export default function UsersView() {
                 {(field) => (
                   <div className="space-y-2">
                     <Label>{t('Concurrency')}</Label>
-                    <Input type="number" min={1} value={field.state.value} onChange={(e) => field.handleChange(parseInt(e.target.value) || 1)} />
+                    <Input
+                      type="number"
+                      min={1}
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(parseInt(e.target.value) || 1)}
+                    />
                   </div>
                 )}
               </CreateField>
             </div>
           </form>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)} disabled={createMutation.isPending}>{t('Cancel')}</Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateDialog(false)}
+              disabled={createMutation.isPending}
+            >
+              {t('Cancel')}
+            </Button>
             <Button onClick={() => createForm.handleSubmit()} disabled={createMutation.isPending}>
               {createMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Create')}
             </Button>
@@ -368,14 +470,29 @@ export default function UsersView() {
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>{t('Edit User')} - {selectedUser?.email}</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); editForm.handleSubmit() }} className="space-y-5 py-2">
+          <DialogHeader>
+            <DialogTitle>
+              {t('Edit User')} - {selectedUser?.email}
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              editForm.handleSubmit()
+            }}
+            className="space-y-5 py-2"
+          >
             <div className="grid grid-cols-2 gap-5">
               <EditField name="balance">
                 {(field) => (
                   <div className="space-y-2">
                     <Label>{t('Balance')} ($)</Label>
-                    <Input type="number" step="0.01" value={field.state.value} onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)} />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)}
+                    />
                   </div>
                 )}
               </EditField>
@@ -383,7 +500,12 @@ export default function UsersView() {
                 {(field) => (
                   <div className="space-y-2">
                     <Label>{t('Concurrency')}</Label>
-                    <Input type="number" min={1} value={field.state.value} onChange={(e) => field.handleChange(parseInt(e.target.value) || 1)} />
+                    <Input
+                      type="number"
+                      min={1}
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(parseInt(e.target.value) || 1)}
+                    />
                   </div>
                 )}
               </EditField>
@@ -393,8 +515,13 @@ export default function UsersView() {
                 {(field) => (
                   <div className="space-y-2">
                     <Label>{t('Role')}</Label>
-                    <Select value={field.state.value} onValueChange={(v) => field.handleChange(v as 'admin' | 'user')}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(v) => field.handleChange(v as 'admin' | 'user')}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="user">{t('User')}</SelectItem>
                         <SelectItem value="admin">{t('Admin')}</SelectItem>
@@ -407,8 +534,13 @@ export default function UsersView() {
                 {(field) => (
                   <div className="space-y-2">
                     <Label>{t('Status')}</Label>
-                    <Select value={field.state.value} onValueChange={(v) => field.handleChange(v as 'active' | 'disabled')}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(v) => field.handleChange(v as 'active' | 'disabled')}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="active">{t('Active')}</SelectItem>
                         <SelectItem value="disabled">{t('Disabled')}</SelectItem>
@@ -422,13 +554,23 @@ export default function UsersView() {
               {(field) => (
                 <div className="space-y-2">
                   <Label>{t('Notes')}</Label>
-                  <Textarea value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} rows={3} />
+                  <Textarea
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    rows={3}
+                  />
                 </div>
               )}
             </EditField>
           </form>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={updateMutation.isPending}>{t('Cancel')}</Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(false)}
+              disabled={updateMutation.isPending}
+            >
+              {t('Cancel')}
+            </Button>
             <Button onClick={() => editForm.handleSubmit()} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Save')}
             </Button>
@@ -437,12 +579,19 @@ export default function UsersView() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setSelectedUser(null) }}>
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open)
+          if (!open) setSelectedUser(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Delete User')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('Are you sure you want to delete user')} <strong>{selectedUser?.email}</strong>? {t('This action cannot be undone.')}
+              {t('Are you sure you want to delete user')} <strong>{selectedUser?.email}</strong>?{' '}
+              {t('This action cannot be undone.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

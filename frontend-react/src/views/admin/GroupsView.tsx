@@ -6,12 +6,33 @@ import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type { AdminGroup, GroupPlatform, CreateGroupRequest, UpdateGroupRequest } from '@/types'
 import { PlusIcon, SearchIcon, TrashIcon, RefreshIcon } from '@/components/icons'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DataTable } from '@/components/data-table'
 import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
 
@@ -35,7 +56,14 @@ const PLATFORM_COLORS: Record<GroupPlatform, string> = {
   sora: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
 }
 
-const defaultForm = { name: '', description: '', platform: 'anthropic' as GroupPlatform, subscription_type: 'standard' as 'standard' | 'subscription', rate_multiplier: 1, is_exclusive: false }
+const defaultForm = {
+  name: '',
+  description: '',
+  platform: 'anthropic' as GroupPlatform,
+  subscription_type: 'standard' as 'standard' | 'subscription',
+  rate_multiplier: 1,
+  is_exclusive: false,
+}
 
 // ==================== Query Key ====================
 
@@ -170,15 +198,103 @@ export default function GroupsView() {
 
   const renderFormFields = (form: typeof createForm) => (
     <div className="space-y-5 py-2">
-      <form.Field name="name">{(field) => <div className="space-y-2"><Label>{t('Name')} *</Label><Input value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} placeholder={t('Group name')} /></div>}</form.Field>
-      <form.Field name="description">{(field) => <div className="space-y-2"><Label>{t('Description')}</Label><Input value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} placeholder={t('Optional description')} /></div>}</form.Field>
+      <form.Field name="name">
+        {(field) => (
+          <div className="space-y-2">
+            <Label>{t('Name')} *</Label>
+            <Input
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder={t('Group name')}
+            />
+          </div>
+        )}
+      </form.Field>
+      <form.Field name="description">
+        {(field) => (
+          <div className="space-y-2">
+            <Label>{t('Description')}</Label>
+            <Input
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder={t('Optional description')}
+            />
+          </div>
+        )}
+      </form.Field>
       <div className="grid grid-cols-2 gap-5">
-        <form.Field name="platform">{(field) => <div className="space-y-2"><Label>{t('Platform')}</Label><Select value={field.state.value} onValueChange={(v) => field.handleChange(v as GroupPlatform)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{PLATFORMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select></div>}</form.Field>
-        <form.Field name="subscription_type">{(field) => <div className="space-y-2"><Label>{t('Subscription Type')}</Label><Select value={field.state.value} onValueChange={(v) => field.handleChange(v as 'standard' | 'subscription')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="standard">{t('Standard')}</SelectItem><SelectItem value="subscription">{t('Subscription')}</SelectItem></SelectContent></Select></div>}</form.Field>
+        <form.Field name="platform">
+          {(field) => (
+            <div className="space-y-2">
+              <Label>{t('Platform')}</Label>
+              <Select
+                value={field.state.value}
+                onValueChange={(v) => field.handleChange(v as GroupPlatform)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORMS.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </form.Field>
+        <form.Field name="subscription_type">
+          {(field) => (
+            <div className="space-y-2">
+              <Label>{t('Subscription Type')}</Label>
+              <Select
+                value={field.state.value}
+                onValueChange={(v) => field.handleChange(v as 'standard' | 'subscription')}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">{t('Standard')}</SelectItem>
+                  <SelectItem value="subscription">{t('Subscription')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </form.Field>
       </div>
       <div className="grid grid-cols-2 gap-5">
-        <form.Field name="rate_multiplier">{(field) => <div className="space-y-2"><Label>{t('Rate Multiplier')}</Label><Input type="number" step="0.01" min={0} value={field.state.value} onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)} /></div>}</form.Field>
-        <form.Field name="is_exclusive">{(field) => <div className="flex items-end pb-2"><label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"><input type="checkbox" checked={field.state.value} onChange={(e) => field.handleChange(e.target.checked)} className="h-4 w-4 rounded border-gray-300" />{t('Exclusive')}</label></div>}</form.Field>
+        <form.Field name="rate_multiplier">
+          {(field) => (
+            <div className="space-y-2">
+              <Label>{t('Rate Multiplier')}</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min={0}
+                value={field.state.value}
+                onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+          )}
+        </form.Field>
+        <form.Field name="is_exclusive">
+          {(field) => (
+            <div className="flex items-end pb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                {t('Exclusive')}
+              </label>
+            </div>
+          )}
+        </form.Field>
       </div>
     </div>
   )
@@ -198,7 +314,9 @@ export default function GroupsView() {
       header: () => t('Platform'),
       size: 120,
       cell: ({ row }) => (
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${PLATFORM_COLORS[row.original.platform] || 'bg-gray-100 text-gray-700'}`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${PLATFORM_COLORS[row.original.platform] || 'bg-gray-100 text-gray-700'}`}
+        >
           {row.original.platform}
         </span>
       ),
@@ -223,18 +341,23 @@ export default function GroupsView() {
       accessorKey: 'is_exclusive',
       header: () => t('Exclusive'),
       size: 100,
-      cell: ({ row }) => (
-        row.original.is_exclusive
-          ? <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{t('Yes')}</span>
-          : <span className="text-xs text-gray-400">{t('No')}</span>
-      ),
+      cell: ({ row }) =>
+        row.original.is_exclusive ? (
+          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            {t('Yes')}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">{t('No')}</span>
+        ),
     },
     {
       accessorKey: 'account_count',
       header: () => t('Accounts'),
       size: 100,
       cell: ({ row }) => (
-        <span className="text-gray-700 dark:text-gray-300">{row.original.account_count ?? '-'}</span>
+        <span className="text-gray-700 dark:text-gray-300">
+          {row.original.account_count ?? '-'}
+        </span>
       ),
     },
     {
@@ -242,11 +365,13 @@ export default function GroupsView() {
       header: () => t('Status'),
       size: 100,
       cell: ({ row }) => (
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-          row.original.status === 'active'
-            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-        }`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+            row.original.status === 'active'
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+          }`}
+        >
           {row.original.status}
         </span>
       ),
@@ -259,12 +384,17 @@ export default function GroupsView() {
         const group = row.original
         return (
           <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="sm" onClick={() => openEdit(group)}>{t('Edit')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => openEdit(group)}>
+              {t('Edit')}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
               className="text-red-500 hover:text-red-700"
-              onClick={() => { setSelectedGroup(group); setShowDeleteDialog(true) }}
+              onClick={() => {
+                setSelectedGroup(group)
+                setShowDeleteDialog(true)
+              }}
             >
               <TrashIcon className="h-4 w-4" />
             </Button>
@@ -281,12 +411,21 @@ export default function GroupsView() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {t('Group Management')} <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
+          {t('Group Management')}{' '}
+          <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
         </h1>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}><RefreshIcon className="h-4 w-4" /></Button>
-          <Button onClick={() => { createForm.reset(); setShowCreateDialog(true) }}>
-            <PlusIcon className="mr-2 h-4 w-4" />{t('Create Group')}
+          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
+            <RefreshIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => {
+              createForm.reset()
+              setShowCreateDialog(true)
+            }}
+          >
+            <PlusIcon className="mr-2 h-4 w-4" />
+            {t('Create Group')}
           </Button>
         </div>
       </div>
@@ -296,17 +435,36 @@ export default function GroupsView() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[200px] flex-1">
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('Search groups...')} className="pl-9" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('Search groups...')}
+              className="pl-9"
+            />
           </div>
-          <Select value={filters.platform ?? 'all'} onValueChange={(v) => setFilter('platform', v === 'all' ? undefined : v)}>
-            <SelectTrigger className="w-auto"><SelectValue /></SelectTrigger>
+          <Select
+            value={filters.platform ?? 'all'}
+            onValueChange={(v) => setFilter('platform', v === 'all' ? undefined : v)}
+          >
+            <SelectTrigger className="w-auto">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('All Platforms')}</SelectItem>
-              {PLATFORMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              {PLATFORMS.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Select value={filters.status ?? 'all'} onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v)}>
-            <SelectTrigger className="w-auto"><SelectValue /></SelectTrigger>
+          <Select
+            value={filters.status ?? 'all'}
+            onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v)}
+          >
+            <SelectTrigger className="w-auto">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="active">{t('Active')}</SelectItem>
@@ -328,10 +486,18 @@ export default function GroupsView() {
       {/* Create Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{t('Create Group')}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{t('Create Group')}</DialogTitle>
+          </DialogHeader>
           {renderFormFields(createForm)}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)} disabled={createMutation.isPending}>{t('Cancel')}</Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateDialog(false)}
+              disabled={createMutation.isPending}
+            >
+              {t('Cancel')}
+            </Button>
             <Button onClick={() => createForm.handleSubmit()} disabled={createMutation.isPending}>
               {createMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Create')}
             </Button>
@@ -342,10 +508,18 @@ export default function GroupsView() {
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{t('Edit Group')}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{t('Edit Group')}</DialogTitle>
+          </DialogHeader>
           {renderFormFields(editForm)}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={updateMutation.isPending}>{t('Cancel')}</Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(false)}
+              disabled={updateMutation.isPending}
+            >
+              {t('Cancel')}
+            </Button>
             <Button onClick={() => editForm.handleSubmit()} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Save')}
             </Button>
@@ -354,12 +528,19 @@ export default function GroupsView() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setSelectedGroup(null) }}>
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open)
+          if (!open) setSelectedGroup(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Delete Group')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('Are you sure you want to delete group')} <strong>{selectedGroup?.name}</strong>? {t('This action cannot be undone.')}
+              {t('Are you sure you want to delete group')} <strong>{selectedGroup?.name}</strong>?{' '}
+              {t('This action cannot be undone.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

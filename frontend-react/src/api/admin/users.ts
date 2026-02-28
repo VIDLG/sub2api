@@ -21,11 +21,11 @@ export async function list(
     status?: 'active' | 'disabled'
     role?: 'admin' | 'user'
     search?: string
-    attributes?: Record<number, string>  // attributeId -> value
+    attributes?: Record<number, string> // attributeId -> value
   },
   options?: {
     signal?: AbortSignal
-  }
+  },
 ): Promise<PaginatedResponse<AdminUser>> {
   // Build params with attribute filters in attr[id]=value format
   const params: Record<string, unknown> = {
@@ -33,7 +33,7 @@ export async function list(
     page_size: pageSize,
     status: filters?.status,
     role: filters?.role,
-    search: filters?.search
+    search: filters?.search,
   }
 
   // Add attribute filters as attr[id]=value
@@ -46,7 +46,7 @@ export async function list(
   }
   const { data } = await apiClient.get<PaginatedResponse<AdminUser>>('/admin/users', {
     params,
-    signal: options?.signal
+    signal: options?.signal,
   })
   return data
 }
@@ -110,12 +110,12 @@ export async function updateBalance(
   id: number,
   balance: number,
   operation: 'set' | 'add' | 'subtract' = 'set',
-  notes?: string
+  notes?: string,
 ): Promise<AdminUser> {
   const { data } = await apiClient.post<AdminUser>(`/admin/users/${id}/balance`, {
     balance,
     operation,
-    notes: notes || ''
+    notes: notes || '',
   })
   return data
 }
@@ -145,8 +145,12 @@ export async function toggleStatus(id: number, status: 'active' | 'disabled'): P
  * @param id - User ID
  * @returns List of user's API keys
  */
-export async function getUserApiKeys(id: number): Promise<PaginatedResponse<Record<string, unknown>>> {
-  const { data } = await apiClient.get<PaginatedResponse<Record<string, unknown>>>(`/admin/users/${id}/api-keys`)
+export async function getUserApiKeys(
+  id: number,
+): Promise<PaginatedResponse<Record<string, unknown>>> {
+  const { data } = await apiClient.get<PaginatedResponse<Record<string, unknown>>>(
+    `/admin/users/${id}/api-keys`,
+  )
   return data
 }
 
@@ -158,7 +162,7 @@ export async function getUserApiKeys(id: number): Promise<PaginatedResponse<Reco
  */
 export async function getUserUsageStats(
   id: number,
-  period: string = 'month'
+  period: string = 'month',
 ): Promise<{
   total_requests: number
   total_cost: number
@@ -169,7 +173,7 @@ export async function getUserUsageStats(
     total_cost: number
     total_tokens: number
   }>(`/admin/users/${id}/usage`, {
-    params: { period }
+    params: { period },
   })
   return data
 }
@@ -210,13 +214,13 @@ export async function getUserBalanceHistory(
   id: number,
   page: number = 1,
   pageSize: number = 20,
-  type?: string
+  type?: string,
 ): Promise<BalanceHistoryResponse> {
   const params: Record<string, unknown> = { page, page_size: pageSize }
   if (type) params.type = type
   const { data } = await apiClient.get<BalanceHistoryResponse>(
     `/admin/users/${id}/balance-history`,
-    { params }
+    { params },
   )
   return data
 }
@@ -232,7 +236,7 @@ export const usersAPI = {
   toggleStatus,
   getUserApiKeys,
   getUserUsageStats,
-  getUserBalanceHistory
+  getUserBalanceHistory,
 }
 
 export default usersAPI

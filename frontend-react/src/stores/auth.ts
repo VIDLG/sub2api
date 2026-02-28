@@ -87,9 +87,11 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => {
     stopAutoRefresh()
     refreshIntervalId = setInterval(() => {
       if (get().token) {
-        get().refreshUser().catch((error) => {
-          console.error('Auto-refresh user failed:', error)
-        })
+        get()
+          .refreshUser()
+          .catch((error) => {
+            console.error('Auto-refresh user failed:', error)
+          })
       }
     }, AUTO_REFRESH_INTERVAL)
   }
@@ -185,9 +187,11 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => {
             ...deriveComputed(user, savedToken, get().runMode),
           })
 
-          get().refreshUser().catch((error) => {
-            console.error('Failed to refresh user on init:', error)
-          })
+          get()
+            .refreshUser()
+            .catch((error) => {
+              console.error('Failed to refresh user on init:', error)
+            })
 
           startAutoRefresh()
 

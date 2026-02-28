@@ -9,7 +9,7 @@ import type {
   TrendDataPoint,
   ModelStat,
   ApiKeyUsageTrendPoint,
-  UserUsageTrendPoint
+  UserUsageTrendPoint,
 } from '@/types'
 
 /**
@@ -115,10 +115,10 @@ export interface ApiKeyTrendResponse {
  * @returns API key usage trend data
  */
 export async function getApiKeyUsageTrend(
-  params?: ApiKeyTrendParams
+  params?: ApiKeyTrendParams,
 ): Promise<ApiKeyTrendResponse> {
   const { data } = await apiClient.get<ApiKeyTrendResponse>('/admin/dashboard/api-keys-trend', {
-    params
+    params,
   })
   return data
 }
@@ -141,7 +141,7 @@ export interface UserTrendResponse {
  */
 export async function getUserUsageTrend(params?: UserTrendParams): Promise<UserTrendResponse> {
   const { data } = await apiClient.get<UserTrendResponse>('/admin/dashboard/users-trend', {
-    params
+    params,
   })
   return data
 }
@@ -163,7 +163,7 @@ export interface BatchUsersUsageResponse {
  */
 export async function getBatchUsersUsage(userIds: number[]): Promise<BatchUsersUsageResponse> {
   const { data } = await apiClient.post<BatchUsersUsageResponse>('/admin/dashboard/users-usage', {
-    user_ids: userIds
+    user_ids: userIds,
   })
   return data
 }
@@ -184,13 +184,13 @@ export interface BatchApiKeysUsageResponse {
  * @returns Usage stats map keyed by API key ID
  */
 export async function getBatchApiKeysUsage(
-  apiKeyIds: number[]
+  apiKeyIds: number[],
 ): Promise<BatchApiKeysUsageResponse> {
   const { data } = await apiClient.post<BatchApiKeysUsageResponse>(
     '/admin/dashboard/api-keys-usage',
     {
-      api_key_ids: apiKeyIds
-    }
+      api_key_ids: apiKeyIds,
+    },
   )
   return data
 }
@@ -203,7 +203,7 @@ export const dashboardAPI = {
   getApiKeyUsageTrend,
   getUserUsageTrend,
   getBatchUsersUsage,
-  getBatchApiKeysUsage
+  getBatchApiKeysUsage,
 }
 
 export default dashboardAPI

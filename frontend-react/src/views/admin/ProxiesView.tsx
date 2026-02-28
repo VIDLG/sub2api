@@ -15,20 +15,35 @@ import type {
   UpdateProxyRequest,
   ProxyQualityCheckResult,
 } from '@/types'
-import {
-  PlusIcon,
-  TrashIcon,
-  SearchIcon,
-  RefreshIcon,
-  ShieldIcon,
-} from '@/components/icons'
+import { PlusIcon, TrashIcon, SearchIcon, RefreshIcon, ShieldIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { DataTable } from '@/components/data-table'
 import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
 
@@ -96,7 +111,12 @@ export default function ProxiesView() {
   } = useDataTableQuery<Proxy, ProxyFilters>({
     queryKey: PROXIES_QUERY_KEY,
     queryFn: (page, pageSize, filters, options) =>
-      adminAPI.proxies.list(page, pageSize, filters as { protocol?: string; status?: 'active' | 'inactive'; search?: string }, options),
+      adminAPI.proxies.list(
+        page,
+        pageSize,
+        filters as { protocol?: string; status?: 'active' | 'inactive'; search?: string },
+        options,
+      ),
   })
 
   // Dialogs
@@ -127,9 +147,16 @@ export default function ProxiesView() {
 
   // Testing & quality
   const [testingId, setTestingId] = useState<number | null>(null)
-  const [testResult, setTestResult] = useState<{ id: number; message: string; success: boolean } | null>(null)
+  const [testResult, setTestResult] = useState<{
+    id: number
+    message: string
+    success: boolean
+  } | null>(null)
   const [qualityCheckingId, setQualityCheckingId] = useState<number | null>(null)
-  const [qualityResult, setQualityResult] = useState<{ id: number; result: ProxyQualityCheckResult } | null>(null)
+  const [qualityResult, setQualityResult] = useState<{
+    id: number
+    result: ProxyQualityCheckResult
+  } | null>(null)
 
   // ==================== Helpers ====================
 
@@ -230,7 +257,11 @@ export default function ProxiesView() {
       if (result.country) parts.push(result.country)
       setTestResult({ id, message: parts.join(' | '), success: result.success })
     } catch (err) {
-      setTestResult({ id, message: extractErrorMessage(err as Error, 'Test failed'), success: false })
+      setTestResult({
+        id,
+        message: extractErrorMessage(err as Error, 'Test failed'),
+        success: false,
+      })
     } finally {
       setTestingId(null)
     }
@@ -255,7 +286,13 @@ export default function ProxiesView() {
       showError('No proxies to create')
       return
     }
-    const parsed: Array<{ protocol: string; host: string; port: number; username?: string; password?: string }> = []
+    const parsed: Array<{
+      protocol: string
+      host: string
+      port: number
+      username?: string
+      password?: string
+    }> = []
     for (const line of lines) {
       try {
         // Format: protocol://user:pass@host:port or protocol://host:port
@@ -340,7 +377,15 @@ export default function ProxiesView() {
         const latency = row.original.latency_ms
         if (latency == null) return <span className="text-gray-400">-</span>
         return (
-          <span className={latency < 500 ? 'text-emerald-600' : latency < 1000 ? 'text-amber-600' : 'text-red-600'}>
+          <span
+            className={
+              latency < 500
+                ? 'text-emerald-600'
+                : latency < 1000
+                  ? 'text-amber-600'
+                  : 'text-red-600'
+            }
+          >
             {latency}ms
           </span>
         )
@@ -373,13 +418,20 @@ export default function ProxiesView() {
     },
     {
       id: 'actions',
-      header: () => <span className="text-right block">{t('admin.proxies.actions', 'Actions')}</span>,
+      header: () => (
+        <span className="text-right block">{t('admin.proxies.actions', 'Actions')}</span>
+      ),
       cell: ({ row }) => {
         const proxy = row.original
         return (
           <div>
             <div className="flex items-center justify-end gap-1">
-              <Button variant="ghost" size="sm" className="text-xs" onClick={() => handleEdit(proxy)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => handleEdit(proxy)}
+              >
                 {t('common.edit', 'Edit')}
               </Button>
               <Button
@@ -389,7 +441,11 @@ export default function ProxiesView() {
                 onClick={() => handleTest(proxy.id)}
                 disabled={testingId === proxy.id}
               >
-                {testingId === proxy.id ? <span className="spinner h-3 w-3" /> : t('common.test', 'Test')}
+                {testingId === proxy.id ? (
+                  <span className="spinner h-3 w-3" />
+                ) : (
+                  t('common.test', 'Test')
+                )}
               </Button>
               <Button
                 variant="ghost"
@@ -415,7 +471,9 @@ export default function ProxiesView() {
               </Button>
             </div>
             {testResult && testResult.id === proxy.id && (
-              <div className={`text-xs mt-1 text-right ${testResult.success ? 'text-emerald-600' : 'text-red-500'}`}>
+              <div
+                className={`text-xs mt-1 text-right ${testResult.success ? 'text-emerald-600' : 'text-red-500'}`}
+              >
                 {testResult.message}
               </div>
             )}
@@ -430,15 +488,23 @@ export default function ProxiesView() {
                 <p className="text-gray-600 dark:text-gray-400">{qualityResult.result.summary}</p>
                 {qualityResult.result.items.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <span className={
-                      item.status === 'pass' ? 'text-emerald-600' :
-                      item.status === 'warn' ? 'text-amber-600' :
-                      item.status === 'challenge' ? 'text-orange-600' : 'text-red-600'
-                    }>
+                    <span
+                      className={
+                        item.status === 'pass'
+                          ? 'text-emerald-600'
+                          : item.status === 'warn'
+                            ? 'text-amber-600'
+                            : item.status === 'challenge'
+                              ? 'text-orange-600'
+                              : 'text-red-600'
+                      }
+                    >
                       [{item.status}]
                     </span>
                     <span>{item.target}</span>
-                    {item.latency_ms != null && <span className="text-gray-500">{item.latency_ms}ms</span>}
+                    {item.latency_ms != null && (
+                      <span className="text-gray-500">{item.latency_ms}ms</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -457,16 +523,29 @@ export default function ProxiesView() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="page-title">{t('admin.proxies.title', 'Proxies')}</h1>
-          <p className="page-description">{t('admin.proxies.description', 'Manage proxy servers')}</p>
+          <p className="page-description">
+            {t('admin.proxies.description', 'Manage proxy servers')}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={refresh} title={t('common.refresh', 'Refresh')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={refresh}
+            title={t('common.refresh', 'Refresh')}
+          >
             <RefreshIcon className="h-4 w-4" />
           </Button>
           <Button variant="secondary" size="sm" onClick={() => setShowBatchDialog(true)}>
             {t('admin.proxies.batchCreate', 'Batch Create')}
           </Button>
-          <Button size="sm" onClick={() => { resetForm(); setShowCreateDialog(true) }}>
+          <Button
+            size="sm"
+            onClick={() => {
+              resetForm()
+              setShowCreateDialog(true)
+            }}
+          >
             <PlusIcon className="h-4 w-4" />
             {t('common.create', 'Create')}
           </Button>
@@ -476,18 +555,28 @@ export default function ProxiesView() {
       {/* Filters */}
       <div className="card p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <Select value={filters.protocol ?? 'all'} onValueChange={(v) => setFilter('protocol', v === 'all' ? undefined : v)}>
+          <Select
+            value={filters.protocol ?? 'all'}
+            onValueChange={(v) => setFilter('protocol', v === 'all' ? undefined : v)}
+          >
             <SelectTrigger className="w-auto text-sm">
               <SelectValue placeholder={t('admin.proxies.allProtocols', 'All Protocols')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('admin.proxies.allProtocols', 'All Protocols')}</SelectItem>
+              <SelectItem value="all">
+                {t('admin.proxies.allProtocols', 'All Protocols')}
+              </SelectItem>
               {PROTOCOLS.map((p) => (
-                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.status ?? 'all'} onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v)}>
+          <Select
+            value={filters.status ?? 'all'}
+            onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v)}
+          >
             <SelectTrigger className="w-auto text-sm">
               <SelectValue placeholder={t('admin.proxies.allStatuses', 'All Statuses')} />
             </SelectTrigger>
@@ -520,7 +609,15 @@ export default function ProxiesView() {
       />
 
       {/* Create/Edit Dialog */}
-      <Dialog open={showCreateDialog || !!editingProxy} onOpenChange={(open) => { if (!open) { setShowCreateDialog(false); setEditingProxy(null) } }}>
+      <Dialog
+        open={showCreateDialog || !!editingProxy}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowCreateDialog(false)
+            setEditingProxy(null)
+          }
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
@@ -549,7 +646,9 @@ export default function ProxiesView() {
                 </SelectTrigger>
                 <SelectContent>
                   {PROTOCOLS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -568,7 +667,9 @@ export default function ProxiesView() {
                 <Input
                   type="number"
                   value={proxyForm.port || ''}
-                  onChange={(e) => setProxyForm((f) => ({ ...f, port: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) =>
+                    setProxyForm((f) => ({ ...f, port: parseInt(e.target.value) || 0 }))
+                  }
                   placeholder="8080"
                 />
               </div>
@@ -587,19 +688,35 @@ export default function ProxiesView() {
                 type="password"
                 value={proxyForm.password}
                 onChange={(e) => setProxyForm((f) => ({ ...f, password: e.target.value }))}
-                placeholder={editingProxy ? t('admin.proxies.leaveBlank', 'Leave blank to keep unchanged') : t('common.optional', 'Optional')}
+                placeholder={
+                  editingProxy
+                    ? t('admin.proxies.leaveBlank', 'Leave blank to keep unchanged')
+                    : t('common.optional', 'Optional')
+                }
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowCreateDialog(false); setEditingProxy(null) }} disabled={createMutation.isPending || updateMutation.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateDialog(false)
+                setEditingProxy(null)
+              }}
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
               {t('common.cancel', 'Cancel')}
             </Button>
             <Button
               onClick={editingProxy ? handleUpdate : handleCreate}
-              disabled={!proxyForm.host || !proxyForm.port || createMutation.isPending || updateMutation.isPending}
+              disabled={
+                !proxyForm.host ||
+                !proxyForm.port ||
+                createMutation.isPending ||
+                updateMutation.isPending
+              }
             >
-              {(createMutation.isPending || updateMutation.isPending) ? (
+              {createMutation.isPending || updateMutation.isPending ? (
                 <div className="spinner h-4 w-4" />
               ) : editingProxy ? (
                 t('common.save', 'Save')
@@ -619,14 +736,19 @@ export default function ProxiesView() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('admin.proxies.batchHint', 'One proxy per line. Format: protocol://[user:pass@]host:port')}
+              {t(
+                'admin.proxies.batchHint',
+                'One proxy per line. Format: protocol://[user:pass@]host:port',
+              )}
             </p>
             <Textarea
               className="font-mono text-xs"
               rows={10}
               value={batchText}
               onChange={(e) => setBatchText(e.target.value)}
-              placeholder={'http://127.0.0.1:8080\nsocks5://user:pass@proxy.example.com:1080\nhttps://host:443'}
+              placeholder={
+                'http://127.0.0.1:8080\nsocks5://user:pass@proxy.example.com:1080\nhttps://host:443'
+              }
             />
           </div>
           <DialogFooter>
@@ -642,22 +764,32 @@ export default function ProxiesView() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('common.confirmDelete', 'Confirm Delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('admin.proxies.deleteConfirm', 'Are you sure you want to delete proxy')} <strong>{deleteTarget?.name}</strong>?
+              {t('admin.proxies.deleteConfirm', 'Are you sure you want to delete proxy')}{' '}
+              <strong>{deleteTarget?.name}</strong>?
               {(deleteTarget?.account_count ?? 0) > 0 && (
                 <span className="block mt-2 text-amber-600">
-                  {t('admin.proxies.deleteWarning', 'This proxy is used by')} {deleteTarget?.account_count} {t('admin.proxies.accountsCount', 'account(s)')}.
+                  {t('admin.proxies.deleteWarning', 'This proxy is used by')}{' '}
+                  {deleteTarget?.account_count} {t('admin.proxies.accountsCount', 'account(s)')}.
                 </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              className="bg-red-600 hover:bg-red-700"
+            >
               <TrashIcon className="h-4 w-4" />
               {t('common.delete', 'Delete')}
             </AlertDialogAction>

@@ -8,7 +8,7 @@ import type {
   AnnouncementUserReadStatus,
   BasePaginationResponse,
   CreateAnnouncementRequest,
-  UpdateAnnouncementRequest
+  UpdateAnnouncementRequest,
 } from '@/types'
 
 export async function list(
@@ -17,11 +17,14 @@ export async function list(
   filters?: {
     status?: string
     search?: string
-  }
+  },
 ): Promise<BasePaginationResponse<Announcement>> {
-  const { data } = await apiClient.get<BasePaginationResponse<Announcement>>('/admin/announcements', {
-    params: { page, page_size: pageSize, ...filters }
-  })
+  const { data } = await apiClient.get<BasePaginationResponse<Announcement>>(
+    '/admin/announcements',
+    {
+      params: { page, page_size: pageSize, ...filters },
+    },
+  )
   return data
 }
 
@@ -35,7 +38,10 @@ export async function create(request: CreateAnnouncementRequest): Promise<Announ
   return data
 }
 
-export async function update(id: number, request: UpdateAnnouncementRequest): Promise<Announcement> {
+export async function update(
+  id: number,
+  request: UpdateAnnouncementRequest,
+): Promise<Announcement> {
   const { data } = await apiClient.put<Announcement>(`/admin/announcements/${id}`, request)
   return data
 }
@@ -49,11 +55,11 @@ export async function getReadStatus(
   id: number,
   page: number = 1,
   pageSize: number = 20,
-  search: string = ''
+  search: string = '',
 ): Promise<BasePaginationResponse<AnnouncementUserReadStatus>> {
   const { data } = await apiClient.get<BasePaginationResponse<AnnouncementUserReadStatus>>(
     `/admin/announcements/${id}/read-status`,
-    { params: { page, page_size: pageSize, search } }
+    { params: { page, page_size: pageSize, search } },
   )
   return data
 }
@@ -64,8 +70,7 @@ const announcementsAPI = {
   create,
   update,
   delete: deleteAnnouncement,
-  getReadStatus
+  getReadStatus,
 }
 
 export default announcementsAPI
-

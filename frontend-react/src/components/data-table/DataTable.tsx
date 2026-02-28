@@ -92,10 +92,7 @@ export function DataTable<TData>({
                   >
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -103,16 +100,10 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() ? 'selected' : undefined}
-              >
+              <TableRow key={row.id} data-state={row.getIsSelected() ? 'selected' : undefined}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext(),
-                    )}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
               </TableRow>
@@ -127,11 +118,7 @@ export function DataTable<TData>({
           totalPages={pagination.totalPages}
           total={pagination.total}
           onPageChange={onPageChange}
-          selectedCount={
-            onRowSelectionChange
-              ? Object.keys(rowSelection ?? {}).length
-              : undefined
-          }
+          selectedCount={onRowSelectionChange ? Object.keys(rowSelection ?? {}).length : undefined}
         />
       )}
     </div>

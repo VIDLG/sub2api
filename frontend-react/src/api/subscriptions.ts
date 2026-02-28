@@ -59,10 +59,10 @@ export async function getSubscriptionSummary(): Promise<SubscriptionSummary> {
  * Get progress for a specific subscription
  */
 export async function getSubscriptionProgress(
-  subscriptionId: number
+  subscriptionId: number,
 ): Promise<SubscriptionProgress> {
   const response = await apiClient.get<SubscriptionProgress>(
-    `/subscriptions/${subscriptionId}/progress`
+    `/subscriptions/${subscriptionId}/progress`,
   )
   return response.data
 }
@@ -72,5 +72,5 @@ export default {
   getActiveSubscriptions,
   getSubscriptionsProgress,
   getSubscriptionSummary,
-  getSubscriptionProgress
+  getSubscriptionProgress,
 }

@@ -9,7 +9,7 @@ import type {
   GroupPlatform,
   CreateGroupRequest,
   UpdateGroupRequest,
-  PaginatedResponse
+  PaginatedResponse,
 } from '@/types'
 
 /**
@@ -30,15 +30,15 @@ export async function list(
   },
   options?: {
     signal?: AbortSignal
-  }
+  },
 ): Promise<PaginatedResponse<AdminGroup>> {
   const { data } = await apiClient.get<PaginatedResponse<AdminGroup>>('/admin/groups', {
     params: {
       page,
       page_size: pageSize,
-      ...filters
+      ...filters,
     },
-    signal: options?.signal
+    signal: options?.signal,
   })
   return data
 }
@@ -50,7 +50,7 @@ export async function list(
  */
 export async function getAll(platform?: GroupPlatform): Promise<AdminGroup[]> {
   const { data } = await apiClient.get<AdminGroup[]>('/admin/groups/all', {
-    params: platform ? { platform } : undefined
+    params: platform ? { platform } : undefined,
   })
   return data
 }
@@ -145,11 +145,14 @@ export async function getStats(id: number): Promise<{
 export async function getGroupApiKeys(
   id: number,
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
 ): Promise<PaginatedResponse<Record<string, unknown>>> {
-  const { data } = await apiClient.get<PaginatedResponse<Record<string, unknown>>>(`/admin/groups/${id}/api-keys`, {
-    params: { page, page_size: pageSize }
-  })
+  const { data } = await apiClient.get<PaginatedResponse<Record<string, unknown>>>(
+    `/admin/groups/${id}/api-keys`,
+    {
+      params: { page, page_size: pageSize },
+    },
+  )
   return data
 }
 
@@ -159,10 +162,10 @@ export async function getGroupApiKeys(
  * @returns Success confirmation
  */
 export async function updateSortOrder(
-  updates: Array<{ id: number; sort_order: number }>
+  updates: Array<{ id: number; sort_order: number }>,
 ): Promise<{ message: string }> {
   const { data } = await apiClient.put<{ message: string }>('/admin/groups/sort-order', {
-    updates
+    updates,
   })
   return data
 }
@@ -178,7 +181,7 @@ export const groupsAPI = {
   toggleStatus,
   getStats,
   getGroupApiKeys,
-  updateSortOrder
+  updateSortOrder,
 }
 
 export default groupsAPI

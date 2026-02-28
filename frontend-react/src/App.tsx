@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/sonner'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,       // 30s — dashboard data is fairly fresh
+      staleTime: 30_000, // 30s — dashboard data is fairly fresh
       retry: 1,
       refetchOnWindowFocus: false,
     },

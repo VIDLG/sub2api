@@ -3,8 +3,26 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { useOnboardingStore } from '@/stores/onboarding'
-import { MenuIcon, UserIcon, KeyIcon, ChevronDownIcon, BookIcon, LogoutIcon, GitHubIcon, ChatIcon, QuestionIcon, WalletIcon } from '@/components/icons'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  MenuIcon,
+  UserIcon,
+  KeyIcon,
+  ChevronDownIcon,
+  BookIcon,
+  LogoutIcon,
+  GitHubIcon,
+  ChatIcon,
+  QuestionIcon,
+  WalletIcon,
+} from '@/components/icons'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import AnnouncementBell from '@/components/common/AnnouncementBell'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher'
@@ -106,12 +124,20 @@ export default function AppHeader() {
     <header className="glass sticky top-0 z-30 border-b border-gray-200/50 dark:border-dark-700/50">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={toggleMobileSidebar} className="lg:hidden" aria-label="Toggle Menu">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleMobileSidebar}
+            className="lg:hidden"
+            aria-label="Toggle Menu"
+          >
             <MenuIcon className="h-5 w-5" />
           </Button>
           <div className="hidden lg:block">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{pageTitle}</h1>
-            {pageDescription && <p className="text-xs text-gray-500 dark:text-dark-400">{pageDescription}</p>}
+            {pageDescription && (
+              <p className="text-xs text-gray-500 dark:text-dark-400">{pageDescription}</p>
+            )}
           </div>
         </div>
 
@@ -119,7 +145,12 @@ export default function AppHeader() {
           {user && <AnnouncementBell />}
 
           {docUrl && (
-            <a href={docUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white">
+            <a
+              href={docUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            >
               <BookIcon className="h-4 w-4" />
               <span className="hidden sm:inline">{t('nav.docs')}</span>
             </a>
@@ -132,7 +163,9 @@ export default function AppHeader() {
           {user && (
             <div className="hidden items-center gap-2 rounded-xl bg-primary-50 px-3 py-1.5 dark:bg-primary-900/20 sm:flex">
               <WalletIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-              <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">${user.balance?.toFixed(2) || '0.00'}</span>
+              <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                ${user.balance?.toFixed(2) || '0.00'}
+              </span>
             </div>
           )}
 
@@ -140,10 +173,16 @@ export default function AppHeader() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 rounded-xl p-1.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-medium text-white shadow-sm">{userInitials}</div>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-medium text-white shadow-sm">
+                    {userInitials}
+                  </div>
                   <div className="hidden text-left md:block">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">{displayName}</div>
-                    <div className="text-xs capitalize text-gray-500 dark:text-dark-400">{user.role}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {displayName}
+                    </div>
+                    <div className="text-xs capitalize text-gray-500 dark:text-dark-400">
+                      {user.role}
+                    </div>
                   </div>
                   <ChevronDownIcon className="hidden h-4 w-4 text-gray-400 md:block" />
                 </Button>
@@ -154,27 +193,69 @@ export default function AppHeader() {
                   <div className="text-xs text-gray-500">{user.email}</div>
                 </DropdownMenuLabel>
                 <div className="border-b border-gray-100 px-4 py-2 dark:border-dark-700 sm:hidden">
-                  <div className="text-xs text-gray-500 dark:text-dark-400">{t('common.balance')}</div>
-                  <div className="text-sm font-semibold text-primary-600 dark:text-primary-400">${user.balance?.toFixed(2) || '0.00'}</div>
+                  <div className="text-xs text-gray-500 dark:text-dark-400">
+                    {t('common.balance')}
+                  </div>
+                  <div className="text-sm font-semibold text-primary-600 dark:text-primary-400">
+                    ${user.balance?.toFixed(2) || '0.00'}
+                  </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link to="/profile" className="flex items-center gap-2"><UserIcon className="h-4 w-4" />{t('nav.profile')}</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link to="/keys" className="flex items-center gap-2"><KeyIcon className="h-4 w-4" />{t('nav.apiKeys')}</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><a href="https://github.com/Wei-Shaw/sub2api" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2"><GitHubIcon className="h-4 w-4" />{t('nav.github')}</a></DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center gap-2">
+                    <UserIcon className="h-4 w-4" />
+                    {t('nav.profile')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/keys" className="flex items-center gap-2">
+                    <KeyIcon className="h-4 w-4" />
+                    {t('nav.apiKeys')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href="https://github.com/Wei-Shaw/sub2api"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <GitHubIcon className="h-4 w-4" />
+                    {t('nav.github')}
+                  </a>
+                </DropdownMenuItem>
                 {contactInfo && (
                   <>
                     <DropdownMenuSeparator />
-                    <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-gray-500"><ChatIcon className="h-3.5 w-3.5" /><span>{t('common.contactSupport')}: <span className="font-medium text-gray-700">{contactInfo}</span></span></div>
+                    <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-gray-500">
+                      <ChatIcon className="h-3.5 w-3.5" />
+                      <span>
+                        {t('common.contactSupport')}:{' '}
+                        <span className="font-medium text-gray-700">{contactInfo}</span>
+                      </span>
+                    </div>
                   </>
                 )}
                 {showOnboardingButton && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleReplayGuide} className="flex items-center gap-2"><QuestionIcon className="h-4 w-4" />{t('onboarding.restartTour')}</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleReplayGuide}
+                      className="flex items-center gap-2"
+                    >
+                      <QuestionIcon className="h-4 w-4" />
+                      {t('onboarding.restartTour')}
+                    </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600 focus:text-red-600"><LogoutIcon className="h-4 w-4" />{t('nav.logout')}</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-red-600 focus:text-red-600"
+                >
+                  <LogoutIcon className="h-4 w-4" />
+                  {t('nav.logout')}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

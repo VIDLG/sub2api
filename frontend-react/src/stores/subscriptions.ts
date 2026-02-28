@@ -87,13 +87,16 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
 
     startPolling() {
       if (pollerInterval) return
-      pollerInterval = setInterval(() => {
-        get()
-          .fetchActiveSubscriptions(true)
-          .catch((error) => {
-            console.error('Subscription polling failed:', error)
-          })
-      }, 5 * 60 * 1000)
+      pollerInterval = setInterval(
+        () => {
+          get()
+            .fetchActiveSubscriptions(true)
+            .catch((error) => {
+              console.error('Subscription polling failed:', error)
+            })
+        },
+        5 * 60 * 1000,
+      )
     },
 
     stopPolling() {

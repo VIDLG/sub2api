@@ -90,7 +90,10 @@ export async function getById(id: number): Promise<ErrorPassthroughRule> {
  * @returns Created rule
  */
 export async function create(ruleData: CreateRuleRequest): Promise<ErrorPassthroughRule> {
-  const { data } = await apiClient.post<ErrorPassthroughRule>('/admin/error-passthrough-rules', ruleData)
+  const { data } = await apiClient.post<ErrorPassthroughRule>(
+    '/admin/error-passthrough-rules',
+    ruleData,
+  )
   return data
 }
 
@@ -100,8 +103,14 @@ export async function create(ruleData: CreateRuleRequest): Promise<ErrorPassthro
  * @param updates - Fields to update
  * @returns Updated rule
  */
-export async function update(id: number, updates: UpdateRuleRequest): Promise<ErrorPassthroughRule> {
-  const { data } = await apiClient.put<ErrorPassthroughRule>(`/admin/error-passthrough-rules/${id}`, updates)
+export async function update(
+  id: number,
+  updates: UpdateRuleRequest,
+): Promise<ErrorPassthroughRule> {
+  const { data } = await apiClient.put<ErrorPassthroughRule>(
+    `/admin/error-passthrough-rules/${id}`,
+    updates,
+  )
   return data
 }
 
@@ -111,7 +120,9 @@ export async function update(id: number, updates: UpdateRuleRequest): Promise<Er
  * @returns Success confirmation
  */
 export async function deleteRule(id: number): Promise<{ message: string }> {
-  const { data } = await apiClient.delete<{ message: string }>(`/admin/error-passthrough-rules/${id}`)
+  const { data } = await apiClient.delete<{ message: string }>(
+    `/admin/error-passthrough-rules/${id}`,
+  )
   return data
 }
 
@@ -131,7 +142,7 @@ export const errorPassthroughAPI = {
   create,
   update,
   delete: deleteRule,
-  toggleEnabled
+  toggleEnabled,
 }
 
 export default errorPassthroughAPI

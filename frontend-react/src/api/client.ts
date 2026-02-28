@@ -3,7 +3,12 @@
  * Base client with interceptors for authentication, token refresh, and error handling
  */
 
-import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
+import axios, {
+  type AxiosInstance,
+  type AxiosError,
+  type InternalAxiosRequestConfig,
+  type AxiosResponse,
+} from 'axios'
 import type { ApiResponse } from '@/types'
 import { getLocale } from '@/i18n'
 
@@ -15,8 +20,8 @@ export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 })
 
 // ==================== Token Refresh State ====================
@@ -77,7 +82,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error)
-  }
+  },
 )
 
 // ==================== Response Interceptor ====================
@@ -95,7 +100,7 @@ apiClient.interceptors.response.use(
         return Promise.reject({
           status: response.status,
           code: apiResponse.code,
-          message: apiResponse.message || 'Unknown error'
+          message: apiResponse.message || 'Unknown error',
         })
       }
     }
@@ -116,7 +121,10 @@ apiClient.interceptors.response.use(
       const url = String(error.config?.url || '')
 
       // Validate `data` shape to avoid HTML error pages breaking our error handling.
-      const apiData = (typeof data === 'object' && data !== null ? data : {}) as Record<string, unknown>
+      const apiData = (typeof data === 'object' && data !== null ? data : {}) as Record<
+        string,
+        unknown
+      >
 
       // Ops monitoring disabled: treat as feature-flagged 404, and proactively redirect away
       // from ops pages to avoid broken UI states.
@@ -140,7 +148,7 @@ apiClient.interceptors.response.use(
           status,
           code: 'OPS_DISABLED',
           message: apiData.message || error.message,
-          url
+          url,
         })
       }
 
@@ -149,7 +157,9 @@ apiClient.interceptors.response.use(
       if (status === 401 && !originalRequest._retry) {
         const refreshToken = localStorage.getItem('refresh_token')
         const isAuthEndpoint =
-          url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh')
+          url.includes('/auth/login') ||
+          url.includes('/auth/register') ||
+          url.includes('/auth/refresh')
 
         // If we have a refresh token and this is not an auth endpoint, try to refresh
         if (refreshToken && !isAuthEndpoint) {
@@ -169,7 +179,7 @@ apiClient.interceptors.response.use(
                   reject({
                     status,
                     code: apiData.code,
-                    message: apiData.message || apiData.detail || error.message
+                    message: apiData.message || apiData.detail || error.message,
                   })
                 }
               })
@@ -184,7 +194,7 @@ apiClient.interceptors.response.use(
             const refreshResponse = await axios.post(
               `${API_BASE_URL}/auth/refresh`,
               { refresh_token: refreshToken },
-              { headers: { 'Content-Type': 'application/json' } }
+              { headers: { 'Content-Type': 'application/json' } },
             )
 
             const refreshData = refreshResponse.data as ApiResponse<{
@@ -234,7 +244,7 @@ apiClient.interceptors.response.use(
             return Promise.reject({
               status: 401,
               code: 'TOKEN_REFRESH_FAILED',
-              message: 'Session expired. Please log in again.'
+              message: 'Session expired. Please log in again.',
             })
           }
         }
@@ -267,16 +277,16 @@ apiClient.interceptors.response.use(
       return Promise.reject({
         status,
         code: apiData.code,
-        message: apiData.message || apiData.detail || error.message
+        message: apiData.message || apiData.detail || error.message,
       })
     }
 
     // Network error
     return Promise.reject({
       status: 0,
-      message: 'Network error. Please check your connection.'
+      message: 'Network error. Please check your connection.',
     })
-  }
+  },
 )
 
 export default apiClient

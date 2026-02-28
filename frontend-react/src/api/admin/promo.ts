@@ -8,7 +8,7 @@ import type {
   PromoCodeUsage,
   CreatePromoCodeRequest,
   UpdatePromoCodeRequest,
-  BasePaginationResponse
+  BasePaginationResponse,
 } from '@/types'
 
 export async function list(
@@ -17,10 +17,10 @@ export async function list(
   filters?: {
     status?: string
     search?: string
-  }
+  },
 ): Promise<BasePaginationResponse<PromoCode>> {
   const { data } = await apiClient.get<BasePaginationResponse<PromoCode>>('/admin/promo-codes', {
-    params: { page, page_size: pageSize, ...filters }
+    params: { page, page_size: pageSize, ...filters },
   })
   return data
 }
@@ -48,11 +48,11 @@ export async function deleteCode(id: number): Promise<{ message: string }> {
 export async function getUsages(
   id: number,
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
 ): Promise<BasePaginationResponse<PromoCodeUsage>> {
   const { data } = await apiClient.get<BasePaginationResponse<PromoCodeUsage>>(
     `/admin/promo-codes/${id}/usages`,
-    { params: { page, page_size: pageSize } }
+    { params: { page, page_size: pageSize } },
   )
   return data
 }
@@ -63,7 +63,7 @@ const promoAPI = {
   create,
   update,
   delete: deleteCode,
-  getUsages
+  getUsages,
 }
 
 export default promoAPI

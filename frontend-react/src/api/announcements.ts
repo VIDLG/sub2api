@@ -7,7 +7,7 @@ import type { UserAnnouncement } from '@/types'
 
 export async function list(unreadOnly: boolean = false): Promise<UserAnnouncement[]> {
   const { data } = await apiClient.get<UserAnnouncement[]>('/announcements', {
-    params: unreadOnly ? { unread_only: 1 } : {}
+    params: unreadOnly ? { unread_only: 1 } : {},
   })
   return data
 }
@@ -19,8 +19,7 @@ export async function markRead(id: number): Promise<{ message: string }> {
 
 const announcementsAPI = {
   list,
-  markRead
+  markRead,
 }
 
 export default announcementsAPI
-

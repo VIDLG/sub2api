@@ -9,14 +9,16 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type { AdminUsageLog, PaginatedResponse, UsageStats } from '@/types'
-import {
-  SearchIcon,
-  RefreshIcon,
-  DownloadIcon,
-} from '@/components/icons'
+import { SearchIcon, RefreshIcon, DownloadIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 
 // ==================== Constants ====================
@@ -63,7 +65,15 @@ export default function UsageView() {
   const [streamFilter, setStreamFilter] = useState<'' | 'true' | 'false'>('')
 
   // Committed filter state — only applied when user clicks Search
-  const [committed, setCommitted] = useState({ userSearch: '', apiKeySearch: '', model: '', dateFrom: '', dateTo: '', streamFilter: '' as '' | 'true' | 'false', page: 1 })
+  const [committed, setCommitted] = useState({
+    userSearch: '',
+    apiKeySearch: '',
+    model: '',
+    dateFrom: '',
+    dateTo: '',
+    streamFilter: '' as '' | 'true' | 'false',
+    page: 1,
+  })
 
   const [exporting, setExporting] = useState(false)
 
@@ -89,11 +99,12 @@ export default function UsageView() {
 
   const statsQuery = useQuery<UsageStats>({
     queryKey: ['admin', 'usage', 'stats', committed.model, committed.dateFrom, committed.dateTo],
-    queryFn: () => adminAPI.usage.getStats({
-      model: committed.model || undefined,
-      start_date: committed.dateFrom || undefined,
-      end_date: committed.dateTo || undefined,
-    }),
+    queryFn: () =>
+      adminAPI.usage.getStats({
+        model: committed.model || undefined,
+        start_date: committed.dateFrom || undefined,
+        end_date: committed.dateTo || undefined,
+      }),
   })
 
   const logs = logsQuery.data?.items || []
@@ -116,7 +127,15 @@ export default function UsageView() {
     setDateFrom('')
     setDateTo('')
     setStreamFilter('')
-    setCommitted({ userSearch: '', apiKeySearch: '', model: '', dateFrom: '', dateTo: '', streamFilter: '', page: 1 })
+    setCommitted({
+      userSearch: '',
+      apiKeySearch: '',
+      model: '',
+      dateFrom: '',
+      dateTo: '',
+      streamFilter: '',
+      page: 1,
+    })
   }
 
   const handlePageChange = (p: number) => {
@@ -138,9 +157,18 @@ export default function UsageView() {
       const items = data.items || []
 
       const headers = [
-        'ID', 'User', 'API Key', 'Account', 'Model',
-        'Prompt Tokens', 'Completion Tokens', 'Total Tokens',
-        'Cost', 'Duration (ms)', 'Stream', 'Time',
+        'ID',
+        'User',
+        'API Key',
+        'Account',
+        'Model',
+        'Prompt Tokens',
+        'Completion Tokens',
+        'Total Tokens',
+        'Cost',
+        'Duration (ms)',
+        'Stream',
+        'Time',
       ]
       const rows = items.map((log) => [
         log.id,
@@ -186,14 +214,28 @@ export default function UsageView() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="page-title">{t('admin.usage.title', 'Usage')}</h1>
-          <p className="page-description">{t('admin.usage.description', 'API usage logs and statistics')}</p>
+          <p className="page-description">
+            {t('admin.usage.description', 'API usage logs and statistics')}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => { logsQuery.refetch(); statsQuery.refetch() }} title={t('common.refresh', 'Refresh')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              logsQuery.refetch()
+              statsQuery.refetch()
+            }}
+            title={t('common.refresh', 'Refresh')}
+          >
             <RefreshIcon className="h-4 w-4" />
           </Button>
           <Button variant="secondary" size="sm" onClick={handleExport} disabled={exporting}>
-            {exporting ? <span className="spinner h-4 w-4" /> : <DownloadIcon className="h-4 w-4" />}
+            {exporting ? (
+              <span className="spinner h-4 w-4" />
+            ) : (
+              <DownloadIcon className="h-4 w-4" />
+            )}
             {t('admin.usage.export', 'Export CSV')}
           </Button>
         </div>
@@ -207,7 +249,11 @@ export default function UsageView() {
           </div>
           <div className="min-w-0">
             <div className="stat-value">
-              {statsLoading ? <span className="skeleton h-7 w-20 inline-block" /> : formatTokens(stats?.total_requests)}
+              {statsLoading ? (
+                <span className="skeleton h-7 w-20 inline-block" />
+              ) : (
+                formatTokens(stats?.total_requests)
+              )}
             </div>
             <div className="stat-label">{t('admin.usage.totalRequests', 'Total Requests')}</div>
           </div>
@@ -218,7 +264,11 @@ export default function UsageView() {
           </div>
           <div className="min-w-0">
             <div className="stat-value">
-              {statsLoading ? <span className="skeleton h-7 w-20 inline-block" /> : formatTokens(stats?.total_tokens)}
+              {statsLoading ? (
+                <span className="skeleton h-7 w-20 inline-block" />
+              ) : (
+                formatTokens(stats?.total_tokens)
+              )}
             </div>
             <div className="stat-label">{t('admin.usage.totalTokens', 'Total Tokens')}</div>
           </div>
@@ -229,7 +279,11 @@ export default function UsageView() {
           </div>
           <div className="min-w-0">
             <div className="stat-value">
-              {statsLoading ? <span className="skeleton h-7 w-20 inline-block" /> : formatCost(stats?.total_cost)}
+              {statsLoading ? (
+                <span className="skeleton h-7 w-20 inline-block" />
+              ) : (
+                formatCost(stats?.total_cost)
+              )}
             </div>
             <div className="stat-label">{t('admin.usage.totalCost', 'Total Cost')}</div>
           </div>
@@ -240,7 +294,11 @@ export default function UsageView() {
           </div>
           <div className="min-w-0">
             <div className="stat-value">
-              {statsLoading ? <span className="skeleton h-7 w-20 inline-block" /> : formatDuration(stats?.average_duration_ms)}
+              {statsLoading ? (
+                <span className="skeleton h-7 w-20 inline-block" />
+              ) : (
+                formatDuration(stats?.average_duration_ms)
+              )}
             </div>
             <div className="stat-label">{t('admin.usage.avgDuration', 'Avg Duration')}</div>
           </div>
@@ -277,7 +335,10 @@ export default function UsageView() {
             placeholder={t('admin.usage.model', 'Model...')}
             className="text-sm"
           />
-          <Select value={streamFilter || 'all'} onValueChange={(v) => setStreamFilter(v === 'all' ? '' : v as 'true' | 'false')}>
+          <Select
+            value={streamFilter || 'all'}
+            onValueChange={(v) => setStreamFilter(v === 'all' ? '' : (v as 'true' | 'false'))}
+          >
             <SelectTrigger className="text-sm">
               <SelectValue placeholder={t('admin.usage.allStream', 'All (Stream)')} />
             </SelectTrigger>
@@ -346,12 +407,18 @@ export default function UsageView() {
                       </div>
                     </td>
                     <td>
-                      <div className="max-w-[120px] truncate text-sm" title={log.api_key_name || ''}>
+                      <div
+                        className="max-w-[120px] truncate text-sm"
+                        title={log.api_key_name || ''}
+                      >
                         {log.api_key_name || log.api_key_id || '-'}
                       </div>
                     </td>
                     <td>
-                      <div className="max-w-[120px] truncate text-sm" title={log.account_name || ''}>
+                      <div
+                        className="max-w-[120px] truncate text-sm"
+                        title={log.account_name || ''}
+                      >
                         {log.account_name || log.account_id || '-'}
                       </div>
                     </td>
@@ -360,8 +427,12 @@ export default function UsageView() {
                     </td>
                     <td>
                       <div className="text-xs">
-                        <div>{formatTokens(log.prompt_tokens)} / {formatTokens(log.completion_tokens)}</div>
-                        <div className="font-medium text-gray-900 dark:text-white">{formatTokens(log.total_tokens)}</div>
+                        <div>
+                          {formatTokens(log.prompt_tokens)} / {formatTokens(log.completion_tokens)}
+                        </div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {formatTokens(log.total_tokens)}
+                        </div>
                       </div>
                     </td>
                     <td className="text-sm">{formatCost(log.cost)}</td>
@@ -373,7 +444,9 @@ export default function UsageView() {
                         <span className="badge badge-gray text-xs">JSON</span>
                       )}
                     </td>
-                    <td className="text-xs text-gray-500 whitespace-nowrap">{formatDate(log.created_at)}</td>
+                    <td className="text-xs text-gray-500 whitespace-nowrap">
+                      {formatDate(log.created_at)}
+                    </td>
                   </tr>
                 ))
               )}
@@ -384,13 +457,27 @@ export default function UsageView() {
         {/* Pagination */}
         {pages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-100 dark:border-dark-700 px-4 py-3">
-            <span className="text-sm text-gray-500">{t('common.total', 'Total')}: {total}</span>
+            <span className="text-sm text-gray-500">
+              {t('common.total', 'Total')}: {total}
+            </span>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" disabled={committed.page <= 1} onClick={() => handlePageChange(committed.page - 1)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={committed.page <= 1}
+                onClick={() => handlePageChange(committed.page - 1)}
+              >
                 {t('common.prev', 'Prev')}
               </Button>
-              <span className="px-3 text-sm text-gray-700 dark:text-gray-300">{committed.page} / {pages}</span>
-              <Button variant="ghost" size="sm" disabled={committed.page >= pages} onClick={() => handlePageChange(committed.page + 1)}>
+              <span className="px-3 text-sm text-gray-700 dark:text-gray-300">
+                {committed.page} / {pages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={committed.page >= pages}
+                onClick={() => handlePageChange(committed.page + 1)}
+              >
                 {t('common.next', 'Next')}
               </Button>
             </div>

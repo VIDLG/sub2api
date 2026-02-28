@@ -180,7 +180,7 @@ export interface SendTestEmailRequest {
 export async function sendTestEmail(request: SendTestEmailRequest): Promise<{ message: string }> {
   const { data } = await apiClient.post<{ message: string }>(
     '/admin/settings/send-test-email',
-    request
+    request,
   )
   return data
 }
@@ -246,11 +246,11 @@ export async function getStreamTimeoutSettings(): Promise<StreamTimeoutSettings>
  * @returns Updated settings
  */
 export async function updateStreamTimeoutSettings(
-  settings: StreamTimeoutSettings
+  settings: StreamTimeoutSettings,
 ): Promise<StreamTimeoutSettings> {
   const { data } = await apiClient.put<StreamTimeoutSettings>(
     '/admin/settings/stream-timeout',
-    settings
+    settings,
   )
   return data
 }
@@ -264,7 +264,7 @@ export const settingsAPI = {
   regenerateAdminApiKey,
   deleteAdminApiKey,
   getStreamTimeoutSettings,
-  updateStreamTimeoutSettings
+  updateStreamTimeoutSettings,
 }
 
 export default settingsAPI

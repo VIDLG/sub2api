@@ -35,7 +35,7 @@ export async function getVersion(): Promise<{ version: string }> {
  */
 export async function checkUpdates(force = false): Promise<VersionInfo> {
   const { data } = await apiClient.get<VersionInfo>('/admin/system/check-updates', {
-    params: force ? { force: 'true' } : undefined
+    params: force ? { force: 'true' } : undefined,
   })
   return data
 }
@@ -75,7 +75,7 @@ export const systemAPI = {
   checkUpdates,
   performUpdate,
   rollback,
-  restartService
+  restartService,
 }
 
 export default systemAPI

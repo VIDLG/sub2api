@@ -79,9 +79,21 @@ export default function AppSidebar() {
       { path: '/dashboard', label: t('nav.dashboard'), icon: DashboardIcon },
       { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon, dataTour: 'sidebar-my-keys' },
       { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
-      { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
+      {
+        path: '/subscriptions',
+        label: t('nav.mySubscriptions'),
+        icon: CreditCardIcon,
+        hideInSimpleMode: true,
+      },
       ...(cachedPublicSettings?.purchase_subscription_enabled
-        ? [{ path: '/purchase', label: t('nav.buySubscription'), icon: CreditCardIcon, hideInSimpleMode: true }]
+        ? [
+            {
+              path: '/purchase',
+              label: t('nav.buySubscription'),
+              icon: CreditCardIcon,
+              hideInSimpleMode: true,
+            },
+          ]
         : []),
       { path: '/redeem', label: t('nav.redeem'), icon: GiftIcon, hideInSimpleMode: true },
       { path: '/profile', label: t('nav.profile'), icon: UserIcon },
@@ -94,9 +106,21 @@ export default function AppSidebar() {
     const items: NavItem[] = [
       { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon, dataTour: 'sidebar-my-keys' },
       { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
-      { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
+      {
+        path: '/subscriptions',
+        label: t('nav.mySubscriptions'),
+        icon: CreditCardIcon,
+        hideInSimpleMode: true,
+      },
       ...(cachedPublicSettings?.purchase_subscription_enabled
-        ? [{ path: '/purchase', label: t('nav.buySubscription'), icon: CreditCardIcon, hideInSimpleMode: true }]
+        ? [
+            {
+              path: '/purchase',
+              label: t('nav.buySubscription'),
+              icon: CreditCardIcon,
+              hideInSimpleMode: true,
+            },
+          ]
         : []),
       { path: '/redeem', label: t('nav.redeem'), icon: GiftIcon, hideInSimpleMode: true },
       { path: '/profile', label: t('nav.profile'), icon: UserIcon },
@@ -112,13 +136,40 @@ export default function AppSidebar() {
         ? [{ path: '/admin/ops', label: t('nav.ops'), icon: ChartIcon }]
         : []),
       { path: '/admin/users', label: t('nav.users'), icon: UsersIcon, hideInSimpleMode: true },
-      { path: '/admin/groups', label: t('nav.groups'), icon: FolderIcon, hideInSimpleMode: true, id: 'sidebar-group-manage' },
-      { path: '/admin/subscriptions', label: t('nav.subscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
-      { path: '/admin/accounts', label: t('nav.accounts'), icon: GlobeIcon, id: 'sidebar-channel-manage' },
+      {
+        path: '/admin/groups',
+        label: t('nav.groups'),
+        icon: FolderIcon,
+        hideInSimpleMode: true,
+        id: 'sidebar-group-manage',
+      },
+      {
+        path: '/admin/subscriptions',
+        label: t('nav.subscriptions'),
+        icon: CreditCardIcon,
+        hideInSimpleMode: true,
+      },
+      {
+        path: '/admin/accounts',
+        label: t('nav.accounts'),
+        icon: GlobeIcon,
+        id: 'sidebar-channel-manage',
+      },
       { path: '/admin/announcements', label: t('nav.announcements'), icon: BellIcon },
       { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
-      { path: '/admin/redeem', label: t('nav.redeemCodes'), icon: TicketIcon, hideInSimpleMode: true, id: 'sidebar-wallet' },
-      { path: '/admin/promo-codes', label: t('nav.promoCodes'), icon: GiftIcon, hideInSimpleMode: true },
+      {
+        path: '/admin/redeem',
+        label: t('nav.redeemCodes'),
+        icon: TicketIcon,
+        hideInSimpleMode: true,
+        id: 'sidebar-wallet',
+      },
+      {
+        path: '/admin/promo-codes',
+        label: t('nav.promoCodes'),
+        icon: GiftIcon,
+        hideInSimpleMode: true,
+      },
       { path: '/admin/usage', label: t('nav.usage'), icon: ChartIcon },
     ]
 
@@ -183,14 +234,16 @@ export default function AppSidebar() {
         <div className="sidebar-header">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-glow">
             {publicSettingsLoaded && (
-              <img src={siteLogo || '/logo.png'} alt="Logo" className="h-full w-full object-contain" />
+              <img
+                src={siteLogo || '/logo.png'}
+                alt="Logo"
+                className="h-full w-full object-contain"
+              />
             )}
           </div>
           {!sidebarCollapsed && (
             <div className="flex flex-col">
-              <span className="text-lg font-bold text-gray-900 dark:text-white">
-                {siteName}
-              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">{siteName}</span>
               <VersionBadge version={siteVersion} />
             </div>
           )}
@@ -201,9 +254,7 @@ export default function AppSidebar() {
           {isAdmin ? (
             <>
               {/* Admin Section */}
-              <div className="sidebar-section">
-                {adminNavItems.map(renderNavItem)}
-              </div>
+              <div className="sidebar-section">{adminNavItems.map(renderNavItem)}</div>
 
               {/* Personal Section for Admin (hidden in simple mode) */}
               {!isSimpleMode && (
@@ -219,9 +270,7 @@ export default function AppSidebar() {
             </>
           ) : (
             /* Regular User View */
-            <div className="sidebar-section">
-              {userNavItems.map(renderNavItem)}
-            </div>
+            <div className="sidebar-section">{userNavItems.map(renderNavItem)}</div>
           )}
         </nav>
 
@@ -238,9 +287,7 @@ export default function AppSidebar() {
             ) : (
               <MoonIcon className="h-5 w-5 flex-shrink-0" />
             )}
-            {!sidebarCollapsed && (
-              <span>{isDark ? t('nav.lightMode') : t('nav.darkMode')}</span>
-            )}
+            {!sidebarCollapsed && <span>{isDark ? t('nav.lightMode') : t('nav.darkMode')}</span>}
           </button>
 
           {/* Collapse Button */}

@@ -7,12 +7,33 @@ import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type { UserSubscription, AdminGroup } from '@/types'
 import { PlusIcon, SearchIcon, RefreshIcon } from '@/components/icons'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DataTable } from '@/components/data-table'
 import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
 
@@ -113,17 +134,20 @@ export default function SubscriptionsView() {
   const [extendDays, setExtendDays] = useState(30)
 
   // Debounced user search
-  const { run: searchUsersDebounced } = useDebounceFn(async (value: string) => {
-    setSearchingUsers(true)
-    try {
-      const results = await adminAPI.usage.searchUsers(value.trim())
-      setUserResults(results)
-    } catch {
-      // silent
-    } finally {
-      setSearchingUsers(false)
-    }
-  }, { wait: 300 })
+  const { run: searchUsersDebounced } = useDebounceFn(
+    async (value: string) => {
+      setSearchingUsers(true)
+      try {
+        const results = await adminAPI.usage.searchUsers(value.trim())
+        setUserResults(results)
+      } catch {
+        // silent
+      } finally {
+        setSearchingUsers(false)
+      }
+    },
+    { wait: 300 },
+  )
 
   // ==================== Mutations ====================
 
@@ -400,7 +424,9 @@ export default function SubscriptionsView() {
             <SelectContent>
               <SelectItem value="all">{t('All Groups')}</SelectItem>
               {allGroups.map((g) => (
-                <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>
+                <SelectItem key={g.id} value={String(g.id)}>
+                  {g.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -508,7 +534,11 @@ export default function SubscriptionsView() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAssignDialog(false)} disabled={assignMutation.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => setShowAssignDialog(false)}
+              disabled={assignMutation.isPending}
+            >
               {t('Cancel')}
             </Button>
             <Button onClick={handleAssign} disabled={assignMutation.isPending}>
@@ -539,7 +569,11 @@ export default function SubscriptionsView() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowExtendDialog(false)} disabled={extendMutation.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => setShowExtendDialog(false)}
+              disabled={extendMutation.isPending}
+            >
               {t('Cancel')}
             </Button>
             <Button onClick={handleExtend} disabled={extendMutation.isPending}>

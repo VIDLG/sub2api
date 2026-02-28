@@ -23,7 +23,7 @@ export default function PurchaseSubscriptionView() {
   const loadSettings = useCallback(async () => {
     setLoading(true)
     try {
-      const settings = cachedPublicSettings || await fetchPublicSettings()
+      const settings = cachedPublicSettings || (await fetchPublicSettings())
       if (settings) {
         setEnabled(settings.purchase_subscription_enabled)
         setUrl(settings.purchase_subscription_url || '')
@@ -47,7 +47,9 @@ export default function PurchaseSubscriptionView() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('purchase.title', 'Purchase Subscription')}</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('purchase.title', 'Purchase Subscription')}
+          </h1>
         </div>
         <div className="flex items-center justify-center py-12">
           <div className="spinner" />
@@ -60,16 +62,32 @@ export default function PurchaseSubscriptionView() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('purchase.title', 'Purchase Subscription')}</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('purchase.title', 'Purchase Subscription')}
+          </h1>
         </div>
         <div className="card py-16 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-dark-800">
-            <svg className="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            <svg
+              className="h-8 w-8 text-gray-400 dark:text-gray-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+              />
             </svg>
           </div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('purchase.notEnabled', 'Subscription purchasing is not enabled.')}</p>
-          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('purchase.contactAdmin', 'Please contact the administrator for more information.')}</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            {t('purchase.notEnabled', 'Subscription purchasing is not enabled.')}
+          </p>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            {t('purchase.contactAdmin', 'Please contact the administrator for more information.')}
+          </p>
         </div>
       </div>
     )
@@ -79,16 +97,32 @@ export default function PurchaseSubscriptionView() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('purchase.title', 'Purchase Subscription')}</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('purchase.title', 'Purchase Subscription')}
+          </h1>
         </div>
         <div className="card py-16 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-            <svg className="h-8 w-8 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            <svg
+              className="h-8 w-8 text-amber-500 dark:text-amber-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+              />
             </svg>
           </div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('purchase.noUrl', 'Purchase URL has not been configured.')}</p>
-          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('purchase.contactAdmin', 'Please contact the administrator for more information.')}</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            {t('purchase.noUrl', 'Purchase URL has not been configured.')}
+          </p>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            {t('purchase.contactAdmin', 'Please contact the administrator for more information.')}
+          </p>
         </div>
       </div>
     )
@@ -99,8 +133,12 @@ export default function PurchaseSubscriptionView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('purchase.title', 'Purchase Subscription')}</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('purchase.description', 'Browse and purchase available subscription plans.')}</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('purchase.title', 'Purchase Subscription')}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {t('purchase.description', 'Browse and purchase available subscription plans.')}
+          </p>
         </div>
         <a
           href={url}
@@ -119,7 +157,9 @@ export default function PurchaseSubscriptionView() {
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-dark-900/80">
             <div className="flex flex-col items-center gap-3">
               <div className="spinner h-8 w-8" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('purchase.loading', 'Loading purchase page...')}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {t('purchase.loading', 'Loading purchase page...')}
+              </p>
             </div>
           </div>
         )}

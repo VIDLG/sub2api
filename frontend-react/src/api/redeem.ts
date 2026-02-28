@@ -61,7 +61,7 @@ export async function getHistory(): Promise<RedeemHistoryItem[]> {
 
 export const redeemAPI = {
   redeem,
-  getHistory
+  getHistory,
 }
 
 export default redeemAPI

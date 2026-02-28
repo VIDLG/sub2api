@@ -12,7 +12,7 @@ import type {
   UpdateProxyRequest,
   PaginatedResponse,
   AdminDataPayload,
-  AdminDataImportResult
+  AdminDataImportResult,
 } from '@/types'
 
 /**
@@ -32,15 +32,15 @@ export async function list(
   },
   options?: {
     signal?: AbortSignal
-  }
+  },
 ): Promise<PaginatedResponse<Proxy>> {
   const { data } = await apiClient.get<PaginatedResponse<Proxy>>('/admin/proxies', {
     params: {
       page,
       page_size: pageSize,
-      ...filters
+      ...filters,
     },
-    signal: options?.signal
+    signal: options?.signal,
   })
   return data
 }
@@ -60,7 +60,7 @@ export async function getAll(): Promise<Proxy[]> {
  */
 export async function getAllWithCount(): Promise<Proxy[]> {
   const { data } = await apiClient.get<Proxy[]>('/admin/proxies/all', {
-    params: { with_count: 'true' }
+    params: { with_count: 'true' },
   })
   return data
 }
@@ -150,7 +150,9 @@ export async function testProxy(id: number): Promise<{
  * @returns Quality check result
  */
 export async function checkProxyQuality(id: number): Promise<ProxyQualityCheckResult> {
-  const { data } = await apiClient.post<ProxyQualityCheckResult>(`/admin/proxies/${id}/quality-check`)
+  const { data } = await apiClient.post<ProxyQualityCheckResult>(
+    `/admin/proxies/${id}/quality-check`,
+  )
   return data
 }
 
@@ -198,7 +200,7 @@ export async function batchCreate(
     port: number
     username?: string
     password?: string
-  }>
+  }>,
 ): Promise<{
   created: number
   skipped: number
@@ -265,7 +267,7 @@ export const proxiesAPI = {
   batchCreate,
   batchDelete,
   exportData,
-  importData
+  importData,
 }
 
 export default proxiesAPI

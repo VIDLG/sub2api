@@ -34,7 +34,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DataTable } from '@/components/data-table'
 import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
 
@@ -163,7 +169,7 @@ export default function RedeemView() {
         genForm.type,
         genForm.value,
         genForm.type === 'subscription' ? genForm.group_id : undefined,
-        genForm.type === 'subscription' ? genForm.validity_days : undefined
+        genForm.type === 'subscription' ? genForm.validity_days : undefined,
       )
       setGeneratedCodes(result)
       setShowGenerateDialog(false)
@@ -296,7 +302,8 @@ export default function RedeemView() {
       size: 150,
       cell: ({ row }) => (
         <span className="text-gray-500 dark:text-gray-400 text-xs">
-          {row.original.user?.email || (row.original.used_by ? `User #${row.original.used_by}` : '-')}
+          {row.original.user?.email ||
+            (row.original.used_by ? `User #${row.original.used_by}` : '-')}
         </span>
       ),
     },
@@ -343,7 +350,12 @@ export default function RedeemView() {
           <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
         </h1>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={handleExportCodes} className="flex items-center gap-1 text-sm" title={t('Export CSV')}>
+          <Button
+            variant="ghost"
+            onClick={handleExportCodes}
+            className="flex items-center gap-1 text-sm"
+            title={t('Export CSV')}
+          >
             <DownloadIcon className="h-4 w-4" />
             {t('Export')}
           </Button>
@@ -427,7 +439,10 @@ export default function RedeemView() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>{t('Type')}</Label>
-              <Select value={genForm.type} onValueChange={(v) => setGenForm((f) => ({ ...f, type: v as RedeemCodeType }))}>
+              <Select
+                value={genForm.type}
+                onValueChange={(v) => setGenForm((f) => ({ ...f, type: v as RedeemCodeType }))}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -475,7 +490,10 @@ export default function RedeemView() {
               <>
                 <div className="space-y-2">
                   <Label>{t('Group')} *</Label>
-                  <Select value={String(genForm.group_id)} onValueChange={(v) => setGenForm((f) => ({ ...f, group_id: Number(v) }))}>
+                  <Select
+                    value={String(genForm.group_id)}
+                    onValueChange={(v) => setGenForm((f) => ({ ...f, group_id: Number(v) }))}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -508,7 +526,11 @@ export default function RedeemView() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowGenerateDialog(false)} disabled={saving}>
+            <Button
+              variant="outline"
+              onClick={() => setShowGenerateDialog(false)}
+              disabled={saving}
+            >
               {t('Cancel')}
             </Button>
             <Button onClick={handleGenerate} disabled={saving}>
@@ -522,7 +544,9 @@ export default function RedeemView() {
       <Dialog open={showResultDialog} onOpenChange={setShowResultDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('Generated Codes')} ({generatedCodes.length})</DialogTitle>
+            <DialogTitle>
+              {t('Generated Codes')} ({generatedCodes.length})
+            </DialogTitle>
           </DialogHeader>
 
           <div className="max-h-64 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-dark-800">
@@ -531,9 +555,7 @@ export default function RedeemView() {
                 key={c.id}
                 className="flex items-center justify-between border-b border-gray-200 py-1.5 last:border-0 dark:border-gray-700"
               >
-                <span className="font-mono text-xs text-gray-900 dark:text-white">
-                  {c.code}
-                </span>
+                <span className="font-mono text-xs text-gray-900 dark:text-white">{c.code}</span>
                 <Button
                   variant="ghost"
                   onClick={() => handleCopyCode(c.code)}
@@ -551,11 +573,19 @@ export default function RedeemView() {
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row">
-            <Button variant="outline" onClick={handleCopyAllCodes} className="flex items-center gap-1 text-sm">
+            <Button
+              variant="outline"
+              onClick={handleCopyAllCodes}
+              className="flex items-center gap-1 text-sm"
+            >
               <ClipboardIcon className="h-4 w-4" />
               {t('Copy All')}
             </Button>
-            <Button variant="outline" onClick={handleDownloadCodes} className="flex items-center gap-1 text-sm">
+            <Button
+              variant="outline"
+              onClick={handleDownloadCodes}
+              className="flex items-center gap-1 text-sm"
+            >
               <DownloadIcon className="h-4 w-4" />
               {t('Download')}
             </Button>
@@ -567,14 +597,22 @@ export default function RedeemView() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setSelectedCode(null) }}>
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open)
+          if (!open) setSelectedCode(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Delete Redeem Code')}</AlertDialogTitle>
             <AlertDialogDescription>
               {t('Are you sure you want to delete code')}{' '}
-              <strong className="font-mono">{selectedCode ? maskCode(selectedCode.code) : ''}</strong>?{' '}
-              {t('This action cannot be undone.')}
+              <strong className="font-mono">
+                {selectedCode ? maskCode(selectedCode.code) : ''}
+              </strong>
+              ? {t('This action cannot be undone.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

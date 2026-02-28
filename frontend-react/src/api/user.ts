@@ -20,9 +20,7 @@ export async function getProfile(): Promise<User> {
  * @param profile - Profile data to update
  * @returns Updated user profile data
  */
-export async function updateProfile(profile: {
-  username?: string
-}): Promise<User> {
+export async function updateProfile(profile: { username?: string }): Promise<User> {
   const { data } = await apiClient.put<User>('/user', profile)
   return data
 }
@@ -34,11 +32,11 @@ export async function updateProfile(profile: {
  */
 export async function changePassword(
   oldPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<{ message: string }> {
   const payload: ChangePasswordRequest = {
     old_password: oldPassword,
-    new_password: newPassword
+    new_password: newPassword,
   }
 
   const { data } = await apiClient.put<{ message: string }>('/user/password', payload)
@@ -48,7 +46,7 @@ export async function changePassword(
 export const userAPI = {
   getProfile,
   updateProfile,
-  changePassword
+  changePassword,
 }
 
 export default userAPI

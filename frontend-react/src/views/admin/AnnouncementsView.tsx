@@ -4,15 +4,41 @@ import { useForm } from '@tanstack/react-form'
 import { type ColumnDef } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
-import type { Announcement, AnnouncementStatus, CreateAnnouncementRequest, UpdateAnnouncementRequest } from '@/types'
+import type {
+  Announcement,
+  AnnouncementStatus,
+  CreateAnnouncementRequest,
+  UpdateAnnouncementRequest,
+} from '@/types'
 import { PlusIcon, SearchIcon, TrashIcon, RefreshIcon } from '@/components/icons'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DataTable } from '@/components/data-table'
 import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
 
@@ -76,8 +102,7 @@ export default function AnnouncementsView() {
     refresh,
   } = useDataTableQuery<Announcement, AnnouncementFilters>({
     queryKey: ANNOUNCEMENTS_QUERY_KEY,
-    queryFn: (page, pageSize, filters) =>
-      adminAPI.announcements.list(page, pageSize, filters),
+    queryFn: (page, pageSize, filters) => adminAPI.announcements.list(page, pageSize, filters),
   })
 
   // Dialog state
@@ -89,7 +114,15 @@ export default function AnnouncementsView() {
   // ==================== Mutations ====================
 
   const saveMutation = useTableMutation({
-    mutationFn: ({ isEdit, id, payload }: { isEdit: boolean; id?: number; payload: CreateAnnouncementRequest | UpdateAnnouncementRequest }) => {
+    mutationFn: ({
+      isEdit,
+      id,
+      payload,
+    }: {
+      isEdit: boolean
+      id?: number
+      payload: CreateAnnouncementRequest | UpdateAnnouncementRequest
+    }) => {
       if (isEdit && id !== undefined) {
         return adminAPI.announcements.update(id, payload as UpdateAnnouncementRequest)
       }
@@ -97,7 +130,11 @@ export default function AnnouncementsView() {
     },
     queryKey: ANNOUNCEMENTS_QUERY_KEY,
     onSuccess: (_data, variables) => {
-      showSuccess(variables.isEdit ? t('Announcement updated successfully') : t('Announcement created successfully'))
+      showSuccess(
+        variables.isEdit
+          ? t('Announcement updated successfully')
+          : t('Announcement created successfully'),
+      )
       setShowFormDialog(false)
     },
     onError: (err) => {
@@ -121,7 +158,13 @@ export default function AnnouncementsView() {
   // ==================== Form ====================
 
   const form = useForm({
-    defaultValues: { title: '', content: '', status: 'draft' as AnnouncementStatus, starts_at: '', ends_at: '' },
+    defaultValues: {
+      title: '',
+      content: '',
+      status: 'draft' as AnnouncementStatus,
+      starts_at: '',
+      ends_at: '',
+    },
     onSubmit: async ({ value }) => {
       if (!value.title.trim()) {
         showError(t('Title is required'))
@@ -181,7 +224,9 @@ export default function AnnouncementsView() {
       header: () => t('Status'),
       size: 100,
       cell: ({ row }) => (
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[row.original.status]}`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[row.original.status]}`}
+        >
           {row.original.status}
         </span>
       ),
@@ -191,7 +236,9 @@ export default function AnnouncementsView() {
       header: () => t('Starts'),
       size: 160,
       cell: ({ row }) => (
-        <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(row.original.starts_at)}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {formatDate(row.original.starts_at)}
+        </span>
       ),
     },
     {
@@ -199,7 +246,9 @@ export default function AnnouncementsView() {
       header: () => t('Ends'),
       size: 160,
       cell: ({ row }) => (
-        <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(row.original.ends_at)}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {formatDate(row.original.ends_at)}
+        </span>
       ),
     },
     {
@@ -207,7 +256,9 @@ export default function AnnouncementsView() {
       header: () => t('Created'),
       size: 160,
       cell: ({ row }) => (
-        <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(row.original.created_at)}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {formatDate(row.original.created_at)}
+        </span>
       ),
     },
     {
@@ -218,12 +269,17 @@ export default function AnnouncementsView() {
         const ann = row.original
         return (
           <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="sm" onClick={() => openEdit(ann)}>{t('Edit')}</Button>
+            <Button variant="ghost" size="sm" onClick={() => openEdit(ann)}>
+              {t('Edit')}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
               className="text-red-500 hover:text-red-700"
-              onClick={() => { setSelectedAnnouncement(ann); setShowDeleteDialog(true) }}
+              onClick={() => {
+                setSelectedAnnouncement(ann)
+                setShowDeleteDialog(true)
+              }}
             >
               <TrashIcon className="h-4 w-4" />
             </Button>
@@ -240,11 +296,17 @@ export default function AnnouncementsView() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {t('Announcement Management')} <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
+          {t('Announcement Management')}{' '}
+          <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
         </h1>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}><RefreshIcon className="h-4 w-4" /></Button>
-          <Button onClick={openCreate}><PlusIcon className="mr-2 h-4 w-4" />{t('Create Announcement')}</Button>
+          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
+            <RefreshIcon className="h-4 w-4" />
+          </Button>
+          <Button onClick={openCreate}>
+            <PlusIcon className="mr-2 h-4 w-4" />
+            {t('Create Announcement')}
+          </Button>
         </div>
       </div>
 
@@ -253,9 +315,17 @@ export default function AnnouncementsView() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[200px] flex-1">
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('Search announcements...')} className="pl-9" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('Search announcements...')}
+              className="pl-9"
+            />
           </div>
-          <Select value={filters.status ?? 'all'} onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v)}>
+          <Select
+            value={filters.status ?? 'all'}
+            onValueChange={(v) => setFilter('status', v === 'all' ? undefined : v)}
+          >
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
@@ -281,13 +351,25 @@ export default function AnnouncementsView() {
       {/* Form Dialog (Create / Edit) */}
       <Dialog open={showFormDialog} onOpenChange={setShowFormDialog}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{isEdit ? t('Edit Announcement') : t('Create Announcement')}</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }} className="space-y-5 py-2">
+          <DialogHeader>
+            <DialogTitle>{isEdit ? t('Edit Announcement') : t('Create Announcement')}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              form.handleSubmit()
+            }}
+            className="space-y-5 py-2"
+          >
             <form.Field name="title">
               {(field) => (
                 <div className="space-y-2">
                   <Label>{t('Title')} *</Label>
-                  <Input value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} placeholder={t('Announcement title')} />
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder={t('Announcement title')}
+                  />
                 </div>
               )}
             </form.Field>
@@ -295,7 +377,12 @@ export default function AnnouncementsView() {
               {(field) => (
                 <div className="space-y-2">
                   <Label>{t('Content')}</Label>
-                  <Textarea value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} rows={5} placeholder={t('Announcement content (supports Markdown)')} />
+                  <Textarea
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    rows={5}
+                    placeholder={t('Announcement content (supports Markdown)')}
+                  />
                 </div>
               )}
             </form.Field>
@@ -303,8 +390,13 @@ export default function AnnouncementsView() {
               {(field) => (
                 <div className="space-y-2">
                   <Label>{t('Status')}</Label>
-                  <Select value={field.state.value} onValueChange={(v) => field.handleChange(v as AnnouncementStatus)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(v) => field.handleChange(v as AnnouncementStatus)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="draft">{t('Draft')}</SelectItem>
                       <SelectItem value="active">{t('Active')}</SelectItem>
@@ -319,7 +411,12 @@ export default function AnnouncementsView() {
                 {(field) => (
                   <div className="space-y-2">
                     <Label>{t('Starts At')}</Label>
-                    <input type="datetime-local" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} className="input-field w-full" />
+                    <input
+                      type="datetime-local"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="input-field w-full"
+                    />
                   </div>
                 )}
               </form.Field>
@@ -327,28 +424,52 @@ export default function AnnouncementsView() {
                 {(field) => (
                   <div className="space-y-2">
                     <Label>{t('Ends At')}</Label>
-                    <input type="datetime-local" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} className="input-field w-full" />
+                    <input
+                      type="datetime-local"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="input-field w-full"
+                    />
                   </div>
                 )}
               </form.Field>
             </div>
           </form>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowFormDialog(false)} disabled={saveMutation.isPending}>{t('Cancel')}</Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowFormDialog(false)}
+              disabled={saveMutation.isPending}
+            >
+              {t('Cancel')}
+            </Button>
             <Button onClick={() => form.handleSubmit()} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? <div className="spinner h-4 w-4" /> : isEdit ? t('Save') : t('Create')}
+              {saveMutation.isPending ? (
+                <div className="spinner h-4 w-4" />
+              ) : isEdit ? (
+                t('Save')
+              ) : (
+                t('Create')
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setSelectedAnnouncement(null) }}>
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open)
+          if (!open) setSelectedAnnouncement(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Delete Announcement')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('Are you sure you want to delete announcement')} <strong>{selectedAnnouncement?.title}</strong>? {t('This action cannot be undone.')}
+              {t('Are you sure you want to delete announcement')}{' '}
+              <strong>{selectedAnnouncement?.title}</strong>? {t('This action cannot be undone.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

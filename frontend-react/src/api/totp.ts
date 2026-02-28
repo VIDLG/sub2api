@@ -11,7 +11,7 @@ import type {
   TotpEnableRequest,
   TotpEnableResponse,
   TotpDisableRequest,
-  TotpVerificationMethod
+  TotpVerificationMethod,
 } from '@/types'
 
 /**
@@ -77,7 +77,7 @@ export const totpAPI = {
   sendVerifyCode,
   initiateSetup,
   enable,
-  disable
+  disable,
 }
 
 export default totpAPI

@@ -10,7 +10,7 @@ import type {
   AssignSubscriptionRequest,
   BulkAssignSubscriptionRequest,
   ExtendSubscriptionRequest,
-  PaginatedResponse
+  PaginatedResponse,
 } from '@/types'
 
 /**
@@ -32,7 +32,7 @@ export async function list(
   },
   options?: {
     signal?: AbortSignal
-  }
+  },
 ): Promise<PaginatedResponse<UserSubscription>> {
   const { data } = await apiClient.get<PaginatedResponse<UserSubscription>>(
     '/admin/subscriptions',
@@ -40,10 +40,10 @@ export async function list(
       params: {
         page,
         page_size: pageSize,
-        ...filters
+        ...filters,
       },
-      signal: options?.signal
-    }
+      signal: options?.signal,
+    },
   )
   return data
 }
@@ -84,11 +84,11 @@ export async function assign(request: AssignSubscriptionRequest): Promise<UserSu
  * @returns Created subscriptions
  */
 export async function bulkAssign(
-  request: BulkAssignSubscriptionRequest
+  request: BulkAssignSubscriptionRequest,
 ): Promise<UserSubscription[]> {
   const { data } = await apiClient.post<UserSubscription[]>(
     '/admin/subscriptions/bulk-assign',
-    request
+    request,
   )
   return data
 }
@@ -101,11 +101,11 @@ export async function bulkAssign(
  */
 export async function extend(
   id: number,
-  request: ExtendSubscriptionRequest
+  request: ExtendSubscriptionRequest,
 ): Promise<UserSubscription> {
   const { data } = await apiClient.post<UserSubscription>(
     `/admin/subscriptions/${id}/extend`,
-    request
+    request,
   )
   return data
 }
@@ -130,13 +130,13 @@ export async function revoke(id: number): Promise<{ message: string }> {
 export async function listByGroup(
   groupId: number,
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
 ): Promise<PaginatedResponse<UserSubscription>> {
   const { data } = await apiClient.get<PaginatedResponse<UserSubscription>>(
     `/admin/groups/${groupId}/subscriptions`,
     {
-      params: { page, page_size: pageSize }
-    }
+      params: { page, page_size: pageSize },
+    },
   )
   return data
 }
@@ -151,13 +151,13 @@ export async function listByGroup(
 export async function listByUser(
   userId: number,
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
 ): Promise<PaginatedResponse<UserSubscription>> {
   const { data } = await apiClient.get<PaginatedResponse<UserSubscription>>(
     `/admin/users/${userId}/subscriptions`,
     {
-      params: { page, page_size: pageSize }
-    }
+      params: { page, page_size: pageSize },
+    },
   )
   return data
 }
@@ -171,7 +171,7 @@ export const subscriptionsAPI = {
   extend,
   revoke,
   listByGroup,
-  listByUser
+  listByUser,
 }
 
 export default subscriptionsAPI

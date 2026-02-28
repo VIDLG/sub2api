@@ -97,8 +97,8 @@ export interface PublicSettings {
 
 export interface AuthResponse {
   access_token: string
-  refresh_token?: string  // New: Refresh Token for token renewal
-  expires_in?: number     // New: Access Token expiry time in seconds
+  refresh_token?: string // New: Refresh Token for token renewal
+  expires_in?: number // New: Access Token expiry time in seconds
   token_type: string
   user: User & { run_mode?: 'standard' | 'simple' }
 }
@@ -614,9 +614,9 @@ export interface Account {
   type: AccountType
   credentials?: Record<string, unknown>
   // Extra fields including Codex usage and model-level rate limits (Antigravity smart retry)
-  extra?: (CodexUsageSnapshot & {
+  extra?: CodexUsageSnapshot & {
     model_rate_limits?: Record<string, { rate_limited_at: string; rate_limit_reset_at: string }>
-  } & Record<string, unknown>)
+  } & Record<string, unknown>
   proxy_id: number | null
   concurrency: number
   current_concurrency?: number // Real-time concurrency count from Redis
@@ -691,7 +691,7 @@ export interface UsageProgress {
 // Antigravity 单个模型的配额信息
 export interface AntigravityModelQuota {
   utilization: number // 使用率 0-100
-  reset_time: string  // 重置时间 ISO8601
+  reset_time: string // 重置时间 ISO8601
 }
 
 export interface AccountUsageInfo {
@@ -1252,7 +1252,15 @@ export interface AccountUsageStatsResponse {
 
 // ==================== User Attribute Types ====================
 
-export type UserAttributeType = 'text' | 'textarea' | 'number' | 'email' | 'url' | 'date' | 'select' | 'multi_select'
+export type UserAttributeType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'email'
+  | 'url'
+  | 'date'
+  | 'select'
+  | 'multi_select'
 
 export interface UserAttributeOption {
   value: string
@@ -1369,7 +1377,7 @@ export interface UpdatePromoCodeRequest {
 
 export interface TotpStatus {
   enabled: boolean
-  enabled_at: number | null  // Unix timestamp in seconds
+  enabled_at: number | null // Unix timestamp in seconds
   feature_enabled: boolean
 }
 

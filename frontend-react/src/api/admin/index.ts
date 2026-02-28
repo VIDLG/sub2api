@@ -41,7 +41,7 @@ export const adminAPI = {
   antigravity: antigravityAPI,
   userAttributes: userAttributesAPI,
   ops: opsAPI,
-  errorPassthrough: errorPassthroughAPI
+  errorPassthrough: errorPassthroughAPI,
 }
 
 export {
@@ -61,7 +61,7 @@ export {
   antigravityAPI,
   userAttributesAPI,
   opsAPI,
-  errorPassthroughAPI
+  errorPassthroughAPI,
 }
 
 export default adminAPI

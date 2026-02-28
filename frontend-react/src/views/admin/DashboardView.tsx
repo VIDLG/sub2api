@@ -21,8 +21,16 @@ import {
   ClockIcon,
   UserPlusIcon,
 } from '@/components/icons'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { TokenTrendChart } from '@/components/charts/TokenTrendChart'
+import { ModelDistributionChart } from '@/components/charts/ModelDistributionChart'
 
 // ==================== Format Helpers ====================
 
@@ -56,7 +64,9 @@ export default function DashboardView() {
   const { t } = useTranslation()
   const showError = useAppStore((s) => s.showError)
 
-  const [startDate, setStartDate] = useState(() => formatLocalDate(new Date(Date.now() - 6 * 86400000)))
+  const [startDate, setStartDate] = useState(() =>
+    formatLocalDate(new Date(Date.now() - 6 * 86400000)),
+  )
   const [endDate, setEndDate] = useState(() => formatLocalDate(new Date()))
   const [granularity, setGranularity] = useState<'day' | 'hour'>('day')
 
@@ -81,7 +91,10 @@ export default function DashboardView() {
   const { data: modelStats = [] } = useQuery<ModelStat[]>({
     queryKey: ['admin', 'dashboard', 'models', startDate, endDate],
     queryFn: async () => {
-      const res = await adminAPI.dashboard.getModelStats({ start_date: startDate, end_date: endDate })
+      const res = await adminAPI.dashboard.getModelStats({
+        start_date: startDate,
+        end_date: endDate,
+      })
       return res.models || []
     },
   })
@@ -117,9 +130,15 @@ export default function DashboardView() {
               <KeyIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.dashboard.apiKeys')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.total_api_keys}</p>
-              <p className="text-xs text-green-600 dark:text-green-400">{stats.active_api_keys} {t('common.active')}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('admin.dashboard.apiKeys')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.total_api_keys}
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                {stats.active_api_keys} {t('common.active')}
+              </p>
             </div>
           </div>
         </div>
@@ -131,12 +150,20 @@ export default function DashboardView() {
               <ServerIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.dashboard.accounts')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.total_accounts}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('admin.dashboard.accounts')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.total_accounts}
+              </p>
               <p className="text-xs">
-                <span className="text-green-600 dark:text-green-400">{stats.normal_accounts} {t('common.active')}</span>
+                <span className="text-green-600 dark:text-green-400">
+                  {stats.normal_accounts} {t('common.active')}
+                </span>
                 {stats.error_accounts > 0 && (
-                  <span className="ml-1 text-red-500">{stats.error_accounts} {t('common.error')}</span>
+                  <span className="ml-1 text-red-500">
+                    {stats.error_accounts} {t('common.error')}
+                  </span>
                 )}
               </p>
             </div>
@@ -150,9 +177,15 @@ export default function DashboardView() {
               <ChartIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.dashboard.todayRequests')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.today_requests}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('common.total')}: {formatNumber(stats.total_requests)}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('admin.dashboard.todayRequests')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.today_requests}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('common.total')}: {formatNumber(stats.total_requests)}
+              </p>
             </div>
           </div>
         </div>
@@ -164,9 +197,15 @@ export default function DashboardView() {
               <UserPlusIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.dashboard.users')}</p>
-              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">+{stats.today_new_users}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('common.total')}: {formatNumber(stats.total_users)}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('admin.dashboard.users')}
+              </p>
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                +{stats.today_new_users}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('common.total')}: {formatNumber(stats.total_users)}
+              </p>
             </div>
           </div>
         </div>
@@ -181,11 +220,26 @@ export default function DashboardView() {
               <CubeIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.dashboard.todayTokens')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{formatTokens(stats.today_tokens)}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('admin.dashboard.todayTokens')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {formatTokens(stats.today_tokens)}
+              </p>
               <p className="text-xs">
-                <span className="text-amber-600 dark:text-amber-400" title={t('admin.dashboard.actual')}>${formatCost(stats.today_actual_cost)}</span>
-                <span className="text-gray-400 dark:text-gray-500" title={t('admin.dashboard.standard')}> / ${formatCost(stats.today_cost)}</span>
+                <span
+                  className="text-amber-600 dark:text-amber-400"
+                  title={t('admin.dashboard.actual')}
+                >
+                  ${formatCost(stats.today_actual_cost)}
+                </span>
+                <span
+                  className="text-gray-400 dark:text-gray-500"
+                  title={t('admin.dashboard.standard')}
+                >
+                  {' '}
+                  / ${formatCost(stats.today_cost)}
+                </span>
               </p>
             </div>
           </div>
@@ -198,11 +252,26 @@ export default function DashboardView() {
               <DatabaseIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.dashboard.totalTokens')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{formatTokens(stats.total_tokens)}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('admin.dashboard.totalTokens')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {formatTokens(stats.total_tokens)}
+              </p>
               <p className="text-xs">
-                <span className="text-indigo-600 dark:text-indigo-400" title={t('admin.dashboard.actual')}>${formatCost(stats.total_actual_cost)}</span>
-                <span className="text-gray-400 dark:text-gray-500" title={t('admin.dashboard.standard')}> / ${formatCost(stats.total_cost)}</span>
+                <span
+                  className="text-indigo-600 dark:text-indigo-400"
+                  title={t('admin.dashboard.actual')}
+                >
+                  ${formatCost(stats.total_actual_cost)}
+                </span>
+                <span
+                  className="text-gray-400 dark:text-gray-500"
+                  title={t('admin.dashboard.standard')}
+                >
+                  {' '}
+                  / ${formatCost(stats.total_cost)}
+                </span>
               </p>
             </div>
           </div>
@@ -215,13 +284,19 @@ export default function DashboardView() {
               <BoltIcon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.dashboard.performance')}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('admin.dashboard.performance')}
+              </p>
               <div className="flex items-baseline gap-2">
-                <p className="text-xl font-bold text-gray-900 dark:text-white">{formatTokens(stats.rpm)}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {formatTokens(stats.rpm)}
+                </p>
                 <span className="text-xs text-gray-500 dark:text-gray-400">RPM</span>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatTokens(stats.tpm)}</p>
+                <p className="text-sm font-semibold text-violet-600 dark:text-violet-400">
+                  {formatTokens(stats.tpm)}
+                </p>
                 <span className="text-xs text-gray-500 dark:text-gray-400">TPM</span>
               </div>
             </div>
@@ -235,9 +310,15 @@ export default function DashboardView() {
               <ClockIcon className="h-5 w-5 text-rose-600 dark:text-rose-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.dashboard.avgResponse')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{formatDuration(stats.average_duration_ms)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{stats.active_users} {t('admin.dashboard.activeUsers')}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('admin.dashboard.avgResponse')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {formatDuration(stats.average_duration_ms)}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {stats.active_users} {t('admin.dashboard.activeUsers')}
+              </p>
             </div>
           </div>
         </div>
@@ -248,7 +329,9 @@ export default function DashboardView() {
         {/* Date Range Filter */}
         <div className="card p-4">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('admin.dashboard.timeRange')}:</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('admin.dashboard.timeRange')}:
+            </span>
             <DateRangePicker
               startDate={startDate}
               endDate={endDate}
@@ -260,8 +343,13 @@ export default function DashboardView() {
               }}
             />
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('admin.dashboard.granularity')}:</span>
-              <Select value={granularity} onValueChange={(v) => setGranularity(v as 'day' | 'hour')}>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('admin.dashboard.granularity')}:
+              </span>
+              <Select
+                value={granularity}
+                onValueChange={(v) => setGranularity(v as 'day' | 'hour')}
+              >
                 <SelectTrigger className="w-28 text-sm">
                   <SelectValue />
                 </SelectTrigger>
@@ -277,83 +365,31 @@ export default function DashboardView() {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Model Distribution */}
-          <div className="card relative overflow-hidden p-4">
-            {chartsLoading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-sm dark:bg-dark-800/50">
-                <div className="spinner" />
-              </div>
-            )}
-            <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{t('admin.dashboard.modelDistribution')}</h3>
-            {modelStats.length > 0 ? (
-              <div className="max-h-64 overflow-y-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-gray-500 dark:text-gray-400">
-                      <th className="pb-2 text-left">{t('admin.dashboard.model')}</th>
-                      <th className="pb-2 text-right">{t('admin.dashboard.requests')}</th>
-                      <th className="pb-2 text-right">{t('admin.dashboard.tokens')}</th>
-                      <th className="pb-2 text-right">{t('admin.dashboard.actual')}</th>
-                      <th className="pb-2 text-right">{t('admin.dashboard.standard')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {modelStats.map((model) => (
-                      <tr key={model.model} className="border-t border-gray-100 dark:border-gray-700">
-                        <td className="max-w-[100px] truncate py-1.5 font-medium text-gray-900 dark:text-white" title={model.model}>{model.model}</td>
-                        <td className="py-1.5 text-right text-gray-600 dark:text-gray-400">{formatNumber(model.requests)}</td>
-                        <td className="py-1.5 text-right text-gray-600 dark:text-gray-400">{formatTokens(model.total_tokens)}</td>
-                        <td className="py-1.5 text-right text-green-600 dark:text-green-400">${formatCost(model.actual_cost)}</td>
-                        <td className="py-1.5 text-right text-gray-400 dark:text-gray-500">${formatCost(model.cost)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400">{t('admin.dashboard.noDataAvailable')}</div>
-            )}
+          <div className="card p-4">
+            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+              {t('admin.dashboard.modelDistribution')}
+            </h3>
+            <ModelDistributionChart
+              data={modelStats}
+              loading={chartsLoading}
+              emptyText={t('admin.dashboard.noDataAvailable')}
+            />
           </div>
 
           {/* Token Usage Trend */}
-          <div className="card relative overflow-hidden p-4">
-            {chartsLoading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-sm dark:bg-dark-800/50">
-                <div className="spinner" />
-              </div>
-            )}
-            <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{t('admin.dashboard.tokenUsageTrend')}</h3>
-            {trendData.length > 0 ? (
-              <div className="max-h-64 overflow-y-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-gray-500 dark:text-gray-400">
-                      <th className="pb-2 text-left">{t('admin.dashboard.date')}</th>
-                      <th className="pb-2 text-right">Input</th>
-                      <th className="pb-2 text-right">Output</th>
-                      <th className="pb-2 text-right">Cache</th>
-                      <th className="pb-2 text-right">{t('admin.dashboard.actual')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trendData.map((d) => (
-                      <tr key={d.date} className="border-t border-gray-100 dark:border-gray-700">
-                        <td className="py-1.5 text-gray-900 dark:text-white">{d.date}</td>
-                        <td className="py-1.5 text-right text-blue-600 dark:text-blue-400">{formatTokens(d.input_tokens)}</td>
-                        <td className="py-1.5 text-right text-green-600 dark:text-green-400">{formatTokens(d.output_tokens)}</td>
-                        <td className="py-1.5 text-right text-amber-600 dark:text-amber-400">{formatTokens(d.cache_tokens)}</td>
-                        <td className="py-1.5 text-right text-emerald-600 dark:text-emerald-400">${formatCost(d.actual_cost)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400">{t('admin.dashboard.noDataAvailable')}</div>
-            )}
+          <div className="card p-4">
+            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+              {t('admin.dashboard.tokenUsageTrend')}
+            </h3>
+            <TokenTrendChart
+              data={trendData}
+              loading={chartsLoading}
+              emptyText={t('admin.dashboard.noDataAvailable')}
+            />
           </div>
         </div>
 
-        {/* User Usage Trend (Full Width) */}
+        {/* User Usage Trend (Full Width) - keep as table since it's per-user-per-day data */}
         <div className="card p-4">
           <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">
             {t('admin.dashboard.recentUsage')} (Top 12)
@@ -372,19 +408,32 @@ export default function DashboardView() {
                 </thead>
                 <tbody>
                   {userTrend.map((point, idx) => (
-                    <tr key={`${point.date}-${point.user_id}-${idx}`} className="border-t border-gray-100 dark:border-gray-700">
+                    <tr
+                      key={`${point.date}-${point.user_id}-${idx}`}
+                      className="border-t border-gray-100 dark:border-gray-700"
+                    >
                       <td className="py-1.5 text-gray-900 dark:text-white">{point.date}</td>
-                      <td className="py-1.5 text-gray-700 dark:text-gray-300">{point.email?.split('@')[0] || `User #${point.user_id}`}</td>
-                      <td className="py-1.5 text-right text-gray-600 dark:text-gray-400">{formatNumber(point.requests)}</td>
-                      <td className="py-1.5 text-right text-gray-600 dark:text-gray-400">{formatTokens(point.tokens)}</td>
-                      <td className="py-1.5 text-right text-green-600 dark:text-green-400">${formatCost(point.actual_cost)}</td>
+                      <td className="py-1.5 text-gray-700 dark:text-gray-300">
+                        {point.email?.split('@')[0] || `User #${point.user_id}`}
+                      </td>
+                      <td className="py-1.5 text-right text-gray-600 dark:text-gray-400">
+                        {formatNumber(point.requests)}
+                      </td>
+                      <td className="py-1.5 text-right text-gray-600 dark:text-gray-400">
+                        {formatTokens(point.tokens)}
+                      </td>
+                      <td className="py-1.5 text-right text-green-600 dark:text-green-400">
+                        ${formatCost(point.actual_cost)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <div className="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400">{t('admin.dashboard.noDataAvailable')}</div>
+            <div className="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+              {t('admin.dashboard.noDataAvailable')}
+            </div>
           )}
         </div>
       </div>

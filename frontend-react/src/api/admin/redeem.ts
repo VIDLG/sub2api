@@ -8,7 +8,7 @@ import type {
   RedeemCode,
   GenerateRedeemCodesRequest,
   RedeemCodeType,
-  PaginatedResponse
+  PaginatedResponse,
 } from '@/types'
 
 /**
@@ -28,15 +28,15 @@ export async function list(
   },
   options?: {
     signal?: AbortSignal
-  }
+  },
 ): Promise<PaginatedResponse<RedeemCode>> {
   const { data } = await apiClient.get<PaginatedResponse<RedeemCode>>('/admin/redeem-codes', {
     params: {
       page,
       page_size: pageSize,
-      ...filters
+      ...filters,
     },
-    signal: options?.signal
+    signal: options?.signal,
   })
   return data
 }
@@ -65,12 +65,12 @@ export async function generate(
   type: RedeemCodeType,
   value: number,
   groupId?: number | null,
-  validityDays?: number
+  validityDays?: number,
 ): Promise<RedeemCode[]> {
   const payload: GenerateRedeemCodesRequest = {
     count,
     type,
-    value
+    value,
   }
 
   // 订阅类型专用字段
@@ -155,7 +155,7 @@ export async function exportCodes(filters?: {
 }): Promise<Blob> {
   const response = await apiClient.get('/admin/redeem-codes/export', {
     params: filters,
-    responseType: 'blob'
+    responseType: 'blob',
   })
   return response.data
 }
@@ -168,7 +168,7 @@ export const redeemAPI = {
   batchDelete,
   expire,
   getStats,
-  exportCodes
+  exportCodes,
 }
 
 export default redeemAPI

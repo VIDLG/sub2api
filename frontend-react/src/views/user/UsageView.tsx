@@ -14,7 +14,13 @@ import { keysAPI } from '@/api/keys'
 import type { UsageLog, UsageStatsResponse, ApiKey, UsageQueryParams } from '@/types'
 import { RefreshIcon, DownloadIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 
 // ==================== Helpers ====================
@@ -54,7 +60,9 @@ export default function UsageView() {
 
   const [page, setPage] = useState(1)
   const [selectedKeyId, setSelectedKeyId] = useState<number | undefined>(undefined)
-  const [startDate, setStartDate] = useState(() => formatLocalDate(new Date(Date.now() - 6 * 86400000)))
+  const [startDate, setStartDate] = useState(() =>
+    formatLocalDate(new Date(Date.now() - 6 * 86400000)),
+  )
   const [endDate, setEndDate] = useState(() => formatLocalDate(new Date()))
 
   // ==================== Queries ====================
@@ -99,7 +107,18 @@ export default function UsageView() {
 
   const exportCSV = () => {
     if (logs.length === 0) return
-    const headers = ['ID', 'Model', 'Input Tokens', 'Output Tokens', 'Total Tokens', 'Cost', 'Actual Cost', 'Duration (ms)', 'Stream', 'Created At']
+    const headers = [
+      'ID',
+      'Model',
+      'Input Tokens',
+      'Output Tokens',
+      'Total Tokens',
+      'Cost',
+      'Actual Cost',
+      'Duration (ms)',
+      'Stream',
+      'Created At',
+    ]
     const rows = logs.map((log) => [
       log.id,
       log.model,
@@ -134,15 +153,30 @@ export default function UsageView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('usage.title', 'Usage')}</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('usage.description', 'View your API usage statistics and logs.')}</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('usage.title', 'Usage')}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {t('usage.description', 'View your API usage statistics and logs.')}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={exportCSV} disabled={logs.length === 0} className="flex items-center gap-2 text-sm" title={t('usage.export', 'Export CSV')}>
+          <Button
+            variant="ghost"
+            onClick={exportCSV}
+            disabled={logs.length === 0}
+            className="flex items-center gap-2 text-sm"
+            title={t('usage.export', 'Export CSV')}
+          >
             <DownloadIcon className="h-4 w-4" />
             {t('usage.export', 'Export CSV')}
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleRefresh} title={t('common.refresh', 'Refresh')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRefresh}
+            title={t('common.refresh', 'Refresh')}
+          >
             <RefreshIcon className="h-5 w-5" />
           </Button>
         </div>
@@ -152,23 +186,42 @@ export default function UsageView() {
       {stats && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div className="card p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('usage.totalRequests', 'Total Requests')}</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{stats.total_requests.toLocaleString()}</p>
-          </div>
-          <div className="card p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('usage.totalTokens', 'Total Tokens')}</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{formatTokens(stats.total_tokens)}</p>
-          </div>
-          <div className="card p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('usage.totalCost', 'Total Cost')}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              {t('usage.totalRequests', 'Total Requests')}
+            </p>
             <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-              <span className="text-green-600 dark:text-green-400">${formatCost(stats.total_actual_cost)}</span>
-              <span className="text-sm font-normal text-gray-400"> / ${formatCost(stats.total_cost)}</span>
+              {stats.total_requests.toLocaleString()}
             </p>
           </div>
           <div className="card p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('usage.avgDuration', 'Avg Duration')}</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{formatDuration(stats.average_duration_ms)}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              {t('usage.totalTokens', 'Total Tokens')}
+            </p>
+            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+              {formatTokens(stats.total_tokens)}
+            </p>
+          </div>
+          <div className="card p-4">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              {t('usage.totalCost', 'Total Cost')}
+            </p>
+            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+              <span className="text-green-600 dark:text-green-400">
+                ${formatCost(stats.total_actual_cost)}
+              </span>
+              <span className="text-sm font-normal text-gray-400">
+                {' '}
+                / ${formatCost(stats.total_cost)}
+              </span>
+            </p>
+          </div>
+          <div className="card p-4">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              {t('usage.avgDuration', 'Avg Duration')}
+            </p>
+            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+              {formatDuration(stats.average_duration_ms)}
+            </p>
           </div>
         </div>
       )}
@@ -187,17 +240,26 @@ export default function UsageView() {
       <div className="card p-4">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('usage.apiKey', 'API Key')}:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('usage.apiKey', 'API Key')}:
+            </label>
             <Select
               value={selectedKeyId != null ? String(selectedKeyId) : 'all'}
-              onValueChange={(v) => { setSelectedKeyId(v === 'all' ? undefined : Number(v)); setPage(1) }}
+              onValueChange={(v) => {
+                setSelectedKeyId(v === 'all' ? undefined : Number(v))
+                setPage(1)
+              }}
             >
               <SelectTrigger className="w-48 text-sm">
                 <SelectValue placeholder={t('usage.allKeys', 'All Keys')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('usage.allKeys', 'All Keys')}</SelectItem>
-                {apiKeys.map((k) => <SelectItem key={k.id} value={String(k.id)}>{k.name}</SelectItem>)}
+                {apiKeys.map((k) => (
+                  <SelectItem key={k.id} value={String(k.id)}>
+                    {k.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -221,7 +283,9 @@ export default function UsageView() {
           </div>
         ) : logs.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('usage.noLogs', 'No usage logs found for this period.')}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {t('usage.noLogs', 'No usage logs found for this period.')}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -239,25 +303,42 @@ export default function UsageView() {
               </thead>
               <tbody>
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-gray-50 transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-800/50">
+                  <tr
+                    key={log.id}
+                    className="border-b border-gray-50 transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-800/50"
+                  >
                     <td className="px-4 py-3">
                       <span className="font-medium text-gray-900 dark:text-white">{log.model}</span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{formatTokens(log.input_tokens)}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{formatTokens(log.output_tokens)}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      {formatTokens(log.input_tokens)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      {formatTokens(log.output_tokens)}
+                    </td>
                     <td className="px-4 py-3">
-                      <span className="text-green-600 dark:text-green-400">${formatCost(log.actual_cost)}</span>
+                      <span className="text-green-600 dark:text-green-400">
+                        ${formatCost(log.actual_cost)}
+                      </span>
                       <span className="text-gray-400"> / ${formatCost(log.total_cost)}</span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{formatDuration(log.duration_ms)}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      {formatDuration(log.duration_ms)}
+                    </td>
                     <td className="px-4 py-3">
                       {log.stream ? (
-                        <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">SSE</span>
+                        <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                          SSE
+                        </span>
                       ) : (
-                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">REST</span>
+                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                          REST
+                        </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(log.created_at)}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                      {formatDateTime(log.created_at)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -269,17 +350,25 @@ export default function UsageView() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-dark-700">
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              {t('common.showing', 'Showing')} {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} {t('common.of', 'of')} {total}
+              {t('common.showing', 'Showing')} {(page - 1) * PAGE_SIZE + 1}-
+              {Math.min(page * PAGE_SIZE, total)} {t('common.of', 'of')} {total}
             </span>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
                 {t('common.prev', 'Prev')}
               </Button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
                 .map((p, idx, arr) => (
                   <span key={p}>
-                    {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-gray-400">...</span>}
+                    {idx > 0 && arr[idx - 1] !== p - 1 && (
+                      <span className="px-1 text-gray-400">...</span>
+                    )}
                     <Button
                       variant={p === page ? 'default' : 'ghost'}
                       size="sm"
@@ -289,7 +378,12 @@ export default function UsageView() {
                     </Button>
                   </span>
                 ))}
-              <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+              >
                 {t('common.next', 'Next')}
               </Button>
             </div>

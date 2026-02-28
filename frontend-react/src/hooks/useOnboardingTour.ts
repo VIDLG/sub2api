@@ -123,7 +123,9 @@ export function useOnboardingTour(options: OnboardingOptions) {
         }
       },
 
-      onPrevClick: () => { driverRef.current?.movePrevious() },
+      onPrevClick: () => {
+        driverRef.current?.movePrevious()
+      },
 
       onCloseClick: () => {
         markAsSeen()
@@ -150,7 +152,11 @@ export function useOnboardingTour(options: OnboardingOptions) {
             if (!popover.description.querySelector(`.${hintClass}`)) {
               const hint = document.createElement('div')
               hint.className = `${hintClass} mt-2 text-xs text-gray-500 flex items-center gap-1`
-              hint.appendChild(document.createTextNode(t('onboarding.interactiveHint', 'Press Enter or Click to continue')))
+              hint.appendChild(
+                document.createTextNode(
+                  t('onboarding.interactiveHint', 'Press Enter or Click to continue'),
+                ),
+              )
               popover.description.appendChild(hint)
             }
           }
@@ -173,15 +179,20 @@ export function useOnboardingTour(options: OnboardingOptions) {
 
             const shortcut1 = document.createElement('span')
             shortcut1.className = 'shortcut-item'
-            const kbd1 = document.createElement('kbd'); kbd1.textContent = '←'
-            const kbd2 = document.createElement('kbd'); kbd2.textContent = '→'
+            const kbd1 = document.createElement('kbd')
+            kbd1.textContent = '←'
+            const kbd2 = document.createElement('kbd')
+            kbd2.textContent = '→'
             shortcut1.appendChild(kbd1)
             shortcut1.appendChild(kbd2)
-            shortcut1.appendChild(document.createTextNode(` ${t('onboarding.navigation.flipPage')}`))
+            shortcut1.appendChild(
+              document.createTextNode(` ${t('onboarding.navigation.flipPage')}`),
+            )
 
             const shortcut2 = document.createElement('span')
             shortcut2.className = 'shortcut-item'
-            const kbd3 = document.createElement('kbd'); kbd3.textContent = 'ESC'
+            const kbd3 = document.createElement('kbd')
+            kbd3.textContent = 'ESC'
             shortcut2.appendChild(kbd3)
             shortcut2.appendChild(document.createTextNode(` ${t('onboarding.navigation.exit')}`))
 
@@ -267,14 +278,28 @@ export function useOnboardingTour(options: OnboardingOptions) {
             }
             htmlElement.addEventListener('input', inputHandler)
             htmlElement.addEventListener('change', inputHandler)
-            currentClickListenerRef.current = { element: htmlElement, handler: inputHandler, originalTabIndex, eventTypes: ['input', 'change'] }
+            currentClickListenerRef.current = {
+              element: htmlElement,
+              handler: inputHandler,
+              originalTabIndex,
+              eventTypes: ['input', 'change'],
+            }
           } else {
             const keyHandler = (e: KeyboardEvent) => {
-              if (['Enter', ' '].includes(e.key)) { e.preventDefault(); void clickHandler() }
+              if (['Enter', ' '].includes(e.key)) {
+                e.preventDefault()
+                void clickHandler()
+              }
             }
             htmlElement.addEventListener('click', clickHandler as EventListener, { once: true })
             htmlElement.addEventListener('keydown', keyHandler)
-            currentClickListenerRef.current = { element: htmlElement, handler: clickHandler as () => void, keyHandler, originalTabIndex, eventTypes: ['click'] }
+            currentClickListenerRef.current = {
+              element: htmlElement,
+              handler: clickHandler as () => void,
+              keyHandler,
+              originalTabIndex,
+              eventTypes: ['click'],
+            }
           }
         }
       },
@@ -282,7 +307,9 @@ export function useOnboardingTour(options: OnboardingOptions) {
       onDestroyed: () => {
         cleanupClickListener()
         if (globalKeyboardHandlerRef.current) {
-          document.removeEventListener('keydown', globalKeyboardHandlerRef.current, { capture: true })
+          document.removeEventListener('keydown', globalKeyboardHandlerRef.current, {
+            capture: true,
+          })
           globalKeyboardHandlerRef.current = null
         }
         onboardingStore.getState().setDriverInstance(null)
@@ -290,7 +317,11 @@ export function useOnboardingTour(options: OnboardingOptions) {
     })
 
     driverRef.current = driverInstance
-    onboardingStore.getState().setDriverInstance(driverInstance as unknown as { isActive?: () => boolean; [key: string]: unknown })
+    onboardingStore
+      .getState()
+      .setDriverInstance(
+        driverInstance as unknown as { isActive?: () => boolean; [key: string]: unknown },
+      )
 
     globalKeyboardHandlerRef.current = (e: KeyboardEvent) => {
       if (!driverRef.current?.isActive()) return
@@ -298,33 +329,48 @@ export function useOnboardingTour(options: OnboardingOptions) {
       const isInput = ['INPUT', 'TEXTAREA'].includes(target?.tagName)
 
       if (e.key === 'Escape') {
-        e.preventDefault(); e.stopPropagation()
-        markAsSeen(); driverRef.current.destroy(); onboardingStore.getState().setDriverInstance(null)
+        e.preventDefault()
+        e.stopPropagation()
+        markAsSeen()
+        driverRef.current.destroy()
+        onboardingStore.getState().setDriverInstance(null)
         return
       }
       if (e.key === 'ArrowRight') {
         if (isInput) return
-        e.preventDefault(); e.stopPropagation()
+        e.preventDefault()
+        e.stopPropagation()
         const currentIndex = driverRef.current!.getActiveIndex() ?? 0
         const step = steps[currentIndex]
         if (step && isInteractiveStep(step) && step.element) {
-          const el = typeof step.element === 'string' ? document.querySelector(step.element) as HTMLElement : step.element as HTMLElement
+          const el =
+            typeof step.element === 'string'
+              ? (document.querySelector(step.element) as HTMLElement)
+              : (step.element as HTMLElement)
           if (el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return
         }
         driverRef.current!.moveNext()
       } else if (e.key === 'Enter') {
         if (isInput) return
-        e.preventDefault(); e.stopPropagation()
+        e.preventDefault()
+        e.stopPropagation()
         const currentIndex = driverRef.current!.getActiveIndex() ?? 0
         const step = steps[currentIndex]
         if (step && isInteractiveStep(step) && step.element) {
-          const el = typeof step.element === 'string' ? document.querySelector(step.element) as HTMLElement : step.element as HTMLElement
-          if (el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) { el.click(); return }
+          const el =
+            typeof step.element === 'string'
+              ? (document.querySelector(step.element) as HTMLElement)
+              : (step.element as HTMLElement)
+          if (el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
+            el.click()
+            return
+          }
         }
         driverRef.current!.moveNext()
       } else if (e.key === 'ArrowLeft') {
         if (isInput || (target as HTMLElement)?.isContentEditable) return
-        e.preventDefault(); e.stopPropagation()
+        e.preventDefault()
+        e.stopPropagation()
         driverRef.current!.movePrevious()
       }
     }
@@ -361,17 +407,20 @@ export function useOnboardingTour(options: OnboardingOptions) {
     if (isSimpleMode) return
     if (user?.role !== 'admin') return
     if (!options.autoStart || hasSeen()) return
-    const onboardingEnabled = useAppStore.getState().cachedPublicSettings?.onboarding_enabled ?? false
+    const onboardingEnabled =
+      useAppStore.getState().cachedPublicSettings?.onboarding_enabled ?? false
     if (!onboardingEnabled) return
 
-    autoStartTimerRef.current = setTimeout(() => { void startTour() }, TIMING.AUTO_START_DELAY_MS)
+    autoStartTimerRef.current = setTimeout(() => {
+      void startTour()
+    }, TIMING.AUTO_START_DELAY_MS)
 
     return () => {
       if (autoStartTimerRef.current) clearTimeout(autoStartTimerRef.current)
       onboardingStore.getState().clearControlMethods()
       onboardingStore.getState().setReplayCallback(null)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return { startTour, replayTour, nextStep, isCurrentStep, hasSeen, markAsSeen, clearSeen }

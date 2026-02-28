@@ -26,8 +26,16 @@ import {
   BeakerIcon,
   ArrowRightIcon,
 } from '@/components/icons'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { TokenTrendChart } from '@/components/charts/TokenTrendChart'
+import { ModelDistributionChart } from '@/components/charts/ModelDistributionChart'
 
 // ==================== Format Helpers ====================
 
@@ -71,7 +79,9 @@ export default function DashboardView() {
   const isSimpleMode = useAuthStore((s) => s.isSimpleMode)
   const refreshUser = useAuthStore((s) => s.refreshUser)
 
-  const [startDate, setStartDate] = useState(() => formatLocalDate(new Date(Date.now() - 6 * 86400000)))
+  const [startDate, setStartDate] = useState(() =>
+    formatLocalDate(new Date(Date.now() - 6 * 86400000)),
+  )
   const [endDate, setEndDate] = useState(() => formatLocalDate(new Date()))
   const [granularity, setGranularity] = useState('day')
 
@@ -85,7 +95,11 @@ export default function DashboardView() {
     },
   })
 
-  const chartParams = { start_date: startDate, end_date: endDate, granularity: granularity as 'day' | 'hour' }
+  const chartParams = {
+    start_date: startDate,
+    end_date: endDate,
+    granularity: granularity as 'day' | 'hour',
+  }
 
   const { data: chartData, isFetching: loadingCharts } = useQuery({
     queryKey: ['user', 'dashboard', 'charts', chartParams],
@@ -137,8 +151,12 @@ export default function DashboardView() {
                 <WalletIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('dashboard.balance')}</p>
-                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">${formatBalance(user?.balance || 0)}</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {t('dashboard.balance')}
+                </p>
+                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                  ${formatBalance(user?.balance || 0)}
+                </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{t('common.available')}</p>
               </div>
             </div>
@@ -152,9 +170,15 @@ export default function DashboardView() {
               <KeyIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('dashboard.apiKeys')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.total_api_keys}</p>
-              <p className="text-xs text-green-600 dark:text-green-400">{stats.active_api_keys} {t('common.active')}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('dashboard.apiKeys')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.total_api_keys}
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                {stats.active_api_keys} {t('common.active')}
+              </p>
             </div>
           </div>
         </div>
@@ -166,9 +190,15 @@ export default function DashboardView() {
               <ChartIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('dashboard.todayRequests')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.today_requests}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('common.total')}: {formatNumber(stats.total_requests)}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('dashboard.todayRequests')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.today_requests}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('common.total')}: {formatNumber(stats.total_requests)}
+              </p>
             </div>
           </div>
         </div>
@@ -180,15 +210,36 @@ export default function DashboardView() {
               <DollarIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('dashboard.todayCost')}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('dashboard.todayCost')}
+              </p>
               <p className="text-xl font-bold text-gray-900 dark:text-white">
-                <span className="text-purple-600 dark:text-purple-400" title={t('dashboard.actual')}>${formatCost(stats.today_actual_cost)}</span>
-                <span className="text-sm font-normal text-gray-400 dark:text-gray-500" title={t('dashboard.standard')}> / ${formatCost(stats.today_cost)}</span>
+                <span
+                  className="text-purple-600 dark:text-purple-400"
+                  title={t('dashboard.actual')}
+                >
+                  ${formatCost(stats.today_actual_cost)}
+                </span>
+                <span
+                  className="text-sm font-normal text-gray-400 dark:text-gray-500"
+                  title={t('dashboard.standard')}
+                >
+                  {' '}
+                  / ${formatCost(stats.today_cost)}
+                </span>
               </p>
               <p className="text-xs">
                 <span className="text-gray-500 dark:text-gray-400">{t('common.total')}: </span>
-                <span className="text-purple-600 dark:text-purple-400" title={t('dashboard.actual')}>${formatCost(stats.total_actual_cost)}</span>
-                <span className="text-gray-400 dark:text-gray-500" title={t('dashboard.standard')}> / ${formatCost(stats.total_cost)}</span>
+                <span
+                  className="text-purple-600 dark:text-purple-400"
+                  title={t('dashboard.actual')}
+                >
+                  ${formatCost(stats.total_actual_cost)}
+                </span>
+                <span className="text-gray-400 dark:text-gray-500" title={t('dashboard.standard')}>
+                  {' '}
+                  / ${formatCost(stats.total_cost)}
+                </span>
               </p>
             </div>
           </div>
@@ -204,9 +255,16 @@ export default function DashboardView() {
               <CubeIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('dashboard.todayTokens')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{formatTokens(stats.today_tokens)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.input')}: {formatTokens(stats.today_input_tokens)} / {t('dashboard.output')}: {formatTokens(stats.today_output_tokens)}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('dashboard.todayTokens')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {formatTokens(stats.today_tokens)}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('dashboard.input')}: {formatTokens(stats.today_input_tokens)} /{' '}
+                {t('dashboard.output')}: {formatTokens(stats.today_output_tokens)}
+              </p>
             </div>
           </div>
         </div>
@@ -218,9 +276,16 @@ export default function DashboardView() {
               <DatabaseIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('dashboard.totalTokens')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{formatTokens(stats.total_tokens)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.input')}: {formatTokens(stats.total_input_tokens)} / {t('dashboard.output')}: {formatTokens(stats.total_output_tokens)}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('dashboard.totalTokens')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {formatTokens(stats.total_tokens)}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('dashboard.input')}: {formatTokens(stats.total_input_tokens)} /{' '}
+                {t('dashboard.output')}: {formatTokens(stats.total_output_tokens)}
+              </p>
             </div>
           </div>
         </div>
@@ -232,13 +297,19 @@ export default function DashboardView() {
               <BoltIcon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('dashboard.performance')}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('dashboard.performance')}
+              </p>
               <div className="flex items-baseline gap-2">
-                <p className="text-xl font-bold text-gray-900 dark:text-white">{formatTokens(stats.rpm)}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {formatTokens(stats.rpm)}
+                </p>
                 <span className="text-xs text-gray-500 dark:text-gray-400">RPM</span>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatTokens(stats.tpm)}</p>
+                <p className="text-sm font-semibold text-violet-600 dark:text-violet-400">
+                  {formatTokens(stats.tpm)}
+                </p>
                 <span className="text-xs text-gray-500 dark:text-gray-400">TPM</span>
               </div>
             </div>
@@ -252,9 +323,15 @@ export default function DashboardView() {
               <ClockIcon className="h-5 w-5 text-rose-600 dark:text-rose-400" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('dashboard.avgResponse')}</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{formatDuration(stats.average_duration_ms)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.averageTime')}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {t('dashboard.avgResponse')}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {formatDuration(stats.average_duration_ms)}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('dashboard.averageTime')}
+              </p>
             </div>
           </div>
         </div>
@@ -265,7 +342,9 @@ export default function DashboardView() {
         {/* Date Range Filter */}
         <div className="card p-4">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('dashboard.timeRange')}:</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('dashboard.timeRange')}:
+            </span>
             <DateRangePicker
               startDate={startDate}
               endDate={endDate}
@@ -277,7 +356,9 @@ export default function DashboardView() {
               }}
             />
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('dashboard.granularity')}:</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('dashboard.granularity')}:
+              </span>
               <Select value={granularity} onValueChange={setGranularity}>
                 <SelectTrigger className="w-28 text-sm">
                   <SelectValue />
@@ -293,84 +374,28 @@ export default function DashboardView() {
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Model Distribution Table */}
-          <div className="card relative overflow-hidden p-4">
-            {loadingCharts && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-sm dark:bg-dark-800/50">
-                <div className="spinner" />
-              </div>
-            )}
-            <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{t('dashboard.modelDistribution')}</h3>
-            {modelStats.length > 0 ? (
-              <div className="max-h-48 overflow-y-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-gray-500 dark:text-gray-400">
-                      <th className="pb-2 text-left">{t('dashboard.model')}</th>
-                      <th className="pb-2 text-right">{t('dashboard.requests')}</th>
-                      <th className="pb-2 text-right">{t('dashboard.tokens')}</th>
-                      <th className="pb-2 text-right">{t('dashboard.actual')}</th>
-                      <th className="pb-2 text-right">{t('dashboard.standard')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {modelStats.map((model) => (
-                      <tr key={model.model} className="border-t border-gray-100 dark:border-gray-700">
-                        <td className="max-w-[100px] truncate py-1.5 font-medium text-gray-900 dark:text-white" title={model.model}>{model.model}</td>
-                        <td className="py-1.5 text-right text-gray-600 dark:text-gray-400">{formatNumber(model.requests)}</td>
-                        <td className="py-1.5 text-right text-gray-600 dark:text-gray-400">{formatTokens(model.total_tokens)}</td>
-                        <td className="py-1.5 text-right text-green-600 dark:text-green-400">${formatCost(model.actual_cost)}</td>
-                        <td className="py-1.5 text-right text-gray-400 dark:text-gray-500">${formatCost(model.cost)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                {t('dashboard.noDataAvailable')}
-              </div>
-            )}
+          {/* Model Distribution */}
+          <div className="card p-4">
+            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+              {t('dashboard.modelDistribution')}
+            </h3>
+            <ModelDistributionChart
+              data={modelStats}
+              loading={loadingCharts}
+              emptyText={t('dashboard.noDataAvailable')}
+            />
           </div>
 
-          {/* Token Usage Trend Table */}
-          <div className="card relative overflow-hidden p-4">
-            {loadingCharts && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-sm dark:bg-dark-800/50">
-                <div className="spinner" />
-              </div>
-            )}
-            <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{t('dashboard.tokenUsageTrend')}</h3>
-            {trendData.length > 0 ? (
-              <div className="max-h-48 overflow-y-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-gray-500 dark:text-gray-400">
-                      <th className="pb-2 text-left">{t('dashboard.date')}</th>
-                      <th className="pb-2 text-right">{t('dashboard.input')}</th>
-                      <th className="pb-2 text-right">{t('dashboard.output')}</th>
-                      <th className="pb-2 text-right">{t('dashboard.actual')}</th>
-                      <th className="pb-2 text-right">{t('dashboard.standard')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trendData.map((d) => (
-                      <tr key={d.date} className="border-t border-gray-100 dark:border-gray-700">
-                        <td className="py-1.5 text-gray-900 dark:text-white">{d.date}</td>
-                        <td className="py-1.5 text-right text-blue-600 dark:text-blue-400">{formatTokens(d.input_tokens)}</td>
-                        <td className="py-1.5 text-right text-green-600 dark:text-green-400">{formatTokens(d.output_tokens)}</td>
-                        <td className="py-1.5 text-right text-amber-600 dark:text-amber-400">${formatCost(d.actual_cost)}</td>
-                        <td className="py-1.5 text-right text-gray-400 dark:text-gray-500">${formatCost(d.cost)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                {t('dashboard.noDataAvailable')}
-              </div>
-            )}
+          {/* Token Usage Trend */}
+          <div className="card p-4">
+            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+              {t('dashboard.tokenUsageTrend')}
+            </h3>
+            <TokenTrendChart
+              data={trendData}
+              loading={loadingCharts}
+              emptyText={t('dashboard.noDataAvailable')}
+            />
           </div>
         </div>
       </div>
@@ -380,8 +405,12 @@ export default function DashboardView() {
         {/* Recent Usage */}
         <div className="card lg:col-span-2">
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('dashboard.recentUsage')}</h2>
-            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-dark-800 dark:text-dark-400">{t('dashboard.last7Days')}</span>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t('dashboard.recentUsage')}
+            </h2>
+            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-dark-800 dark:text-dark-400">
+              {t('dashboard.last7Days')}
+            </span>
           </div>
           <div className="p-6">
             {loadingUsage ? (
@@ -390,32 +419,59 @@ export default function DashboardView() {
               </div>
             ) : recentUsage.length === 0 ? (
               <div className="py-8 text-center">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('dashboard.noUsageRecords')}</p>
-                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('dashboard.startUsingApi')}</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {t('dashboard.noUsageRecords')}
+                </p>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  {t('dashboard.startUsingApi')}
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
                 {recentUsage.map((log) => (
-                  <div key={log.id} className="flex items-center justify-between rounded-xl bg-gray-50 p-4 transition-colors hover:bg-gray-100 dark:bg-dark-800/50 dark:hover:bg-dark-800">
+                  <div
+                    key={log.id}
+                    className="flex items-center justify-between rounded-xl bg-gray-50 p-4 transition-colors hover:bg-gray-100 dark:bg-dark-800/50 dark:hover:bg-dark-800"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
                         <BeakerIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{log.model}</p>
-                        <p className="text-xs text-gray-500 dark:text-dark-400">{formatDateTime(log.created_at)}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {log.model}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-dark-400">
+                          {formatDateTime(log.created_at)}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold">
-                        <span className="text-green-600 dark:text-green-400" title={t('dashboard.actual')}>${formatCost(log.actual_cost)}</span>
-                        <span className="font-normal text-gray-400 dark:text-gray-500" title={t('dashboard.standard')}> / ${formatCost(log.total_cost)}</span>
+                        <span
+                          className="text-green-600 dark:text-green-400"
+                          title={t('dashboard.actual')}
+                        >
+                          ${formatCost(log.actual_cost)}
+                        </span>
+                        <span
+                          className="font-normal text-gray-400 dark:text-gray-500"
+                          title={t('dashboard.standard')}
+                        >
+                          {' '}
+                          / ${formatCost(log.total_cost)}
+                        </span>
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-dark-400">{(log.input_tokens + log.output_tokens).toLocaleString()} tokens</p>
+                      <p className="text-xs text-gray-500 dark:text-dark-400">
+                        {(log.input_tokens + log.output_tokens).toLocaleString()} tokens
+                      </p>
                     </div>
                   </div>
                 ))}
-                <Link to="/usage" className="flex items-center justify-center gap-2 py-3 text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                <Link
+                  to="/usage"
+                  className="flex items-center justify-center gap-2 py-3 text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                >
                   {t('dashboard.viewAllUsage')}
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>
@@ -427,38 +483,61 @@ export default function DashboardView() {
         {/* Quick Actions */}
         <div className="card lg:col-span-1">
           <div className="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('dashboard.quickActions')}</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t('dashboard.quickActions')}
+            </h2>
           </div>
           <div className="space-y-3 p-4">
-            <button onClick={() => navigate({ to: '/keys' })} className="group flex w-full items-center gap-4 rounded-xl bg-gray-50 p-4 text-left transition-all duration-200 hover:bg-gray-100 dark:bg-dark-800/50 dark:hover:bg-dark-800">
+            <button
+              onClick={() => navigate({ to: '/keys' })}
+              className="group flex w-full items-center gap-4 rounded-xl bg-gray-50 p-4 text-left transition-all duration-200 hover:bg-gray-100 dark:bg-dark-800/50 dark:hover:bg-dark-800"
+            >
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary-100 transition-transform group-hover:scale-105 dark:bg-primary-900/30">
                 <KeyIcon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('dashboard.createApiKey')}</p>
-                <p className="text-xs text-gray-500 dark:text-dark-400">{t('dashboard.generateNewKey')}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('dashboard.createApiKey')}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-dark-400">
+                  {t('dashboard.generateNewKey')}
+                </p>
               </div>
               <ChevronRightIcon className="h-5 w-5 text-gray-400 transition-colors group-hover:text-primary-500 dark:text-dark-500" />
             </button>
 
-            <button onClick={() => navigate({ to: '/usage' })} className="group flex w-full items-center gap-4 rounded-xl bg-gray-50 p-4 text-left transition-all duration-200 hover:bg-gray-100 dark:bg-dark-800/50 dark:hover:bg-dark-800">
+            <button
+              onClick={() => navigate({ to: '/usage' })}
+              className="group flex w-full items-center gap-4 rounded-xl bg-gray-50 p-4 text-left transition-all duration-200 hover:bg-gray-100 dark:bg-dark-800/50 dark:hover:bg-dark-800"
+            >
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 transition-transform group-hover:scale-105 dark:bg-emerald-900/30">
                 <ChartIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('dashboard.viewUsage')}</p>
-                <p className="text-xs text-gray-500 dark:text-dark-400">{t('dashboard.checkDetailedLogs')}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('dashboard.viewUsage')}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-dark-400">
+                  {t('dashboard.checkDetailedLogs')}
+                </p>
               </div>
               <ChevronRightIcon className="h-5 w-5 text-gray-400 transition-colors group-hover:text-emerald-500 dark:text-dark-500" />
             </button>
 
-            <button onClick={() => navigate({ to: '/redeem' })} className="group flex w-full items-center gap-4 rounded-xl bg-gray-50 p-4 text-left transition-all duration-200 hover:bg-gray-100 dark:bg-dark-800/50 dark:hover:bg-dark-800">
+            <button
+              onClick={() => navigate({ to: '/redeem' })}
+              className="group flex w-full items-center gap-4 rounded-xl bg-gray-50 p-4 text-left transition-all duration-200 hover:bg-gray-100 dark:bg-dark-800/50 dark:hover:bg-dark-800"
+            >
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 transition-transform group-hover:scale-105 dark:bg-amber-900/30">
                 <GiftIcon className="h-6 w-6 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('dashboard.redeemCode')}</p>
-                <p className="text-xs text-gray-500 dark:text-dark-400">{t('dashboard.addBalanceWithCode')}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('dashboard.redeemCode')}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-dark-400">
+                  {t('dashboard.addBalanceWithCode')}
+                </p>
               </div>
               <ChevronRightIcon className="h-5 w-5 text-gray-400 transition-colors group-hover:text-amber-500 dark:text-dark-500" />
             </button>

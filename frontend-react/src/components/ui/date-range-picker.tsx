@@ -18,8 +18,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 // ==================== Types ====================
 
 interface DateRangePickerProps {
-  startDate: string        // YYYY-MM-DD
-  endDate: string          // YYYY-MM-DD
+  startDate: string // YYYY-MM-DD
+  endDate: string // YYYY-MM-DD
   onChange: (range: { startDate: string; endDate: string; preset: string | null }) => void
   className?: string
 }
@@ -48,12 +48,18 @@ const PRESETS: Preset[] = [
   {
     labelKey: 'dates.today',
     value: 'today',
-    getRange: () => { const t = today(); return { start: t, end: t } },
+    getRange: () => {
+      const t = today()
+      return { start: t, end: t }
+    },
   },
   {
     labelKey: 'dates.yesterday',
     value: 'yesterday',
-    getRange: () => { const t = subDays(today(), 1); return { start: t, end: t } },
+    getRange: () => {
+      const t = subDays(today(), 1)
+      return { start: t, end: t }
+    },
   },
   {
     labelKey: 'dates.last7Days',
@@ -118,21 +124,25 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
       if (preset) return t(preset.labelKey)
     }
     if (startDate && endDate) {
-      if (startDate === endDate) return format(new Date(startDate + 'T00:00:00'), 'MMM d', { locale: calendarLocale })
+      if (startDate === endDate)
+        return format(new Date(startDate + 'T00:00:00'), 'MMM d', { locale: calendarLocale })
       return `${format(new Date(startDate + 'T00:00:00'), 'MMM d', { locale: calendarLocale })} – ${format(new Date(endDate + 'T00:00:00'), 'MMM d', { locale: calendarLocale })}`
     }
     return t('dates.selectDateRange')
   })()
 
-  const handleSelectPreset = useCallback((preset: Preset) => {
-    const range = preset.getRange()
-    setPending({ from: range.start, to: range.end })
-    // Immediately emit for presets (like Vue: selectPreset doesn't auto-apply, but we do here for UX)
-    const s = toDateStr(range.start)
-    const e = toDateStr(range.end)
-    onChange({ startDate: s, endDate: e, preset: preset.value })
-    setOpen(false)
-  }, [onChange])
+  const handleSelectPreset = useCallback(
+    (preset: Preset) => {
+      const range = preset.getRange()
+      setPending({ from: range.start, to: range.end })
+      // Immediately emit for presets (like Vue: selectPreset doesn't auto-apply, but we do here for UX)
+      const s = toDateStr(range.start)
+      const e = toDateStr(range.end)
+      onChange({ startDate: s, endDate: e, preset: preset.value })
+      setOpen(false)
+    },
+    [onChange],
+  )
 
   const handleApply = useCallback(() => {
     if (!pending.from) return
@@ -148,11 +158,20 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
         <Button
           variant="outline"
           size="sm"
-          className={cn('flex items-center gap-2 text-sm font-medium', open && 'border-primary-500 ring-2 ring-primary-500/30', className)}
+          className={cn(
+            'flex items-center gap-2 text-sm font-medium',
+            open && 'border-primary-500 ring-2 ring-primary-500/30',
+            className,
+          )}
         >
           <CalendarIcon className="h-4 w-4 text-gray-400" />
           <span>{displayLabel}</span>
-          <ChevronDownIcon className={cn('h-4 w-4 text-gray-400 transition-transform duration-200', open && 'rotate-180')} />
+          <ChevronDownIcon
+            className={cn(
+              'h-4 w-4 text-gray-400 transition-transform duration-200',
+              open && 'rotate-180',
+            )}
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -168,7 +187,8 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
                 className={cn(
                   'rounded-md px-3 py-1.5 text-xs font-medium transition-colors duration-150',
                   'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-700',
-                  isActive && 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                  isActive &&
+                    'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
                 )}
               >
                 {t(preset.labelKey)}

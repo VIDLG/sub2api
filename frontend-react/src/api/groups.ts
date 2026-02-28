@@ -29,7 +29,7 @@ export async function getUserGroupRates(): Promise<Record<number, number>> {
 
 export const userGroupsAPI = {
   getAvailable,
-  getUserGroupRates
+  getUserGroupRates,
 }
 
 export default userGroupsAPI

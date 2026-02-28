@@ -30,10 +30,7 @@ function injectPublicSettings(backendUrl: string, isDev: boolean): Plugin {
             }
           }
         } catch (e) {
-          console.warn(
-            '[vite] 无法获取公开配置，将回退到 API 调用:',
-            (e as Error).message,
-          )
+          console.warn('[vite] 无法获取公开配置，将回退到 API 调用:', (e as Error).message)
         }
         return html
       },

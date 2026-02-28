@@ -34,35 +34,35 @@ export interface AntigravityTokenInfo {
 }
 
 export async function generateAuthUrl(
-  payload: AntigravityAuthUrlRequest
+  payload: AntigravityAuthUrlRequest,
 ): Promise<AntigravityAuthUrlResponse> {
   const { data } = await apiClient.post<AntigravityAuthUrlResponse>(
     '/admin/antigravity/oauth/auth-url',
-    payload
+    payload,
   )
   return data
 }
 
 export async function exchangeCode(
-  payload: AntigravityExchangeCodeRequest
+  payload: AntigravityExchangeCodeRequest,
 ): Promise<AntigravityTokenInfo> {
   const { data } = await apiClient.post<AntigravityTokenInfo>(
     '/admin/antigravity/oauth/exchange-code',
-    payload
+    payload,
   )
   return data
 }
 
 export async function refreshAntigravityToken(
   refreshToken: string,
-  proxyId?: number | null
+  proxyId?: number | null,
 ): Promise<AntigravityTokenInfo> {
   const payload: Record<string, unknown> = { refresh_token: refreshToken }
   if (proxyId) payload.proxy_id = proxyId
 
   const { data } = await apiClient.post<AntigravityTokenInfo>(
     '/admin/antigravity/oauth/refresh-token',
-    payload
+    payload,
   )
   return data
 }

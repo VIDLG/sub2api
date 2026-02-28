@@ -47,11 +47,11 @@ export type GeminiTokenInfo = {
 }
 
 export async function generateAuthUrl(
-  payload: GeminiAuthUrlRequest
+  payload: GeminiAuthUrlRequest,
 ): Promise<GeminiAuthUrlResponse> {
   const { data } = await apiClient.post<GeminiAuthUrlResponse>(
     '/admin/gemini/oauth/auth-url',
-    payload
+    payload,
   )
   return data
 }
@@ -59,7 +59,7 @@ export async function generateAuthUrl(
 export async function exchangeCode(payload: GeminiExchangeCodeRequest): Promise<GeminiTokenInfo> {
   const { data } = await apiClient.post<GeminiTokenInfo>(
     '/admin/gemini/oauth/exchange-code',
-    payload
+    payload,
   )
   return data
 }

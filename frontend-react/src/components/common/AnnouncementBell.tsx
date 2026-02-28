@@ -6,7 +6,13 @@ import announcementsAPI from '@/api/announcements'
 import { useAppStore } from '@/stores/app'
 import type { UserAnnouncement } from '@/types'
 import { BellIcon, CheckIcon } from '@/components/icons'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
 marked.setOptions({ breaks: true, gfm: true })
@@ -51,13 +57,19 @@ export default function AnnouncementBell() {
     }
   }, [showError, t])
 
-  useEffect(() => { loadAnnouncements() }, [loadAnnouncements])
+  useEffect(() => {
+    loadAnnouncements()
+  }, [loadAnnouncements])
 
   async function markAsRead(id: number) {
     try {
       await announcementsAPI.markRead(id)
-      setAnnouncements((prev) => prev.map((a) => a.id === id ? { ...a, read_at: new Date().toISOString() } : a))
-      setSelectedItem((prev) => prev?.id === id ? { ...prev, read_at: new Date().toISOString() } : prev)
+      setAnnouncements((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, read_at: new Date().toISOString() } : a)),
+      )
+      setSelectedItem((prev) =>
+        prev?.id === id ? { ...prev, read_at: new Date().toISOString() } : prev,
+      )
     } catch (err: unknown) {
       showError((err as { message?: string })?.message || t('common.unknownError', 'Unknown error'))
     }
@@ -66,9 +78,11 @@ export default function AnnouncementBell() {
   async function markAllAsRead() {
     setLoading(true)
     try {
-      await Promise.all(announcements.filter((a) => !a.read_at).map((a) => announcementsAPI.markRead(a.id)))
+      await Promise.all(
+        announcements.filter((a) => !a.read_at).map((a) => announcementsAPI.markRead(a.id)),
+      )
       const now = new Date().toISOString()
-      setAnnouncements((prev) => prev.map((a) => a.read_at ? a : { ...a, read_at: now }))
+      setAnnouncements((prev) => prev.map((a) => (a.read_at ? a : { ...a, read_at: now })))
       showSuccess(t('announcements.allMarkedAsRead', 'All marked as read'))
     } catch (err: unknown) {
       showError((err as { message?: string })?.message || t('common.unknownError', 'Unknown error'))
@@ -109,16 +123,26 @@ export default function AnnouncementBell() {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
                     <BellIcon className="h-4 w-4" />
                   </div>
-                  <DialogTitle className="text-lg font-semibold">{t('announcements.title', 'Announcements')}</DialogTitle>
+                  <DialogTitle className="text-lg font-semibold">
+                    {t('announcements.title', 'Announcements')}
+                  </DialogTitle>
                 </div>
                 {unreadCount > 0 && (
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    <span className="font-medium text-blue-600 dark:text-blue-400">{unreadCount}</span> {t('announcements.unread', 'unread')}
+                    <span className="font-medium text-blue-600 dark:text-blue-400">
+                      {unreadCount}
+                    </span>{' '}
+                    {t('announcements.unread', 'unread')}
                   </p>
                 )}
               </div>
               {unreadCount > 0 && (
-                <Button size="sm" onClick={markAllAsRead} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg">
+                <Button
+                  size="sm"
+                  onClick={markAllAsRead}
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                >
                   {t('announcements.markAllRead', 'Mark all read')}
                 </Button>
               )}
@@ -127,7 +151,9 @@ export default function AnnouncementBell() {
 
           <div className="max-h-[65vh] overflow-y-auto">
             {loading ? (
-              <div className="flex items-center justify-center py-16"><div className="spinner h-10 w-10" /></div>
+              <div className="flex items-center justify-center py-16">
+                <div className="spinner h-10 w-10" />
+              </div>
             ) : announcements.length > 0 ? (
               announcements.map((item) => (
                 <div
@@ -135,7 +161,9 @@ export default function AnnouncementBell() {
                   onClick={() => openDetail(item)}
                   className={`group relative flex cursor-pointer items-center gap-4 border-b border-gray-100 px-6 py-4 transition-all hover:bg-gray-50 dark:border-dark-700 dark:hover:bg-dark-700/30 ${!item.read_at ? 'bg-blue-50/30 dark:bg-blue-900/5' : ''}`}
                 >
-                  {!item.read_at && <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600" />}
+                  {!item.read_at && (
+                    <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600" />
+                  )}
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
                     {!item.read_at ? (
                       <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
@@ -150,9 +178,13 @@ export default function AnnouncementBell() {
                   </div>
                   <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-sm font-medium text-gray-900 dark:text-white">{item.title}</h3>
+                      <h3 className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                        {item.title}
+                      </h3>
                       <div className="mt-1 flex items-center gap-2">
-                        <time className="text-xs text-gray-500">{formatRelativeTime(item.created_at)}</time>
+                        <time className="text-xs text-gray-500">
+                          {formatRelativeTime(item.created_at)}
+                        </time>
                         {!item.read_at && (
                           <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
                             <span className="relative flex h-1.5 w-1.5">
@@ -164,7 +196,13 @@ export default function AnnouncementBell() {
                         )}
                       </div>
                     </div>
-                    <svg className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg
+                      className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform group-hover:translate-x-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -175,8 +213,12 @@ export default function AnnouncementBell() {
                 <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-700 dark:to-dark-600">
                   <BellIcon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                 </div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('announcements.empty', 'No announcements')}</p>
-                <p className="mt-1 text-xs text-gray-500">{t('announcements.emptyDescription', "You're all caught up!")}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('announcements.empty', 'No announcements')}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  {t('announcements.emptyDescription', "You're all caught up!")}
+                </p>
               </div>
             )}
           </div>
@@ -184,7 +226,12 @@ export default function AnnouncementBell() {
       </Dialog>
 
       {/* Detail dialog */}
-      <Dialog open={!!selectedItem} onOpenChange={(open) => { if (!open) setSelectedItem(null) }}>
+      <Dialog
+        open={!!selectedItem}
+        onOpenChange={(open) => {
+          if (!open) setSelectedItem(null)
+        }}
+      >
         <DialogContent className="max-w-[780px] gap-0 p-0 overflow-hidden">
           <DialogHeader className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-br from-blue-50/80 via-indigo-50/50 to-purple-50/30 px-8 py-6 dark:border-dark-700 dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-purple-900/5">
             <div className="absolute right-0 top-0 h-full w-64 bg-gradient-to-l from-indigo-100/30 to-transparent dark:from-indigo-900/20" />
@@ -194,17 +241,26 @@ export default function AnnouncementBell() {
                   <BellIcon className="h-5 w-5" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{t('announcements.title', 'Announcement')}</span>
+                  <span className="rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                    {t('announcements.title', 'Announcement')}
+                  </span>
                   {selectedItem && !selectedItem.read_at && (
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-2.5 py-1 text-xs font-medium text-white">
-                      <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-white" /></span>
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+                      </span>
                       {t('announcements.unread', 'Unread')}
                     </span>
                   )}
                 </div>
               </div>
-              <DialogTitle className="mb-2 text-2xl font-bold leading-tight">{selectedItem?.title}</DialogTitle>
-              <p className="text-sm text-gray-500">{selectedItem ? formatRelativeTime(selectedItem.created_at) : ''}</p>
+              <DialogTitle className="mb-2 text-2xl font-bold leading-tight">
+                {selectedItem?.title}
+              </DialogTitle>
+              <p className="text-sm text-gray-500">
+                {selectedItem ? formatRelativeTime(selectedItem.created_at) : ''}
+              </p>
             </div>
           </DialogHeader>
 
@@ -213,13 +269,17 @@ export default function AnnouncementBell() {
               <div className="absolute bottom-0 left-0 top-0 w-1 rounded-full bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500" />
               <div
                 className="announcement-markdown prose prose-sm max-w-none pl-6 dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: selectedItem ? renderMarkdown(selectedItem.content) : '' }}
+                dangerouslySetInnerHTML={{
+                  __html: selectedItem ? renderMarkdown(selectedItem.content) : '',
+                }}
               />
             </div>
           </div>
 
           <DialogFooter className="border-t border-gray-100 bg-gray-50/50 px-8 py-4 dark:border-dark-700 dark:bg-dark-900/30">
-            <Button variant="outline" onClick={() => setSelectedItem(null)}>{t('common.close', 'Close')}</Button>
+            <Button variant="outline" onClick={() => setSelectedItem(null)}>
+              {t('common.close', 'Close')}
+            </Button>
             {selectedItem && !selectedItem.read_at && (
               <Button
                 onClick={async () => {

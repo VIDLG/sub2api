@@ -38,7 +38,11 @@ interface AppActions {
   toggleMobileSidebar: () => void
   setMobileOpen: (open: boolean) => void
   setLoading: (isLoading: boolean) => void
-  showToast: (type: 'success' | 'error' | 'info' | 'warning', message: string, duration?: number) => string
+  showToast: (
+    type: 'success' | 'error' | 'info' | 'warning',
+    message: string,
+    duration?: number,
+  ) => string
   showSuccess: (message: string, duration?: number) => string
   showError: (message: string, duration?: number) => string
   showInfo: (message: string, duration?: number) => string
@@ -109,7 +113,11 @@ export const useAppStore = create<AppState & AppActions>()((set, get) => {
       set({ loading: loadingCount > 0 })
     },
 
-    showToast(type: 'success' | 'error' | 'info' | 'warning', message: string, duration?: number): string {
+    showToast(
+      type: 'success' | 'error' | 'info' | 'warning',
+      message: string,
+      duration?: number,
+    ): string {
       const options = duration ? { duration } : undefined
       switch (type) {
         case 'success':
@@ -149,12 +157,16 @@ export const useAppStore = create<AppState & AppActions>()((set, get) => {
       }
     },
 
-    async withLoadingAndError<T>(operation: () => Promise<T>, errorMessage?: string): Promise<T | null> {
+    async withLoadingAndError<T>(
+      operation: () => Promise<T>,
+      errorMessage?: string,
+    ): Promise<T | null> {
       get().setLoading(true)
       try {
         return await operation()
       } catch (error) {
-        const message = errorMessage || (error as { message?: string }).message || 'An error occurred'
+        const message =
+          errorMessage || (error as { message?: string }).message || 'An error occurred'
         get().showError(message)
         return null
       } finally {

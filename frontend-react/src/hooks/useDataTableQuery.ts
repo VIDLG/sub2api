@@ -54,13 +54,10 @@ export function useDataTableQuery<TData, TFilters extends Record<string, unknown
     setPage(newPage)
   }, [])
 
-  const handleFilterChange = useCallback(
-    (key: keyof TFilters, value: TFilters[keyof TFilters]) => {
-      setFilters((prev) => ({ ...prev, [key]: value }))
-      setPage(1)
-    },
-    [],
-  )
+  const handleFilterChange = useCallback((key: keyof TFilters, value: TFilters[keyof TFilters]) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setPage(1)
+  }, [])
 
   const handleSearch = useCallback(
     (value: string) => {
@@ -75,13 +72,10 @@ export function useDataTableQuery<TData, TFilters extends Record<string, unknown
     [queryClient, queryKey],
   )
 
-  const setSearchImmediate = useCallback(
-    (value: string) => {
-      setSearchState(value)
-      setPage(1)
-    },
-    [],
-  )
+  const setSearchImmediate = useCallback((value: string) => {
+    setSearchState(value)
+    setPage(1)
+  }, [])
 
   const refresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey })

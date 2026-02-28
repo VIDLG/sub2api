@@ -11,11 +11,6 @@ async function bootstrap() {
   const appStore = useAppStore.getState()
   appStore.initFromInjectedConfig()
 
-  // Set document title
-  if (appStore.siteName && appStore.siteName !== 'Sub2API') {
-    document.title = `${appStore.siteName} - AI API Gateway`
-  }
-
   // Initialize i18n
   await initI18n()
 

@@ -9,7 +9,7 @@ import type {
   UserAttributeValue,
   CreateUserAttributeRequest,
   UpdateUserAttributeRequest,
-  UserAttributeValuesMap
+  UserAttributeValuesMap,
 } from '@/types'
 
 /**
@@ -25,7 +25,7 @@ export async function listDefinitions(): Promise<UserAttributeDefinition[]> {
  */
 export async function listEnabledDefinitions(): Promise<UserAttributeDefinition[]> {
   const { data } = await apiClient.get<UserAttributeDefinition[]>('/admin/user-attributes', {
-    params: { enabled: true }
+    params: { enabled: true },
   })
   return data
 }
@@ -34,7 +34,7 @@ export async function listEnabledDefinitions(): Promise<UserAttributeDefinition[
  * Create a new attribute definition
  */
 export async function createDefinition(
-  request: CreateUserAttributeRequest
+  request: CreateUserAttributeRequest,
 ): Promise<UserAttributeDefinition> {
   const { data } = await apiClient.post<UserAttributeDefinition>('/admin/user-attributes', request)
   return data
@@ -45,11 +45,11 @@ export async function createDefinition(
  */
 export async function updateDefinition(
   id: number,
-  request: UpdateUserAttributeRequest
+  request: UpdateUserAttributeRequest,
 ): Promise<UserAttributeDefinition> {
   const { data } = await apiClient.put<UserAttributeDefinition>(
     `/admin/user-attributes/${id}`,
-    request
+    request,
   )
   return data
 }
@@ -67,7 +67,7 @@ export async function deleteDefinition(id: number): Promise<{ message: string }>
  */
 export async function reorderDefinitions(ids: number[]): Promise<{ message: string }> {
   const { data } = await apiClient.put<{ message: string }>('/admin/user-attributes/reorder', {
-    ids
+    ids,
   })
   return data
 }
@@ -76,9 +76,7 @@ export async function reorderDefinitions(ids: number[]): Promise<{ message: stri
  * Get user's attribute values
  */
 export async function getUserAttributeValues(userId: number): Promise<UserAttributeValue[]> {
-  const { data } = await apiClient.get<UserAttributeValue[]>(
-    `/admin/users/${userId}/attributes`
-  )
+  const { data } = await apiClient.get<UserAttributeValue[]>(`/admin/users/${userId}/attributes`)
   return data
 }
 
@@ -87,12 +85,11 @@ export async function getUserAttributeValues(userId: number): Promise<UserAttrib
  */
 export async function updateUserAttributeValues(
   userId: number,
-  values: UserAttributeValuesMap
+  values: UserAttributeValuesMap,
 ): Promise<{ message: string }> {
-  const { data } = await apiClient.put<{ message: string }>(
-    `/admin/users/${userId}/attributes`,
-    { values }
-  )
+  const { data } = await apiClient.put<{ message: string }>(`/admin/users/${userId}/attributes`, {
+    values,
+  })
   return data
 }
 
@@ -107,11 +104,11 @@ export interface BatchUserAttributesResponse {
  * Get attribute values for multiple users
  */
 export async function getBatchUserAttributes(
-  userIds: number[]
+  userIds: number[],
 ): Promise<BatchUserAttributesResponse> {
   const { data } = await apiClient.post<BatchUserAttributesResponse>(
     '/admin/user-attributes/batch',
-    { user_ids: userIds }
+    { user_ids: userIds },
   )
   return data
 }
@@ -125,7 +122,7 @@ export const userAttributesAPI = {
   reorderDefinitions,
   getUserAttributeValues,
   updateUserAttributeValues,
-  getBatchUserAttributes
+  getBatchUserAttributes,
 }
 
 export default userAttributesAPI

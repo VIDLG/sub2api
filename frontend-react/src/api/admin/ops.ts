@@ -387,7 +387,10 @@ export interface OpsUserConcurrencyStatsResponse {
   timestamp?: string
 }
 
-export async function getConcurrencyStats(platform?: string, groupId?: number | null): Promise<OpsConcurrencyStatsResponse> {
+export async function getConcurrencyStats(
+  platform?: string,
+  groupId?: number | null,
+): Promise<OpsConcurrencyStatsResponse> {
   const params: Record<string, unknown> = {}
   if (platform) {
     params.platform = platform
@@ -396,12 +399,16 @@ export async function getConcurrencyStats(platform?: string, groupId?: number | 
     params.group_id = groupId
   }
 
-  const { data } = await apiClient.get<OpsConcurrencyStatsResponse>('/admin/ops/concurrency', { params })
+  const { data } = await apiClient.get<OpsConcurrencyStatsResponse>('/admin/ops/concurrency', {
+    params,
+  })
   return data
 }
 
 export async function getUserConcurrencyStats(): Promise<OpsUserConcurrencyStatsResponse> {
-  const { data } = await apiClient.get<OpsUserConcurrencyStatsResponse>('/admin/ops/user-concurrency')
+  const { data } = await apiClient.get<OpsUserConcurrencyStatsResponse>(
+    '/admin/ops/user-concurrency',
+  )
   return data
 }
 
@@ -449,7 +456,10 @@ export interface OpsAccountAvailabilityStatsResponse {
   timestamp?: string
 }
 
-export async function getAccountAvailabilityStats(platform?: string, groupId?: number | null): Promise<OpsAccountAvailabilityStatsResponse> {
+export async function getAccountAvailabilityStats(
+  platform?: string,
+  groupId?: number | null,
+): Promise<OpsAccountAvailabilityStatsResponse> {
   const params: Record<string, unknown> = {}
   if (platform) {
     params.platform = platform
@@ -457,7 +467,10 @@ export async function getAccountAvailabilityStats(platform?: string, groupId?: n
   if (typeof groupId === 'number' && groupId > 0) {
     params.group_id = groupId
   }
-  const { data } = await apiClient.get<OpsAccountAvailabilityStatsResponse>('/admin/ops/account-availability', { params })
+  const { data } = await apiClient.get<OpsAccountAvailabilityStatsResponse>(
+    '/admin/ops/account-availability',
+    { params },
+  )
   return data
 }
 
@@ -486,7 +499,7 @@ export interface OpsRealtimeTrafficSummaryResponse {
 export async function getRealtimeTrafficSummary(
   window: string,
   platform?: string,
-  groupId?: number | null
+  groupId?: number | null,
 ): Promise<OpsRealtimeTrafficSummaryResponse> {
   const params: Record<string, unknown> = { window }
   if (platform) {
@@ -496,7 +509,10 @@ export async function getRealtimeTrafficSummary(
     params.group_id = groupId
   }
 
-  const { data } = await apiClient.get<OpsRealtimeTrafficSummaryResponse>('/admin/ops/realtime-traffic', { params })
+  const { data } = await apiClient.get<OpsRealtimeTrafficSummaryResponse>(
+    '/admin/ops/realtime-traffic',
+    { params },
+  )
   return data
 }
 
@@ -524,7 +540,7 @@ export interface SubscribeQPSOptions {
   /**
    * Called when a reconnect is scheduled (helps display "retry in Xs").
    */
-  onReconnectScheduled?: (info: { attempt: number, delayMs: number }) => void
+  onReconnectScheduled?: (info: { attempt: number; delayMs: number }) => void
   wsBaseUrl?: string
   /**
    * Maximum reconnect attempts. Defaults to Infinity to keep the dashboard live.
@@ -548,12 +564,15 @@ export interface SubscribeQPSOptions {
 export type OpsWSStatus = 'connecting' | 'connected' | 'reconnecting' | 'offline' | 'closed'
 
 export const OPS_WS_CLOSE_CODES = {
-  REALTIME_DISABLED: 4001
+  REALTIME_DISABLED: 4001,
 } as const
 
 const OPS_WS_BASE_PROTOCOL = 'sub2api-admin'
 
-export function subscribeQPS(onMessage: (data: unknown) => void, options: SubscribeQPSOptions = {}): () => void {
+export function subscribeQPS(
+  onMessage: (data: unknown) => void,
+  options: SubscribeQPSOptions = {},
+): () => void {
   let ws: WebSocket | null = null
   let reconnectAttempts = 0
   const maxReconnectAttempts = Number.isFinite(options.maxReconnectAttempts as number)
@@ -688,7 +707,11 @@ export function subscribeQPS(onMessage: (data: unknown) => void, options: Subscr
       ws = null
 
       // If the server explicitly tells us to stop reconnecting, honor it.
-      if (event && typeof event.code === 'number' && event.code === OPS_WS_CLOSE_CODES.REALTIME_DISABLED) {
+      if (
+        event &&
+        typeof event.code === 'number' &&
+        event.code === OPS_WS_CLOSE_CODES.REALTIME_DISABLED
+      ) {
         shouldReconnect = false
         clearReconnectTimer()
         setStatus('closed')
@@ -798,9 +821,9 @@ export interface EmailNotificationConfig {
 }
 
 export interface OpsMetricThresholds {
-  sla_percent_min?: number | null                 // SLA低于此值变红
-  ttft_p99_ms_max?: number | null                 // TTFT P99高于此值变红
-  request_error_rate_percent_max?: number | null  // 请求错误率高于此值变红
+  sla_percent_min?: number | null // SLA低于此值变红
+  ttft_p99_ms_max?: number | null // TTFT P99高于此值变红
+  request_error_rate_percent_max?: number | null // 请求错误率高于此值变红
   upstream_error_rate_percent_max?: number | null // 上游错误率高于此值变红
 }
 
@@ -988,102 +1011,114 @@ export type OpsErrorLogsResponse = PaginatedResponse<OpsErrorLog>
 
 export async function getDashboardOverview(
   params: {
-  time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
-  start_time?: string
-  end_time?: string
-  platform?: string
-  group_id?: number | null
-  mode?: OpsQueryMode
+    time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
+    start_time?: string
+    end_time?: string
+    platform?: string
+    group_id?: number | null
+    mode?: OpsQueryMode
   },
-  options: OpsRequestOptions = {}
+  options: OpsRequestOptions = {},
 ): Promise<OpsDashboardOverview> {
   const { data } = await apiClient.get<OpsDashboardOverview>('/admin/ops/dashboard/overview', {
     params,
-    signal: options.signal
+    signal: options.signal,
   })
   return data
 }
 
 export async function getThroughputTrend(
   params: {
-  time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
-  start_time?: string
-  end_time?: string
-  platform?: string
-  group_id?: number | null
-  mode?: OpsQueryMode
+    time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
+    start_time?: string
+    end_time?: string
+    platform?: string
+    group_id?: number | null
+    mode?: OpsQueryMode
   },
-  options: OpsRequestOptions = {}
+  options: OpsRequestOptions = {},
 ): Promise<OpsThroughputTrendResponse> {
-  const { data } = await apiClient.get<OpsThroughputTrendResponse>('/admin/ops/dashboard/throughput-trend', {
-    params,
-    signal: options.signal
-  })
+  const { data } = await apiClient.get<OpsThroughputTrendResponse>(
+    '/admin/ops/dashboard/throughput-trend',
+    {
+      params,
+      signal: options.signal,
+    },
+  )
   return data
 }
 
 export async function getLatencyHistogram(
   params: {
-  time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
-  start_time?: string
-  end_time?: string
-  platform?: string
-  group_id?: number | null
-  mode?: OpsQueryMode
+    time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
+    start_time?: string
+    end_time?: string
+    platform?: string
+    group_id?: number | null
+    mode?: OpsQueryMode
   },
-  options: OpsRequestOptions = {}
+  options: OpsRequestOptions = {},
 ): Promise<OpsLatencyHistogramResponse> {
-  const { data } = await apiClient.get<OpsLatencyHistogramResponse>('/admin/ops/dashboard/latency-histogram', {
-    params,
-    signal: options.signal
-  })
+  const { data } = await apiClient.get<OpsLatencyHistogramResponse>(
+    '/admin/ops/dashboard/latency-histogram',
+    {
+      params,
+      signal: options.signal,
+    },
+  )
   return data
 }
 
 export async function getErrorTrend(
   params: {
-  time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
-  start_time?: string
-  end_time?: string
-  platform?: string
-  group_id?: number | null
-  mode?: OpsQueryMode
+    time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
+    start_time?: string
+    end_time?: string
+    platform?: string
+    group_id?: number | null
+    mode?: OpsQueryMode
   },
-  options: OpsRequestOptions = {}
+  options: OpsRequestOptions = {},
 ): Promise<OpsErrorTrendResponse> {
   const { data } = await apiClient.get<OpsErrorTrendResponse>('/admin/ops/dashboard/error-trend', {
     params,
-    signal: options.signal
+    signal: options.signal,
   })
   return data
 }
 
 export async function getErrorDistribution(
   params: {
-  time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
-  start_time?: string
-  end_time?: string
-  platform?: string
-  group_id?: number | null
-  mode?: OpsQueryMode
+    time_range?: '5m' | '30m' | '1h' | '6h' | '24h'
+    start_time?: string
+    end_time?: string
+    platform?: string
+    group_id?: number | null
+    mode?: OpsQueryMode
   },
-  options: OpsRequestOptions = {}
+  options: OpsRequestOptions = {},
 ): Promise<OpsErrorDistributionResponse> {
-  const { data } = await apiClient.get<OpsErrorDistributionResponse>('/admin/ops/dashboard/error-distribution', {
-    params,
-    signal: options.signal
-  })
+  const { data } = await apiClient.get<OpsErrorDistributionResponse>(
+    '/admin/ops/dashboard/error-distribution',
+    {
+      params,
+      signal: options.signal,
+    },
+  )
   return data
 }
 
 export async function getOpenAITokenStats(
   params: OpsOpenAITokenStatsParams,
-  options: OpsRequestOptions = {}
+  options: OpsRequestOptions = {},
 ): Promise<OpsOpenAITokenStatsResponse> {
-  const { data } = await apiClient.get<OpsOpenAITokenStatsResponse>('/admin/ops/dashboard/openai-token-stats', {
-    params,
-    signal: options.signal
-  })
+  const { data } = await apiClient.get<OpsOpenAITokenStatsResponse>(
+    '/admin/ops/dashboard/openai-token-stats',
+    {
+      params,
+      signal: options.signal,
+    },
+  )
   return data
 }
 
@@ -1111,7 +1146,9 @@ export type OpsErrorListQueryParams = {
 }
 
 // Legacy unified endpoints
-export async function listErrorLogs(params: OpsErrorListQueryParams): Promise<OpsErrorLogsResponse> {
+export async function listErrorLogs(
+  params: OpsErrorListQueryParams,
+): Promise<OpsErrorLogsResponse> {
   const { data } = await apiClient.get<OpsErrorLogsResponse>('/admin/ops/errors', { params })
   return data
 }
@@ -1127,7 +1164,9 @@ export async function retryErrorRequest(id: number, req: OpsRetryRequest): Promi
 }
 
 export async function listRetryAttempts(errorId: number, limit = 50): Promise<OpsRetryAttempt[]> {
-  const { data } = await apiClient.get<OpsRetryAttempt[]>(`/admin/ops/errors/${errorId}/retries`, { params: { limit } })
+  const { data } = await apiClient.get<OpsRetryAttempt[]>(`/admin/ops/errors/${errorId}/retries`, {
+    params: { limit },
+  })
   return data
 }
 
@@ -1136,13 +1175,21 @@ export async function updateErrorResolved(errorId: number, resolved: boolean): P
 }
 
 // New split endpoints
-export async function listRequestErrors(params: OpsErrorListQueryParams): Promise<OpsErrorLogsResponse> {
-  const { data } = await apiClient.get<OpsErrorLogsResponse>('/admin/ops/request-errors', { params })
+export async function listRequestErrors(
+  params: OpsErrorListQueryParams,
+): Promise<OpsErrorLogsResponse> {
+  const { data } = await apiClient.get<OpsErrorLogsResponse>('/admin/ops/request-errors', {
+    params,
+  })
   return data
 }
 
-export async function listUpstreamErrors(params: OpsErrorListQueryParams): Promise<OpsErrorLogsResponse> {
-  const { data } = await apiClient.get<OpsErrorLogsResponse>('/admin/ops/upstream-errors', { params })
+export async function listUpstreamErrors(
+  params: OpsErrorListQueryParams,
+): Promise<OpsErrorLogsResponse> {
+  const { data } = await apiClient.get<OpsErrorLogsResponse>('/admin/ops/upstream-errors', {
+    params,
+  })
   return data
 }
 
@@ -1157,40 +1204,63 @@ export async function getUpstreamErrorDetail(id: number): Promise<OpsErrorDetail
 }
 
 export async function retryRequestErrorClient(id: number): Promise<OpsRetryResult> {
-  const { data } = await apiClient.post<OpsRetryResult>(`/admin/ops/request-errors/${id}/retry-client`, {})
+  const { data } = await apiClient.post<OpsRetryResult>(
+    `/admin/ops/request-errors/${id}/retry-client`,
+    {},
+  )
   return data
 }
 
-export async function retryRequestErrorUpstreamEvent(id: number, idx: number): Promise<OpsRetryResult> {
-  const { data } = await apiClient.post<OpsRetryResult>(`/admin/ops/request-errors/${id}/upstream-errors/${idx}/retry`, {})
+export async function retryRequestErrorUpstreamEvent(
+  id: number,
+  idx: number,
+): Promise<OpsRetryResult> {
+  const { data } = await apiClient.post<OpsRetryResult>(
+    `/admin/ops/request-errors/${id}/upstream-errors/${idx}/retry`,
+    {},
+  )
   return data
 }
 
 export async function retryUpstreamError(id: number): Promise<OpsRetryResult> {
-  const { data } = await apiClient.post<OpsRetryResult>(`/admin/ops/upstream-errors/${id}/retry`, {})
+  const { data } = await apiClient.post<OpsRetryResult>(
+    `/admin/ops/upstream-errors/${id}/retry`,
+    {},
+  )
   return data
 }
 
-export async function updateRequestErrorResolved(errorId: number, resolved: boolean): Promise<void> {
+export async function updateRequestErrorResolved(
+  errorId: number,
+  resolved: boolean,
+): Promise<void> {
   await apiClient.put(`/admin/ops/request-errors/${errorId}/resolve`, { resolved })
 }
 
-export async function updateUpstreamErrorResolved(errorId: number, resolved: boolean): Promise<void> {
+export async function updateUpstreamErrorResolved(
+  errorId: number,
+  resolved: boolean,
+): Promise<void> {
   await apiClient.put(`/admin/ops/upstream-errors/${errorId}/resolve`, { resolved })
 }
 
 export async function listRequestErrorUpstreamErrors(
   id: number,
   params: OpsErrorListQueryParams = {},
-  options: { include_detail?: boolean } = {}
+  options: { include_detail?: boolean } = {},
 ): Promise<PaginatedResponse<OpsErrorDetail>> {
   const query: Record<string, unknown> = { ...params }
   if (options.include_detail) query.include_detail = '1'
-  const { data } = await apiClient.get<PaginatedResponse<OpsErrorDetail>>(`/admin/ops/request-errors/${id}/upstream-errors`, { params: query })
+  const { data } = await apiClient.get<PaginatedResponse<OpsErrorDetail>>(
+    `/admin/ops/request-errors/${id}/upstream-errors`,
+    { params: query },
+  )
   return data
 }
 
-export async function listRequestDetails(params: OpsRequestDetailsParams): Promise<OpsRequestDetailsResponse> {
+export async function listRequestDetails(
+  params: OpsRequestDetailsParams,
+): Promise<OpsRequestDetailsResponse> {
   const { data } = await apiClient.get<OpsRequestDetailsResponse>('/admin/ops/requests', { params })
   return data
 }
@@ -1239,7 +1309,10 @@ export async function getAlertEvent(id: number): Promise<AlertEvent> {
   return data
 }
 
-export async function updateAlertEventStatus(id: number, status: 'resolved' | 'manual_resolved'): Promise<void> {
+export async function updateAlertEventStatus(
+  id: number,
+  status: 'resolved' | 'manual_resolved',
+): Promise<void> {
   await apiClient.put(`/admin/ops/alert-events/${id}/status`, { status })
 }
 
@@ -1256,12 +1329,19 @@ export async function createAlertSilence(payload: {
 
 // Email notification config
 export async function getEmailNotificationConfig(): Promise<EmailNotificationConfig> {
-  const { data } = await apiClient.get<EmailNotificationConfig>('/admin/ops/email-notification/config')
+  const { data } = await apiClient.get<EmailNotificationConfig>(
+    '/admin/ops/email-notification/config',
+  )
   return data
 }
 
-export async function updateEmailNotificationConfig(config: EmailNotificationConfig): Promise<EmailNotificationConfig> {
-  const { data } = await apiClient.put<EmailNotificationConfig>('/admin/ops/email-notification/config', config)
+export async function updateEmailNotificationConfig(
+  config: EmailNotificationConfig,
+): Promise<EmailNotificationConfig> {
+  const { data } = await apiClient.put<EmailNotificationConfig>(
+    '/admin/ops/email-notification/config',
+    config,
+  )
   return data
 }
 
@@ -1271,7 +1351,9 @@ export async function getAlertRuntimeSettings(): Promise<OpsAlertRuntimeSettings
   return data
 }
 
-export async function updateAlertRuntimeSettings(config: OpsAlertRuntimeSettings): Promise<OpsAlertRuntimeSettings> {
+export async function updateAlertRuntimeSettings(
+  config: OpsAlertRuntimeSettings,
+): Promise<OpsAlertRuntimeSettings> {
   const { data } = await apiClient.put<OpsAlertRuntimeSettings>('/admin/ops/runtime/alert', config)
   return data
 }
@@ -1281,7 +1363,9 @@ export async function getRuntimeLogConfig(): Promise<OpsRuntimeLogConfig> {
   return data
 }
 
-export async function updateRuntimeLogConfig(config: OpsRuntimeLogConfig): Promise<OpsRuntimeLogConfig> {
+export async function updateRuntimeLogConfig(
+  config: OpsRuntimeLogConfig,
+): Promise<OpsRuntimeLogConfig> {
   const { data } = await apiClient.put<OpsRuntimeLogConfig>('/admin/ops/runtime/logging', config)
   return data
 }
@@ -1292,12 +1376,19 @@ export async function resetRuntimeLogConfig(): Promise<OpsRuntimeLogConfig> {
 }
 
 export async function listSystemLogs(params: OpsSystemLogQuery): Promise<OpsSystemLogListResponse> {
-  const { data } = await apiClient.get<OpsSystemLogListResponse>('/admin/ops/system-logs', { params })
+  const { data } = await apiClient.get<OpsSystemLogListResponse>('/admin/ops/system-logs', {
+    params,
+  })
   return data
 }
 
-export async function cleanupSystemLogs(payload: OpsSystemLogCleanupRequest): Promise<{ deleted: number }> {
-  const { data } = await apiClient.post<{ deleted: number }>('/admin/ops/system-logs/cleanup', payload)
+export async function cleanupSystemLogs(
+  payload: OpsSystemLogCleanupRequest,
+): Promise<{ deleted: number }> {
+  const { data } = await apiClient.post<{ deleted: number }>(
+    '/admin/ops/system-logs/cleanup',
+    payload,
+  )
   return data
 }
 
@@ -1312,7 +1403,9 @@ export async function getAdvancedSettings(): Promise<OpsAdvancedSettings> {
   return data
 }
 
-export async function updateAdvancedSettings(config: OpsAdvancedSettings): Promise<OpsAdvancedSettings> {
+export async function updateAdvancedSettings(
+  config: OpsAdvancedSettings,
+): Promise<OpsAdvancedSettings> {
   const { data } = await apiClient.put<OpsAdvancedSettings>('/admin/ops/advanced-settings', config)
   return data
 }
@@ -1382,7 +1475,7 @@ export const opsAPI = {
   updateMetricThresholds,
   listSystemLogs,
   cleanupSystemLogs,
-  getSystemLogSinkHealth
+  getSystemLogSinkHealth,
 }
 
 export default opsAPI

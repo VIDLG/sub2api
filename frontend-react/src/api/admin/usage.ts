@@ -86,11 +86,11 @@ export interface AdminUsageQueryParams extends UsageQueryParams {
  */
 export async function list(
   params: AdminUsageQueryParams,
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal },
 ): Promise<PaginatedResponse<AdminUsageLog>> {
   const { data } = await apiClient.get<PaginatedResponse<AdminUsageLog>>('/admin/usage', {
     params,
-    signal: options?.signal
+    signal: options?.signal,
   })
   return data
 }
@@ -113,7 +113,7 @@ export async function getStats(params: {
   timezone?: string
 }): Promise<AdminUsageStatsResponse> {
   const { data } = await apiClient.get<AdminUsageStatsResponse>('/admin/usage/stats', {
-    params
+    params,
   })
   return data
 }
@@ -125,7 +125,7 @@ export async function getStats(params: {
  */
 export async function searchUsers(keyword: string): Promise<SimpleUser[]> {
   const { data } = await apiClient.get<SimpleUser[]>('/admin/usage/search-users', {
-    params: { q: keyword }
+    params: { q: keyword },
   })
   return data
 }
@@ -145,7 +145,7 @@ export async function searchApiKeys(userId?: number, keyword?: string): Promise<
     params.q = keyword
   }
   const { data } = await apiClient.get<SimpleApiKey[]>('/admin/usage/search-api-keys', {
-    params
+    params,
   })
   return data
 }
@@ -157,12 +157,15 @@ export async function searchApiKeys(userId?: number, keyword?: string): Promise<
  */
 export async function listCleanupTasks(
   params: { page?: number; page_size?: number },
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal },
 ): Promise<PaginatedResponse<UsageCleanupTask>> {
-  const { data } = await apiClient.get<PaginatedResponse<UsageCleanupTask>>('/admin/usage/cleanup-tasks', {
-    params,
-    signal: options?.signal
-  })
+  const { data } = await apiClient.get<PaginatedResponse<UsageCleanupTask>>(
+    '/admin/usage/cleanup-tasks',
+    {
+      params,
+      signal: options?.signal,
+    },
+  )
   return data
 }
 
@@ -171,7 +174,9 @@ export async function listCleanupTasks(
  * @param payload - Cleanup task parameters
  * @returns Created cleanup task
  */
-export async function createCleanupTask(payload: CreateUsageCleanupTaskRequest): Promise<UsageCleanupTask> {
+export async function createCleanupTask(
+  payload: CreateUsageCleanupTaskRequest,
+): Promise<UsageCleanupTask> {
   const { data } = await apiClient.post<UsageCleanupTask>('/admin/usage/cleanup-tasks', payload)
   return data
 }
@@ -182,7 +187,7 @@ export async function createCleanupTask(payload: CreateUsageCleanupTaskRequest):
  */
 export async function cancelCleanupTask(taskId: number): Promise<{ id: number; status: string }> {
   const { data } = await apiClient.post<{ id: number; status: string }>(
-    `/admin/usage/cleanup-tasks/${taskId}/cancel`
+    `/admin/usage/cleanup-tasks/${taskId}/cancel`,
   )
   return data
 }
@@ -194,7 +199,7 @@ export const adminUsageAPI = {
   searchApiKeys,
   listCleanupTasks,
   createCleanupTask,
-  cancelCleanupTask
+  cancelCleanupTask,
 }
 
 export default adminUsageAPI

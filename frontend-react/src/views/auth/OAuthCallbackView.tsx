@@ -54,8 +54,17 @@ export default function OAuthCallbackView() {
                   <Label>{t('oauth.authorizationCode', 'Authorization Code')}</Label>
                   <div className="flex items-center gap-2">
                     <Input value={code} readOnly className="flex-1 font-mono text-sm" />
-                    <Button variant="ghost" size="icon" onClick={() => copyToClipboard(code, 'code')} title="Copy">
-                      {copied === 'code' ? <CheckIcon className="h-4 w-4 text-green-500" /> : <ClipboardIcon className="h-4 w-4" />}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyToClipboard(code, 'code')}
+                      title="Copy"
+                    >
+                      {copied === 'code' ? (
+                        <CheckIcon className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <ClipboardIcon className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -65,8 +74,17 @@ export default function OAuthCallbackView() {
                     <Label>{t('oauth.state', 'State')}</Label>
                     <div className="flex items-center gap-2">
                       <Input value={state} readOnly className="flex-1 font-mono text-sm" />
-                      <Button variant="ghost" size="icon" onClick={() => copyToClipboard(state, 'state')} title="Copy">
-                        {copied === 'state' ? <CheckIcon className="h-4 w-4 text-green-500" /> : <ClipboardIcon className="h-4 w-4" />}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard(state, 'state')}
+                        title="Copy"
+                      >
+                        {copied === 'state' ? (
+                          <CheckIcon className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <ClipboardIcon className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -76,8 +94,17 @@ export default function OAuthCallbackView() {
                   <Label>{t('oauth.callbackUrl', 'Callback URL')}</Label>
                   <div className="flex items-center gap-2">
                     <Input value={fullUrl} readOnly className="flex-1 font-mono text-xs" />
-                    <Button variant="ghost" size="icon" onClick={() => copyToClipboard(fullUrl, 'url')} title="Copy">
-                      {copied === 'url' ? <CheckIcon className="h-4 w-4 text-green-500" /> : <ClipboardIcon className="h-4 w-4" />}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyToClipboard(fullUrl, 'url')}
+                      title="Copy"
+                    >
+                      {copied === 'url' ? (
+                        <CheckIcon className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <ClipboardIcon className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>

@@ -18,11 +18,11 @@ export async function list(
   pageSize: number = 10,
   options?: {
     signal?: AbortSignal
-  }
+  },
 ): Promise<PaginatedResponse<ApiKey>> {
   const { data } = await apiClient.get<PaginatedResponse<ApiKey>>('/keys', {
     params: { page, page_size: pageSize },
-    signal: options?.signal
+    signal: options?.signal,
   })
   return data
 }
@@ -55,7 +55,7 @@ export async function create(
   ipWhitelist?: string[],
   ipBlacklist?: string[],
   quota?: number,
-  expiresInDays?: number
+  expiresInDays?: number,
 ): Promise<ApiKey> {
   const payload: CreateApiKeyRequest = { name }
   if (groupId !== undefined) {
@@ -118,7 +118,7 @@ export const keysAPI = {
   create,
   update,
   delete: deleteKey,
-  toggleStatus
+  toggleStatus,
 }
 
 export default keysAPI

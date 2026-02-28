@@ -13,7 +13,7 @@ import type {
   SendVerifyCodeResponse,
   PublicSettings,
   TotpLoginResponse,
-  TotpLogin2FARequest
+  TotpLogin2FARequest,
 } from '@/types'
 
 /**
@@ -197,7 +197,7 @@ export async function refreshToken(): Promise<RefreshTokenResponse> {
   }
 
   const { data } = await apiClient.post<RefreshTokenResponse>('/auth/refresh', {
-    refresh_token: currentRefreshToken
+    refresh_token: currentRefreshToken,
   })
 
   // Update tokens in localStorage
@@ -240,7 +240,7 @@ export async function getPublicSettings(): Promise<PublicSettings> {
  * @returns Response with countdown seconds
  */
 export async function sendVerifyCode(
-  request: SendVerifyCodeRequest
+  request: SendVerifyCodeRequest,
 ): Promise<SendVerifyCodeResponse> {
   const { data } = await apiClient.post<SendVerifyCodeResponse>('/auth/send-verify-code', request)
   return data
@@ -262,7 +262,9 @@ export interface ValidatePromoCodeResponse {
  * @returns Validation result with bonus amount if valid
  */
 export async function validatePromoCode(code: string): Promise<ValidatePromoCodeResponse> {
-  const { data } = await apiClient.post<ValidatePromoCodeResponse>('/auth/validate-promo-code', { code })
+  const { data } = await apiClient.post<ValidatePromoCodeResponse>('/auth/validate-promo-code', {
+    code,
+  })
   return data
 }
 
@@ -279,8 +281,13 @@ export interface ValidateInvitationCodeResponse {
  * @param code - Invitation code to validate
  * @returns Validation result
  */
-export async function validateInvitationCode(code: string): Promise<ValidateInvitationCodeResponse> {
-  const { data } = await apiClient.post<ValidateInvitationCodeResponse>('/auth/validate-invitation-code', { code })
+export async function validateInvitationCode(
+  code: string,
+): Promise<ValidateInvitationCodeResponse> {
+  const { data } = await apiClient.post<ValidateInvitationCodeResponse>(
+    '/auth/validate-invitation-code',
+    { code },
+  )
   return data
 }
 
@@ -304,7 +311,9 @@ export interface ForgotPasswordResponse {
  * @param request - Email and optional Turnstile token
  * @returns Response with message
  */
-export async function forgotPassword(request: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
+export async function forgotPassword(
+  request: ForgotPasswordRequest,
+): Promise<ForgotPasswordResponse> {
   const { data } = await apiClient.post<ForgotPasswordResponse>('/auth/forgot-password', request)
   return data
 }
@@ -357,7 +366,7 @@ export const authAPI = {
   forgotPassword,
   resetPassword,
   refreshToken,
-  revokeAllSessions
+  revokeAllSessions,
 }
 
 export default authAPI

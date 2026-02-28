@@ -21,7 +21,8 @@ export default function AuthLayout({ children, footer, subtitle }: Props) {
   const publicSettingsLoaded = useAppStore((s) => s.publicSettingsLoaded)
   const fetchPublicSettings = useAppStore((s) => s.fetchPublicSettings)
 
-  const siteSubtitle = cachedPublicSettings?.site_subtitle || 'Subscription to API Conversion Platform'
+  const siteSubtitle =
+    cachedPublicSettings?.site_subtitle || 'Subscription to API Conversion Platform'
   const logoSrc = sanitizeUrl(siteLogo || '', { allowRelative: true, allowDataUrl: true })
   const currentYear = new Date().getFullYear()
 
@@ -75,11 +76,7 @@ export default function AuthLayout({ children, footer, subtitle }: Props) {
         </div>
 
         {/* Footer Links */}
-        {footer && (
-          <div className="mt-6 text-center text-sm">
-            {footer}
-          </div>
-        )}
+        {footer && <div className="mt-6 text-center text-sm">{footer}</div>}
 
         {/* Copyright */}
         <div className="mt-8 text-center text-xs text-gray-400 dark:text-dark-500">
