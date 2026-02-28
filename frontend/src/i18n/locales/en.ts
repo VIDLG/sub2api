@@ -3475,9 +3475,7 @@ export default {
         totp: 'Two-Factor Authentication (2FA)',
         totpHint: 'Allow users to use authenticator apps like Google Authenticator',
         totpKeyNotConfigured:
-          'Please configure TOTP_ENCRYPTION_KEY in environment variables first. Generate a key with: openssl rand -hex 32',
-        onboardingTour: 'Onboarding Tour',
-        onboardingTourHint: 'Automatically show the onboarding tour guide after user login'
+          'Please configure TOTP_ENCRYPTION_KEY in environment variables first. Generate a key with: openssl rand -hex 32'
       },
       turnstile: {
         title: 'Cloudflare Turnstile',

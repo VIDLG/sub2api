@@ -329,8 +329,7 @@ export const useAppStore = defineStore('app', () => {
         purchase_subscription_url: '',
         linuxdo_oauth_enabled: false,
         sora_client_enabled: false,
-        version: siteVersion.value,
-        onboarding_enabled: false
+        version: siteVersion.value
       }
     }
 

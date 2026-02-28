@@ -393,21 +393,6 @@
                 :disabled="!form.totp_encryption_key_configured"
               />
             </div>
-
-            <!-- Onboarding Tour -->
-            <div
-              class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
-            >
-              <div>
-                <label class="font-medium text-gray-900 dark:text-white">{{
-                  t('admin.settings.registration.onboardingTour')
-                }}</label>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.registration.onboardingTourHint') }}
-                </p>
-              </div>
-              <Toggle v-model="form.onboarding_enabled" />
-            </div>
           </div>
         </div>
 
@@ -1218,9 +1203,7 @@ const form = reactive<SettingsForm>({
   ops_monitoring_enabled: true,
   ops_realtime_monitoring_enabled: true,
   ops_query_mode_default: 'auto',
-  ops_metrics_interval_seconds: 60,
-  // Onboarding tour
-  onboarding_enabled: false
+  ops_metrics_interval_seconds: 60
 })
 
 // LinuxDo OAuth redirect URL suggestion
@@ -1337,8 +1320,7 @@ async function saveSettings() {
       fallback_model_gemini: form.fallback_model_gemini,
       fallback_model_antigravity: form.fallback_model_antigravity,
       enable_identity_patch: form.enable_identity_patch,
-      identity_patch_prompt: form.identity_patch_prompt,
-      onboarding_enabled: form.onboarding_enabled
+      identity_patch_prompt: form.identity_patch_prompt
     }
     const updated = await adminAPI.settings.updateSettings(payload)
     Object.assign(form, updated)

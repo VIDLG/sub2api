@@ -37,22 +37,15 @@ const authStore = useAuthStore()
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
-const { replayTour, startTour, hasSeen } = useOnboardingTour({
+const { replayTour } = useOnboardingTour({
   storageKey: isAdmin.value ? 'admin_guide' : 'user_guide',
-  autoStart: false
+  autoStart: true
 })
 
 const onboardingStore = useOnboardingStore()
 
-onMounted(async () => {
+onMounted(() => {
   onboardingStore.setReplayCallback(replayTour)
-
-  // Fetch latest public settings with force refresh (ensures onboarding_enabled reflects current DB value,
-  // bypassing any stale cache from before the user logged in)
-  const settings = await appStore.fetchPublicSettings(true)
-  if (settings?.onboarding_enabled && !hasSeen()) {
-    await startTour()
-  }
 })
 
 defineExpose({ replayTour })

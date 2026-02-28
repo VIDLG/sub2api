@@ -96,7 +96,6 @@ export interface PublicSettings {
   linuxdo_oauth_enabled: boolean
   sora_client_enabled: boolean
   version: string
-  onboarding_enabled: boolean
 }
 
 export interface AuthResponse {
