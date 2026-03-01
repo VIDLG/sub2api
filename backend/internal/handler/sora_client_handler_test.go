@@ -945,6 +945,9 @@ func (r *stubUserRepoForHandler) RemoveGroupFromAllowedGroups(context.Context, i
 func (r *stubUserRepoForHandler) UpdateTotpSecret(context.Context, int64, *string) error { return nil }
 func (r *stubUserRepoForHandler) EnableTotp(context.Context, int64) error                { return nil }
 func (r *stubUserRepoForHandler) DisableTotp(context.Context, int64) error               { return nil }
+func (r *stubUserRepoForHandler) AddGroupToAllowedGroups(context.Context, int64, int64) error {
+	return nil
+}
 
 // ==================== NewSoraClientHandler ====================
 
@@ -2181,7 +2184,7 @@ func (s *stubSoraClientForHandler) GetVideoTask(_ context.Context, _ *service.Ac
 func newMinimalGatewayService(accountRepo service.AccountRepository) *service.GatewayService {
 	return service.NewGatewayService(
 		accountRepo, nil, nil, nil, nil, nil, nil, nil,
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 }
 

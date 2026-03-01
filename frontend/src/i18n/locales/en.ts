@@ -501,6 +501,7 @@ export default {
         claudeCode: 'Claude Code',
         geminiCli: 'Gemini CLI',
         codexCli: 'Codex CLI',
+        codexCliWs: 'Codex CLI (WebSocket)',
         opencode: 'OpenCode',
       },
       antigravity: {
@@ -1076,6 +1077,9 @@ export default {
       noApiKeys: 'This user has no API keys',
       group: 'Group',
       none: 'None',
+      groupChangedSuccess: 'Group updated successfully',
+      groupChangedWithGrant: 'Group updated. User auto-granted access to "{group}"',
+      groupChangeFailed: 'Failed to update group',
       noUsersYet: 'No users yet',
       createFirstUser: 'Create your first user to get started.',
       userCreated: 'User created successfully',
@@ -1613,7 +1617,19 @@ export default {
         sessions: {
           full: 'Active sessions full, new sessions must wait (idle timeout: {idle} min)',
           normal: 'Active sessions normal (idle timeout: {idle} min)'
-        }
+        },
+        rpm: {
+          full: 'RPM limit reached',
+          warning: 'RPM approaching limit',
+          normal: 'RPM normal',
+          tieredNormal: 'RPM limit (Tiered) - Normal',
+          tieredWarning: 'RPM limit (Tiered) - Approaching limit',
+          tieredStickyOnly: 'RPM limit (Tiered) - Sticky only | Buffer: {buffer}',
+          tieredBlocked: 'RPM limit (Tiered) - Blocked | Buffer: {buffer}',
+          stickyExemptNormal: 'RPM limit (Sticky Exempt) - Normal',
+          stickyExemptWarning: 'RPM limit (Sticky Exempt) - Approaching limit',
+          stickyExemptOver: 'RPM limit (Sticky Exempt) - Over limit, sticky only'
+        },
       },
       tempUnschedulable: {
         title: 'Temp Unschedulable',
@@ -1827,6 +1843,22 @@ export default {
           idleTimeout: 'Idle Timeout',
           idleTimeoutPlaceholder: '5',
           idleTimeoutHint: 'Sessions will be released after idle timeout'
+        },
+        rpmLimit: {
+          label: 'RPM Limit',
+          hint: 'Limit requests per minute to protect upstream accounts',
+          baseRpm: 'Base RPM',
+          baseRpmPlaceholder: '15',
+          baseRpmHint: 'Max requests per minute, 0 or empty means no limit',
+          strategy: 'RPM Strategy',
+          strategyTiered: 'Tiered Model',
+          strategyStickyExempt: 'Sticky Exempt',
+          strategyTieredHint: 'Green → Yellow → Sticky only → Blocked, progressive throttling',
+          strategyStickyExemptHint: 'Only sticky sessions allowed when over limit',
+          strategyHint: 'Tiered: gradually restrict when exceeded; Sticky Exempt: existing sessions unrestricted',
+          stickyBuffer: 'Sticky Buffer',
+          stickyBufferPlaceholder: 'Default: 20% of base RPM',
+          stickyBufferHint: 'Extra requests allowed for sticky sessions after exceeding base RPM. Leave empty to use default (20% of base RPM, min 1)'
         },
         tlsFingerprint: {
           label: 'TLS Fingerprint Simulation',
