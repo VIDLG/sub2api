@@ -329,7 +329,7 @@ export default function AnnouncementsView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="draft">{t('Draft')}</SelectItem>
               <SelectItem value="active">{t('Active')}</SelectItem>
@@ -397,7 +397,7 @@ export default function AnnouncementsView() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper">
                       <SelectItem value="draft">{t('Draft')}</SelectItem>
                       <SelectItem value="active">{t('Active')}</SelectItem>
                       <SelectItem value="archived">{t('Archived')}</SelectItem>

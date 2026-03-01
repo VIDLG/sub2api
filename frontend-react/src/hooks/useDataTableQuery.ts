@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PaginatedResponse } from '@/types'
 import type { ServerPagination } from '@/components/data-table'
@@ -50,36 +50,33 @@ export function useDataTableQuery<TData, TFilters extends Record<string, unknown
       }
     : undefined
 
-  const handlePageChange = useCallback((newPage: number) => {
+  const handlePageChange = (newPage: number) => {
     setPage(newPage)
-  }, [])
+  }
 
-  const handleFilterChange = useCallback((key: keyof TFilters, value: TFilters[keyof TFilters]) => {
+  const handleFilterChange = (key: keyof TFilters, value: TFilters[keyof TFilters]) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
     setPage(1)
-  }, [])
+  }
 
-  const handleSearch = useCallback(
-    (value: string) => {
-      setSearchState(value)
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      debounceRef.current = setTimeout(() => {
-        setPage(1)
-        // Invalidate to trigger refetch with new search term
-        queryClient.invalidateQueries({ queryKey })
-      }, 300)
-    },
-    [queryClient, queryKey],
-  )
+  const handleSearch = (value: string) => {
+    setSearchState(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setPage(1)
+      // Invalidate to trigger refetch with new search term
+      queryClient.invalidateQueries({ queryKey })
+    }, 300)
+  }
 
-  const setSearchImmediate = useCallback((value: string) => {
+  const setSearchImmediate = (value: string) => {
     setSearchState(value)
     setPage(1)
-  }, [])
+  }
 
-  const refresh = useCallback(() => {
+  const refresh = () => {
     queryClient.invalidateQueries({ queryKey })
-  }, [queryClient, queryKey])
+  }
 
   return {
     data: data?.items ?? [],

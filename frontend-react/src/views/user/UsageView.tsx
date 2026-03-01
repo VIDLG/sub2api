@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { TimeRangePicker, DASHBOARD_PRESETS } from '@/components/common/TimeRangePicker'
 
 // ==================== Helpers ====================
 
@@ -60,6 +60,7 @@ export default function UsageView() {
 
   const [page, setPage] = useState(1)
   const [selectedKeyId, setSelectedKeyId] = useState<number | undefined>(undefined)
+  const [datePreset, setDatePreset] = useState('7days')
   const [startDate, setStartDate] = useState(() =>
     formatLocalDate(new Date(Date.now() - 6 * 86400000)),
   )
@@ -253,7 +254,7 @@ export default function UsageView() {
               <SelectTrigger className="w-48 text-sm">
                 <SelectValue placeholder={t('usage.allKeys', 'All Keys')} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 <SelectItem value="all">{t('usage.allKeys', 'All Keys')}</SelectItem>
                 {apiKeys.map((k) => (
                   <SelectItem key={k.id} value={String(k.id)}>
@@ -263,14 +264,18 @@ export default function UsageView() {
               </SelectContent>
             </Select>
           </div>
-          <DateRangePicker
-            startDate={startDate}
-            endDate={endDate}
-            onChange={({ startDate: s, endDate: e }) => {
-              setStartDate(s)
-              setEndDate(e)
-              setPage(1)
+          <TimeRangePicker
+            value={datePreset}
+            onChange={(v, range) => {
+              setDatePreset(v)
+              if (range) {
+                setStartDate(range.from)
+                setEndDate(range.to)
+                setPage(1)
+              }
             }}
+            presets={DASHBOARD_PRESETS}
+            customRange={{ from: startDate, to: endDate }}
           />
         </div>
       </div>

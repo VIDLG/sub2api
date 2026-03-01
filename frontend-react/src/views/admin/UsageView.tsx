@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { TimeRangePicker, DASHBOARD_PRESETS } from '@/components/common/TimeRangePicker'
 
 // ==================== Constants ====================
 
@@ -60,6 +60,7 @@ export default function UsageView() {
   const [userSearch, setUserSearch] = useState('')
   const [apiKeySearch, setApiKeySearch] = useState('')
   const [model, setModel] = useState('')
+  const [datePreset, setDatePreset] = useState('7days')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [streamFilter, setStreamFilter] = useState<'' | 'true' | 'false'>('')
@@ -342,7 +343,7 @@ export default function UsageView() {
             <SelectTrigger className="text-sm">
               <SelectValue placeholder={t('admin.usage.allStream', 'All (Stream)')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('admin.usage.allStream', 'All (Stream)')}</SelectItem>
               <SelectItem value="true">{t('admin.usage.streamYes', 'Stream: Yes')}</SelectItem>
               <SelectItem value="false">{t('admin.usage.streamNo', 'Stream: No')}</SelectItem>
@@ -350,13 +351,17 @@ export default function UsageView() {
           </Select>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <DateRangePicker
-            startDate={dateFrom}
-            endDate={dateTo}
-            onChange={({ startDate: s, endDate: e }) => {
-              setDateFrom(s)
-              setDateTo(e)
+          <TimeRangePicker
+            value={datePreset}
+            onChange={(v, range) => {
+              setDatePreset(v)
+              if (range) {
+                setDateFrom(range.from)
+                setDateTo(range.to)
+              }
             }}
+            presets={DASHBOARD_PRESETS}
+            customRange={{ from: dateFrom, to: dateTo }}
           />
           <Button variant="secondary" size="sm" onClick={handleSearch}>
             <SearchIcon className="h-4 w-4" />

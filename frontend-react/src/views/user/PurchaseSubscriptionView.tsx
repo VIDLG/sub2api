@@ -5,7 +5,7 @@
  * Mirrors Vue views/user/PurchaseSubscriptionView.vue
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/stores/app'
 import { LinkIcon } from '@/components/icons'
@@ -20,7 +20,7 @@ export default function PurchaseSubscriptionView() {
   const [enabled, setEnabled] = useState(false)
   const [url, setUrl] = useState('')
 
-  const loadSettings = useCallback(async () => {
+  const loadSettings = async () => {
     setLoading(true)
     try {
       const settings = cachedPublicSettings || (await fetchPublicSettings())
@@ -33,11 +33,11 @@ export default function PurchaseSubscriptionView() {
     } finally {
       setLoading(false)
     }
-  }, [cachedPublicSettings, fetchPublicSettings])
+  }
 
   useEffect(() => {
     loadSettings()
-  }, [loadSettings])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isValidUrl = url.startsWith('http://') || url.startsWith('https://')
 

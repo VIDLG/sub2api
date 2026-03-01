@@ -3,7 +3,7 @@
  * Handles dark/light mode toggle with localStorage persistence.
  */
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 
 function getInitialTheme(): boolean {
   if (typeof window === 'undefined') return false
@@ -24,14 +24,14 @@ if (initialIsDark) {
 export function useTheme() {
   const [isDark, setIsDark] = useState(initialIsDark)
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = () => {
     setIsDark((prev) => {
       const next = !prev
       document.documentElement.classList.toggle('dark', next)
       localStorage.setItem('theme', next ? 'dark' : 'light')
       return next
     })
-  }, [])
+  }
 
   return { isDark, toggleTheme }
 }

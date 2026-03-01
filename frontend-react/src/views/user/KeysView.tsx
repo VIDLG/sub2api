@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
@@ -170,30 +170,24 @@ export default function KeysView() {
   const { Field: EditForm_Field } = editForm
 
   // Helpers
-  const getGroupName = useCallback(
-    (groupId: number | null): string => {
-      if (!groupId) return t('keys.default', 'Default')
-      const group = groups.find((g) => g.id === groupId)
-      return group?.name || `#${groupId}`
-    },
-    [groups, t],
-  )
+  const getGroupName = (groupId: number | null): string => {
+    if (!groupId) return t('keys.default', 'Default')
+    const group = groups.find((g) => g.id === groupId)
+    return group?.name || `#${groupId}`
+  }
 
-  const copyToClipboard = useCallback(
-    async (key: ApiKey) => {
-      try {
-        await navigator.clipboard.writeText(key.key)
-        setCopiedId(key.id)
-        setTimeout(() => setCopiedId(null), 2000)
-      } catch {
-        showError(t('keys.copyFailed', 'Failed to copy key'))
-      }
-    },
-    [showError, t],
-  )
+  const copyToClipboard = async (key: ApiKey) => {
+    try {
+      await navigator.clipboard.writeText(key.key)
+      setCopiedId(key.id)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch {
+      showError(t('keys.copyFailed', 'Failed to copy key'))
+    }
+  }
 
   // Create handler (manual async — form-based)
-  const handleCreate = useCallback(async () => {
+  const handleCreate = async () => {
     const values = createForm.store.state.values
     if (!values.name.trim()) {
       showError(t('keys.nameRequired', 'Key name is required'))
@@ -221,26 +215,23 @@ export default function KeysView() {
     } finally {
       setCreating(false)
     }
-  }, [createForm, refresh, showError, showSuccess, t])
+  }
 
   // Edit handler (manual async — form-based)
-  const openEdit = useCallback(
-    (key: ApiKey) => {
-      setSelectedKey(key)
-      editForm.reset({
-        name: key.name,
-        groupId: key.group_id,
-        status: key.status === 'active' ? 'active' : 'inactive',
-        quota: key.quota,
-        ipWhitelist: (key.ip_whitelist || []).join('\n'),
-        ipBlacklist: (key.ip_blacklist || []).join('\n'),
-      })
-      setShowEditDialog(true)
-    },
-    [editForm],
-  )
+  const openEdit = (key: ApiKey) => {
+    setSelectedKey(key)
+    editForm.reset({
+      name: key.name,
+      groupId: key.group_id,
+      status: key.status === 'active' ? 'active' : 'inactive',
+      quota: key.quota,
+      ipWhitelist: (key.ip_whitelist || []).join('\n'),
+      ipBlacklist: (key.ip_blacklist || []).join('\n'),
+    })
+    setShowEditDialog(true)
+  }
 
-  const handleEdit = useCallback(async () => {
+  const handleEdit = async () => {
     if (!selectedKey) return
     const values = editForm.store.state.values
     setSaving(true)
@@ -275,7 +266,7 @@ export default function KeysView() {
     } finally {
       setSaving(false)
     }
-  }, [selectedKey, editForm, refresh, showError, showSuccess, t])
+  }
 
   // ==================== Column Definitions ====================
 
@@ -506,7 +497,7 @@ export default function KeysView() {
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder={t('keys.default', 'Default')} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper">
                       <SelectItem value="__none__">{t('keys.default', 'Default')}</SelectItem>
                       {groups.map((g) => (
                         <SelectItem key={g.id} value={String(g.id)}>
@@ -613,7 +604,7 @@ export default function KeysView() {
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder={t('keys.default', 'Default')} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper">
                         <SelectItem value="__none__">{t('keys.default', 'Default')}</SelectItem>
                         {groups.map((g) => (
                           <SelectItem key={g.id} value={String(g.id)}>
@@ -636,7 +627,7 @@ export default function KeysView() {
                       <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper">
                         <SelectItem value="active">{t('keys.status_active', 'Active')}</SelectItem>
                         <SelectItem value="inactive">
                           {t('keys.status_inactive', 'Inactive')}

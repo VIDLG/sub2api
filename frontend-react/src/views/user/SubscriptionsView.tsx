@@ -5,7 +5,7 @@
  * Mirrors Vue views/user/SubscriptionsView.vue
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/stores/app'
 import subscriptionsAPI from '@/api/subscriptions'
@@ -70,7 +70,7 @@ export default function SubscriptionsView() {
   const [subscriptions, setSubscriptions] = useState<UserSubscription[]>([])
   const [loading, setLoading] = useState(false)
 
-  const loadSubscriptions = useCallback(async () => {
+  const loadSubscriptions = async () => {
     setLoading(true)
     try {
       const data = await subscriptionsAPI.getMySubscriptions()
@@ -80,11 +80,11 @@ export default function SubscriptionsView() {
     } finally {
       setLoading(false)
     }
-  }, [showError, t])
+  }
 
   useEffect(() => {
     loadSubscriptions()
-  }, [loadSubscriptions])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ==================== Render ====================
 

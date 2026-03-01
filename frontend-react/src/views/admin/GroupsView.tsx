@@ -234,7 +234,7 @@ export default function GroupsView() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   {PLATFORMS.map((p) => (
                     <SelectItem key={p} value={p}>
                       {p}
@@ -256,7 +256,7 @@ export default function GroupsView() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="standard">{t('Standard')}</SelectItem>
                   <SelectItem value="subscription">{t('Subscription')}</SelectItem>
                 </SelectContent>
@@ -449,7 +449,7 @@ export default function GroupsView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Platforms')}</SelectItem>
               {PLATFORMS.map((p) => (
                 <SelectItem key={p} value={p}>
@@ -465,7 +465,7 @@ export default function GroupsView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="active">{t('Active')}</SelectItem>
               <SelectItem value="inactive">{t('Inactive')}</SelectItem>

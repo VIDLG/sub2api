@@ -28,7 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { TimeRangePicker, DASHBOARD_PRESETS } from '@/components/common/TimeRangePicker'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { TokenTrendChart } from '@/components/charts/TokenTrendChart'
 import { ModelDistributionChart } from '@/components/charts/ModelDistributionChart'
 
@@ -64,6 +65,7 @@ export default function DashboardView() {
   const { t } = useTranslation()
   const showError = useAppStore((s) => s.showError)
 
+  const [datePreset, setDatePreset] = useState('7days')
   const [startDate, setStartDate] = useState(() =>
     formatLocalDate(new Date(Date.now() - 6 * 86400000)),
   )
@@ -332,15 +334,19 @@ export default function DashboardView() {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {t('admin.dashboard.timeRange')}:
             </span>
-            <DateRangePicker
-              startDate={startDate}
-              endDate={endDate}
-              onChange={({ startDate: s, endDate: e }) => {
-                setStartDate(s)
-                setEndDate(e)
-                const diffMs = new Date(e).getTime() - new Date(s).getTime()
-                setGranularity(diffMs <= 86400000 ? 'hour' : 'day')
+            <TimeRangePicker
+              value={datePreset}
+              onChange={(v, range) => {
+                setDatePreset(v)
+                if (range) {
+                  setStartDate(range.from)
+                  setEndDate(range.to)
+                  const diffMs = new Date(range.to).getTime() - new Date(range.from).getTime()
+                  setGranularity(diffMs <= 86400000 ? 'hour' : 'day')
+                }
               }}
+              presets={DASHBOARD_PRESETS}
+              customRange={{ from: startDate, to: endDate }}
             />
             <div className="ml-auto flex items-center gap-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -353,7 +359,7 @@ export default function DashboardView() {
                 <SelectTrigger className="w-28 text-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="day">{t('admin.dashboard.day')}</SelectItem>
                   <SelectItem value="hour">{t('admin.dashboard.hour')}</SelectItem>
                 </SelectContent>
@@ -395,7 +401,7 @@ export default function DashboardView() {
             {t('admin.dashboard.recentUsage')} (Top 12)
           </h3>
           {userTrend.length > 0 ? (
-            <div className="max-h-64 overflow-y-auto">
+            <ScrollArea className="max-h-64">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-gray-500 dark:text-gray-400">
@@ -429,7 +435,7 @@ export default function DashboardView() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollArea>
           ) : (
             <div className="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
               {t('admin.dashboard.noDataAvailable')}

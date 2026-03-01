@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 marked.setOptions({ breaks: true, gfm: true })
 
@@ -45,7 +46,7 @@ export default function AnnouncementBell() {
 
   const unreadCount = announcements.filter((a) => !a.read_at).length
 
-  const loadAnnouncements = useCallback(async () => {
+  const loadAnnouncements = async () => {
     setLoading(true)
     try {
       const data = await announcementsAPI.list(false)
@@ -55,11 +56,11 @@ export default function AnnouncementBell() {
     } finally {
       setLoading(false)
     }
-  }, [showError, t])
+  }
 
   useEffect(() => {
     loadAnnouncements()
-  }, [loadAnnouncements])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function markAsRead(id: number) {
     try {
@@ -149,7 +150,7 @@ export default function AnnouncementBell() {
             </div>
           </DialogHeader>
 
-          <div className="max-h-[65vh] overflow-y-auto">
+          <ScrollArea className="max-h-[65vh]">
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="spinner h-10 w-10" />
@@ -221,7 +222,7 @@ export default function AnnouncementBell() {
                 </p>
               </div>
             )}
-          </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
@@ -264,7 +265,7 @@ export default function AnnouncementBell() {
             </div>
           </DialogHeader>
 
-          <div className="max-h-[60vh] overflow-y-auto px-8 py-8">
+          <ScrollArea className="max-h-[60vh] px-8 py-8">
             <div className="relative">
               <div className="absolute bottom-0 left-0 top-0 w-1 rounded-full bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500" />
               <div
@@ -274,7 +275,7 @@ export default function AnnouncementBell() {
                 }}
               />
             </div>
-          </div>
+          </ScrollArea>
 
           <DialogFooter className="border-t border-gray-100 bg-gray-50/50 px-8 py-4 dark:border-dark-700 dark:bg-dark-900/30">
             <Button variant="outline" onClick={() => setSelectedItem(null)}>

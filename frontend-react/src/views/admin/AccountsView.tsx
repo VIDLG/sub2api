@@ -550,7 +550,7 @@ export default function AccountsView() {
             <SelectTrigger className="w-auto text-sm">
               <SelectValue placeholder={t('admin.accounts.allPlatforms', 'All Platforms')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">
                 {t('admin.accounts.allPlatforms', 'All Platforms')}
               </SelectItem>
@@ -568,7 +568,7 @@ export default function AccountsView() {
             <SelectTrigger className="w-auto text-sm">
               <SelectValue placeholder={t('admin.accounts.allTypes', 'All Types')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('admin.accounts.allTypes', 'All Types')}</SelectItem>
               {ACCOUNT_TYPES.map((at) => (
                 <SelectItem key={at.value} value={at.value}>
@@ -584,7 +584,7 @@ export default function AccountsView() {
             <SelectTrigger className="w-auto text-sm">
               <SelectValue placeholder={t('admin.accounts.allStatuses', 'All Statuses')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('admin.accounts.allStatuses', 'All Statuses')}</SelectItem>
               {STATUS_OPTIONS.map((s) => (
                 <SelectItem key={s.value} value={s.value}>
@@ -635,7 +635,7 @@ export default function AccountsView() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper">
                       {PLATFORMS.map((p) => (
                         <SelectItem key={p.value} value={p.value}>
                           {p.label}
@@ -657,7 +657,7 @@ export default function AccountsView() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper">
                       {ACCOUNT_TYPES.map((at) => (
                         <SelectItem key={at.value} value={at.value}>
                           {at.label}
@@ -749,7 +749,7 @@ export default function AccountsView() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper">
                       {STATUS_OPTIONS.map((s) => (
                         <SelectItem key={s.value} value={s.value}>
                           {s.label}

@@ -4,6 +4,8 @@ import { Link } from '@tanstack/react-router'
 import { useSubscriptionStore } from '@/stores/subscriptions'
 import { CreditCardIcon } from '@/components/icons'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Progress } from '@/components/ui/progress'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import type { UserSubscription } from '@/types'
 
 function isUnlimited(sub: UserSubscription): boolean {
@@ -39,9 +41,9 @@ function barClass(used: number | undefined, limit: number | null | undefined): s
   return 'bg-green-500'
 }
 
-function barWidth(used: number | undefined, limit: number | null | undefined): string {
-  if (!limit) return '0%'
-  return `${Math.min(((used || 0) / limit) * 100, 100)}%`
+function barPct(used: number | undefined, limit: number | null | undefined): number {
+  if (!limit) return 0
+  return Math.min(((used || 0) / limit) * 100, 100)
 }
 
 function formatUsage(used: number | undefined, limit: number | null | undefined): string {
@@ -110,7 +112,7 @@ export default function SubscriptionProgressMini() {
           </p>
         </div>
 
-        <div className="max-h-64 overflow-y-auto">
+        <ScrollArea className="max-h-64">
           {sorted.map((sub) => (
             <div
               key={sub.id}
@@ -145,14 +147,14 @@ export default function SubscriptionProgressMini() {
                         <span className="w-8 flex-shrink-0 text-[10px] text-gray-500">
                           {t('subscriptionProgress.daily', 'Day')}
                         </span>
-                        <div className="h-1.5 min-w-0 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
-                          <div
-                            className={`h-1.5 rounded-full transition-all ${barClass(sub.daily_usage_usd, sub.group.daily_limit_usd)}`}
-                            style={{
-                              width: barWidth(sub.daily_usage_usd, sub.group.daily_limit_usd),
-                            }}
-                          />
-                        </div>
+                        <Progress
+                          value={barPct(sub.daily_usage_usd, sub.group.daily_limit_usd)}
+                          className="h-1.5 min-w-0 flex-1 bg-gray-200 dark:bg-dark-600"
+                          indicatorClassName={barClass(
+                            sub.daily_usage_usd,
+                            sub.group.daily_limit_usd,
+                          )}
+                        />
                         <span className="w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
                           {formatUsage(sub.daily_usage_usd, sub.group.daily_limit_usd)}
                         </span>
@@ -163,14 +165,14 @@ export default function SubscriptionProgressMini() {
                         <span className="w-8 flex-shrink-0 text-[10px] text-gray-500">
                           {t('subscriptionProgress.weekly', 'Week')}
                         </span>
-                        <div className="h-1.5 min-w-0 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
-                          <div
-                            className={`h-1.5 rounded-full transition-all ${barClass(sub.weekly_usage_usd, sub.group.weekly_limit_usd)}`}
-                            style={{
-                              width: barWidth(sub.weekly_usage_usd, sub.group.weekly_limit_usd),
-                            }}
-                          />
-                        </div>
+                        <Progress
+                          value={barPct(sub.weekly_usage_usd, sub.group.weekly_limit_usd)}
+                          className="h-1.5 min-w-0 flex-1 bg-gray-200 dark:bg-dark-600"
+                          indicatorClassName={barClass(
+                            sub.weekly_usage_usd,
+                            sub.group.weekly_limit_usd,
+                          )}
+                        />
                         <span className="w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
                           {formatUsage(sub.weekly_usage_usd, sub.group.weekly_limit_usd)}
                         </span>
@@ -181,14 +183,14 @@ export default function SubscriptionProgressMini() {
                         <span className="w-8 flex-shrink-0 text-[10px] text-gray-500">
                           {t('subscriptionProgress.monthly', 'Month')}
                         </span>
-                        <div className="h-1.5 min-w-0 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
-                          <div
-                            className={`h-1.5 rounded-full transition-all ${barClass(sub.monthly_usage_usd, sub.group.monthly_limit_usd)}`}
-                            style={{
-                              width: barWidth(sub.monthly_usage_usd, sub.group.monthly_limit_usd),
-                            }}
-                          />
-                        </div>
+                        <Progress
+                          value={barPct(sub.monthly_usage_usd, sub.group.monthly_limit_usd)}
+                          className="h-1.5 min-w-0 flex-1 bg-gray-200 dark:bg-dark-600"
+                          indicatorClassName={barClass(
+                            sub.monthly_usage_usd,
+                            sub.group.monthly_limit_usd,
+                          )}
+                        />
                         <span className="w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
                           {formatUsage(sub.monthly_usage_usd, sub.group.monthly_limit_usd)}
                         </span>
@@ -199,7 +201,7 @@ export default function SubscriptionProgressMini() {
               </div>
             </div>
           ))}
-        </div>
+        </ScrollArea>
 
         <div className="border-t border-gray-100 p-2 dark:border-dark-700">
           <Link

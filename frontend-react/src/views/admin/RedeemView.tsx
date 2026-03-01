@@ -395,7 +395,7 @@ export default function RedeemView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Types')}</SelectItem>
               <SelectItem value="balance">{t('Balance')}</SelectItem>
               <SelectItem value="concurrency">{t('Concurrency')}</SelectItem>
@@ -409,7 +409,7 @@ export default function RedeemView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="active">{t('Active')}</SelectItem>
               <SelectItem value="unused">{t('Unused')}</SelectItem>
@@ -446,7 +446,7 @@ export default function RedeemView() {
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="balance">{t('Balance')}</SelectItem>
                   <SelectItem value="concurrency">{t('Concurrency')}</SelectItem>
                   <SelectItem value="subscription">{t('Subscription')}</SelectItem>
@@ -497,7 +497,7 @@ export default function RedeemView() {
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper">
                       <SelectItem value="0">{t('Select a group...')}</SelectItem>
                       {allGroups.map((g) => (
                         <SelectItem key={g.id} value={String(g.id)}>

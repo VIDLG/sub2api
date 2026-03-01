@@ -352,7 +352,7 @@ export default function UsersView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Roles')}</SelectItem>
               <SelectItem value="admin">{t('Admin')}</SelectItem>
               <SelectItem value="user">{t('User')}</SelectItem>
@@ -367,7 +367,7 @@ export default function UsersView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="active">{t('Active')}</SelectItem>
               <SelectItem value="disabled">{t('Disabled')}</SelectItem>
@@ -522,7 +522,7 @@ export default function UsersView() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper">
                         <SelectItem value="user">{t('User')}</SelectItem>
                         <SelectItem value="admin">{t('Admin')}</SelectItem>
                       </SelectContent>
@@ -541,7 +541,7 @@ export default function UsersView() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper">
                         <SelectItem value="active">{t('Active')}</SelectItem>
                         <SelectItem value="disabled">{t('Disabled')}</SelectItem>
                       </SelectContent>

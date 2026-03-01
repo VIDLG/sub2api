@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm } from '@tanstack/react-form'
 import { type ColumnDef } from '@tanstack/react-table'
@@ -215,26 +215,23 @@ export default function PromoCodesView() {
 
   // ==================== Usages (manual pagination) ====================
 
-  const loadUsages = useCallback(
-    async (promoId: number, currentPage: number) => {
-      setUsagesLoading(true)
-      try {
-        const res: BasePaginationResponse<PromoCodeUsage> = await adminAPI.promo.getUsages(
-          promoId,
-          currentPage,
-          USAGES_PAGE_SIZE,
-        )
-        setUsages(res.items)
-        setUsagesTotalPages(res.pages)
-        setUsagesTotal(res.total)
-      } catch {
-        showError(t('Failed to load usage records'))
-      } finally {
-        setUsagesLoading(false)
-      }
-    },
-    [showError, t],
-  )
+  const loadUsages = async (promoId: number, currentPage: number) => {
+    setUsagesLoading(true)
+    try {
+      const res: BasePaginationResponse<PromoCodeUsage> = await adminAPI.promo.getUsages(
+        promoId,
+        currentPage,
+        USAGES_PAGE_SIZE,
+      )
+      setUsages(res.items)
+      setUsagesTotalPages(res.pages)
+      setUsagesTotal(res.total)
+    } catch {
+      showError(t('Failed to load usage records'))
+    } finally {
+      setUsagesLoading(false)
+    }
+  }
 
   const openUsages = (promo: PromoCode) => {
     setSelectedPromo(promo)
@@ -449,7 +446,7 @@ export default function PromoCodesView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="active">{t('Active')}</SelectItem>
               <SelectItem value="disabled">{t('Disabled')}</SelectItem>
@@ -554,7 +551,7 @@ export default function PromoCodesView() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper">
                         <SelectItem value="active">{t('Active')}</SelectItem>
                         <SelectItem value="disabled">{t('Disabled')}</SelectItem>
                       </SelectContent>

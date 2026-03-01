@@ -287,7 +287,7 @@ export default function SetupWizardView() {
                         <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper">
                           <SelectItem value="disable">disable</SelectItem>
                           <SelectItem value="require">require</SelectItem>
                           <SelectItem value="verify-ca">verify-ca</SelectItem>

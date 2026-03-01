@@ -407,7 +407,7 @@ export default function SubscriptionsView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="active">{t('Active')}</SelectItem>
               <SelectItem value="expired">{t('Expired')}</SelectItem>
@@ -421,7 +421,7 @@ export default function SubscriptionsView() {
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('All Groups')}</SelectItem>
               {allGroups.map((g) => (
                 <SelectItem key={g.id} value={String(g.id)}>
@@ -504,7 +504,7 @@ export default function SubscriptionsView() {
                 <SelectTrigger>
                   <SelectValue placeholder={t('Select a group...')} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="0">{t('Select a group...')}</SelectItem>
                   {allGroups.map((g) => (
                     <SelectItem key={g.id} value={String(g.id)}>

@@ -4,7 +4,7 @@
  * Mirrors the Vue AppSidebar.vue implementation.
  */
 
-import { useMemo, useEffect, type ComponentType, type SVGProps } from 'react'
+import { useEffect, type ComponentType, type SVGProps } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/stores/app'
@@ -74,7 +74,7 @@ export default function AppSidebar() {
   }, [isAdmin, fetchAdminSettings])
 
   // User navigation items
-  const userNavItems = useMemo((): NavItem[] => {
+  const userNavItems = ((): NavItem[] => {
     const items: NavItem[] = [
       { path: '/dashboard', label: t('nav.dashboard'), icon: DashboardIcon },
       { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon, dataTour: 'sidebar-my-keys' },
@@ -99,10 +99,10 @@ export default function AppSidebar() {
       { path: '/profile', label: t('nav.profile'), icon: UserIcon },
     ]
     return isSimpleMode ? items.filter((item) => !item.hideInSimpleMode) : items
-  }, [t, cachedPublicSettings?.purchase_subscription_enabled, isSimpleMode])
+  })()
 
   // Personal nav items (admin's "My Account" section)
-  const personalNavItems = useMemo((): NavItem[] => {
+  const personalNavItems = ((): NavItem[] => {
     const items: NavItem[] = [
       { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon, dataTour: 'sidebar-my-keys' },
       { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
@@ -126,10 +126,10 @@ export default function AppSidebar() {
       { path: '/profile', label: t('nav.profile'), icon: UserIcon },
     ]
     return isSimpleMode ? items.filter((item) => !item.hideInSimpleMode) : items
-  }, [t, cachedPublicSettings?.purchase_subscription_enabled, isSimpleMode])
+  })()
 
   // Admin navigation items
-  const adminNavItems = useMemo((): NavItem[] => {
+  const adminNavItems = ((): NavItem[] => {
     const baseItems: NavItem[] = [
       { path: '/admin/dashboard', label: t('nav.dashboard'), icon: DashboardIcon },
       ...(opsMonitoringEnabled
@@ -182,7 +182,7 @@ export default function AppSidebar() {
 
     baseItems.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
     return baseItems
-  }, [t, opsMonitoringEnabled, isSimpleMode])
+  })()
 
   function isActive(path: string): boolean {
     return pathname === path || pathname.startsWith(path + '/')

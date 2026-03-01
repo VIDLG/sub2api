@@ -5,7 +5,7 @@
  * Mirrors Vue views/user/RedeemView.vue
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
@@ -87,7 +87,7 @@ export default function RedeemView() {
 
   // ==================== Data Loading ====================
 
-  const loadHistory = useCallback(async () => {
+  const loadHistory = async () => {
     setLoadingHistory(true)
     try {
       const data = await redeemAPI.getHistory()
@@ -97,15 +97,15 @@ export default function RedeemView() {
     } finally {
       setLoadingHistory(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
     loadHistory()
-  }, [loadHistory])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ==================== Actions ====================
 
-  const handleRedeem = useCallback(async () => {
+  const handleRedeem = async () => {
     if (!code.trim()) {
       showError(t('redeem.codeRequired', 'Please enter a redeem code'))
       return
@@ -127,7 +127,7 @@ export default function RedeemView() {
     } finally {
       setRedeeming(false)
     }
-  }, [code, refreshUser, loadHistory, showError, showSuccess, t])
+  }
 
   // ==================== Render ====================
 

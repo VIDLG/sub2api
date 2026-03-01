@@ -33,7 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { TimeRangePicker, DASHBOARD_PRESETS } from '@/components/common/TimeRangePicker'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { TokenTrendChart } from '@/components/charts/TokenTrendChart'
 import { ModelDistributionChart } from '@/components/charts/ModelDistributionChart'
 
@@ -79,6 +80,7 @@ export default function DashboardView() {
   const isSimpleMode = useAuthStore((s) => s.isSimpleMode)
   const refreshUser = useAuthStore((s) => s.refreshUser)
 
+  const [datePreset, setDatePreset] = useState('7days')
   const [startDate, setStartDate] = useState(() =>
     formatLocalDate(new Date(Date.now() - 6 * 86400000)),
   )
@@ -214,32 +216,43 @@ export default function DashboardView() {
                 {t('dashboard.todayCost')}
               </p>
               <p className="text-xl font-bold text-gray-900 dark:text-white">
-                <span
-                  className="text-purple-600 dark:text-purple-400"
-                  title={t('dashboard.actual')}
-                >
-                  ${formatCost(stats.today_actual_cost)}
-                </span>
-                <span
-                  className="text-sm font-normal text-gray-400 dark:text-gray-500"
-                  title={t('dashboard.standard')}
-                >
-                  {' '}
-                  / ${formatCost(stats.today_cost)}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-purple-600 dark:text-purple-400">
+                      ${formatCost(stats.today_actual_cost)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('dashboard.actual')}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-sm font-normal text-gray-400 dark:text-gray-500">
+                      {' '}
+                      / ${formatCost(stats.today_cost)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('dashboard.standard')}</TooltipContent>
+                </Tooltip>
               </p>
               <p className="text-xs">
                 <span className="text-gray-500 dark:text-gray-400">{t('common.total')}: </span>
-                <span
-                  className="text-purple-600 dark:text-purple-400"
-                  title={t('dashboard.actual')}
-                >
-                  ${formatCost(stats.total_actual_cost)}
-                </span>
-                <span className="text-gray-400 dark:text-gray-500" title={t('dashboard.standard')}>
-                  {' '}
-                  / ${formatCost(stats.total_cost)}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-purple-600 dark:text-purple-400">
+                      ${formatCost(stats.total_actual_cost)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('dashboard.actual')}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-gray-400 dark:text-gray-500">
+                      {' '}
+                      / ${formatCost(stats.total_cost)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('dashboard.standard')}</TooltipContent>
+                </Tooltip>
               </p>
             </div>
           </div>
@@ -345,15 +358,19 @@ export default function DashboardView() {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {t('dashboard.timeRange')}:
             </span>
-            <DateRangePicker
-              startDate={startDate}
-              endDate={endDate}
-              onChange={({ startDate: s, endDate: e }) => {
-                setStartDate(s)
-                setEndDate(e)
-                const diffMs = new Date(e).getTime() - new Date(s).getTime()
-                setGranularity(diffMs <= 86400000 ? 'hour' : 'day')
+            <TimeRangePicker
+              value={datePreset}
+              onChange={(v, range) => {
+                setDatePreset(v)
+                if (range) {
+                  setStartDate(range.from)
+                  setEndDate(range.to)
+                  const diffMs = new Date(range.to).getTime() - new Date(range.from).getTime()
+                  setGranularity(diffMs <= 86400000 ? 'hour' : 'day')
+                }
               }}
+              presets={DASHBOARD_PRESETS}
+              customRange={{ from: startDate, to: endDate }}
             />
             <div className="ml-auto flex items-center gap-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -363,7 +380,7 @@ export default function DashboardView() {
                 <SelectTrigger className="w-28 text-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="day">{t('dashboard.day')}</SelectItem>
                   <SelectItem value="hour">{t('dashboard.hour')}</SelectItem>
                 </SelectContent>
@@ -448,19 +465,23 @@ export default function DashboardView() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold">
-                        <span
-                          className="text-green-600 dark:text-green-400"
-                          title={t('dashboard.actual')}
-                        >
-                          ${formatCost(log.actual_cost)}
-                        </span>
-                        <span
-                          className="font-normal text-gray-400 dark:text-gray-500"
-                          title={t('dashboard.standard')}
-                        >
-                          {' '}
-                          / ${formatCost(log.total_cost)}
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-green-600 dark:text-green-400">
+                              ${formatCost(log.actual_cost)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('dashboard.actual')}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="font-normal text-gray-400 dark:text-gray-500">
+                              {' '}
+                              / ${formatCost(log.total_cost)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('dashboard.standard')}</TooltipContent>
+                        </Tooltip>
                       </p>
                       <p className="text-xs text-gray-500 dark:text-dark-400">
                         {(log.input_tokens + log.output_tokens).toLocaleString()} tokens

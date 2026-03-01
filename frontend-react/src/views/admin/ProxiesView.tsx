@@ -562,7 +562,7 @@ export default function ProxiesView() {
             <SelectTrigger className="w-auto text-sm">
               <SelectValue placeholder={t('admin.proxies.allProtocols', 'All Protocols')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">
                 {t('admin.proxies.allProtocols', 'All Protocols')}
               </SelectItem>
@@ -580,7 +580,7 @@ export default function ProxiesView() {
             <SelectTrigger className="w-auto text-sm">
               <SelectValue placeholder={t('admin.proxies.allStatuses', 'All Statuses')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper">
               <SelectItem value="all">{t('admin.proxies.allStatuses', 'All Statuses')}</SelectItem>
               <SelectItem value="active">{t('common.active', 'Active')}</SelectItem>
               <SelectItem value="inactive">{t('common.inactive', 'Inactive')}</SelectItem>
@@ -644,7 +644,7 @@ export default function ProxiesView() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   {PROTOCOLS.map((p) => (
                     <SelectItem key={p.value} value={p.value}>
                       {p.label}

@@ -4,7 +4,7 @@
  * Mirrors Vue auth/EmailVerifyView.vue
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth'
@@ -53,7 +53,7 @@ export default function EmailVerifyView() {
     return () => clearInterval(timer)
   }, [countdown])
 
-  const sendCode = useCallback(async () => {
+  const sendCode = async () => {
     if (!regData?.email) return
     setResendLoading(true)
     try {
@@ -68,7 +68,7 @@ export default function EmailVerifyView() {
     } finally {
       setResendLoading(false)
     }
-  }, [regData?.email, showSuccess, showError, t])
+  }
 
   function handleInput(index: number, value: string) {
     if (!/^\d*$/.test(value)) return

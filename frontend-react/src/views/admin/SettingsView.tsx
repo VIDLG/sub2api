@@ -4,7 +4,7 @@
  * Admin API Key, Registration, Defaults, Site, SMTP, Turnstile, Purchase, Stream Timeout.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
@@ -24,35 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
-// ==================== Toggle Switch ====================
-
-function Toggle({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: boolean
-  onChange: (v: boolean) => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => onChange(!value)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        value ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-    >
-      <span
-        className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
-          value ? 'translate-x-5' : 'translate-x-0.5'
-        }`}
-      />
-    </button>
-  )
-}
+import { Switch } from '@/components/ui/switch'
 
 // ==================== Section Card ====================
 
@@ -109,7 +81,7 @@ export default function SettingsView() {
 
   // ==================== Data Loading ====================
 
-  const loadSettings = useCallback(async () => {
+  const loadSettings = async () => {
     setLoading(true)
     try {
       const [settingsData, keyData, stData] = await Promise.all([
@@ -130,7 +102,7 @@ export default function SettingsView() {
     } finally {
       setLoading(false)
     }
-  }, [showError, t])
+  }
 
   useEffect(() => {
     loadSettings()
@@ -474,9 +446,9 @@ export default function SettingsView() {
               )}
             </p>
           </div>
-          <Toggle
-            value={settings.registration_enabled}
-            onChange={(v) => updateField('registration_enabled', v)}
+          <Switch
+            checked={settings.registration_enabled}
+            onCheckedChange={(v) => updateField('registration_enabled', v)}
           />
         </div>
 
@@ -493,9 +465,9 @@ export default function SettingsView() {
               )}
             </p>
           </div>
-          <Toggle
-            value={settings.email_verify_enabled}
-            onChange={(v) => updateField('email_verify_enabled', v)}
+          <Switch
+            checked={settings.email_verify_enabled}
+            onCheckedChange={(v) => updateField('email_verify_enabled', v)}
           />
         </div>
 
@@ -512,9 +484,9 @@ export default function SettingsView() {
               )}
             </p>
           </div>
-          <Toggle
-            value={settings.promo_code_enabled}
-            onChange={(v) => updateField('promo_code_enabled', v)}
+          <Switch
+            checked={settings.promo_code_enabled}
+            onCheckedChange={(v) => updateField('promo_code_enabled', v)}
           />
         </div>
 
@@ -531,9 +503,9 @@ export default function SettingsView() {
               )}
             </p>
           </div>
-          <Toggle
-            value={settings.invitation_code_enabled}
-            onChange={(v) => updateField('invitation_code_enabled', v)}
+          <Switch
+            checked={settings.invitation_code_enabled}
+            onCheckedChange={(v) => updateField('invitation_code_enabled', v)}
           />
         </div>
 
@@ -551,9 +523,9 @@ export default function SettingsView() {
                 )}
               </p>
             </div>
-            <Toggle
-              value={settings.password_reset_enabled}
-              onChange={(v) => updateField('password_reset_enabled', v)}
+            <Switch
+              checked={settings.password_reset_enabled}
+              onCheckedChange={(v) => updateField('password_reset_enabled', v)}
             />
           </div>
         )}
@@ -571,9 +543,9 @@ export default function SettingsView() {
               )}
             </p>
           </div>
-          <Toggle
-            value={settings.onboarding_enabled}
-            onChange={(v) => updateField('onboarding_enabled', v)}
+          <Switch
+            checked={settings.onboarding_enabled}
+            onCheckedChange={(v) => updateField('onboarding_enabled', v)}
           />
         </div>
       </SectionCard>
@@ -940,9 +912,9 @@ export default function SettingsView() {
                 {t('admin.settings.smtp.useTlsHint', 'Enable TLS encryption for SMTP connection')}
               </p>
             </div>
-            <Toggle
-              value={settings.smtp_use_tls}
-              onChange={(v) => updateField('smtp_use_tls', v)}
+            <Switch
+              checked={settings.smtp_use_tls}
+              onCheckedChange={(v) => updateField('smtp_use_tls', v)}
             />
           </div>
         </SectionCard>
@@ -969,9 +941,9 @@ export default function SettingsView() {
               )}
             </p>
           </div>
-          <Toggle
-            value={settings.turnstile_enabled}
-            onChange={(v) => updateField('turnstile_enabled', v)}
+          <Switch
+            checked={settings.turnstile_enabled}
+            onCheckedChange={(v) => updateField('turnstile_enabled', v)}
           />
         </div>
 
@@ -1040,9 +1012,9 @@ export default function SettingsView() {
               {t('admin.settings.purchase.enabledHint', 'Display purchase option in sidebar')}
             </p>
           </div>
-          <Toggle
-            value={settings.purchase_subscription_enabled}
-            onChange={(v) => updateField('purchase_subscription_enabled', v)}
+          <Switch
+            checked={settings.purchase_subscription_enabled}
+            onCheckedChange={(v) => updateField('purchase_subscription_enabled', v)}
           />
         </div>
 
@@ -1096,9 +1068,9 @@ export default function SettingsView() {
                   )}
                 </p>
               </div>
-              <Toggle
-                value={streamTimeout.enabled}
-                onChange={(v) =>
+              <Switch
+                checked={streamTimeout.enabled}
+                onCheckedChange={(v) =>
                   setStreamTimeout((prev) => (prev ? { ...prev, enabled: v } : prev))
                 }
               />
@@ -1123,7 +1095,7 @@ export default function SettingsView() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper">
                         <SelectItem value="temp_unsched">
                           {t(
                             'admin.settings.streamTimeout.actionTempUnsched',
