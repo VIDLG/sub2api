@@ -1,4 +1,16 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git fetch*)",
+      "Bash(git branch*)",
+      "Bash(git rev-list*)",
+      "Bash(git show*)",
+      "Bash(git remote -v*)"
+    ]
+  },
   "hooks": {
     "Stop": [
       {
