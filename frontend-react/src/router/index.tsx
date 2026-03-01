@@ -272,7 +272,14 @@ const adminUsageRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: '/admin/usage',
   staticData: { title: 'Usage Records', titleKey: 'admin.usage.title' },
-  component: lazyRouteComponent(() => import('@/views/admin/UsageView')),
+  component: lazyRouteComponent(() => import('@/views/admin/usage/UsageView')),
+})
+
+const adminAiAnalyzerRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: '/admin/ai',
+  staticData: { title: 'AI Analyzer', titleKey: 'admin.aiAnalyzer.title' },
+  component: lazyRouteComponent(() => import('@/views/admin/AiAnalyzerView')),
 })
 
 // --- Route tree ---
@@ -310,6 +317,7 @@ const routeTree = rootRoute.addChildren([
       adminPromoCodesRoute,
       adminSettingsRoute,
       adminUsageRoute,
+      adminAiAnalyzerRoute,
     ]),
   ]),
 ])

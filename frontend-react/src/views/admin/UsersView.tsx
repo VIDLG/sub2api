@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm } from '@tanstack/react-form'
-import { type ColumnDef } from '@tanstack/react-table'
+import { type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type { AdminUser } from '@/types'
@@ -34,8 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/data-table'
-import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+import { DataTable, ColumnSettings } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Types ====================
 
@@ -55,6 +55,15 @@ function formatDate(dateStr: string) {
 
 const USERS_QUERY_KEY = ['admin', 'users']
 
+const USERS_COLUMN_META: ColumnMeta[] = [
+  { id: 'email', label: 'Email' },
+  { id: 'role', label: 'Role' },
+  { id: 'balance', label: 'Balance' },
+  { id: 'concurrency', label: 'Concurrency' },
+  { id: 'status', label: 'Status' },
+  { id: 'created_at', label: 'Created' },
+]
+
 // ==================== Component ====================
 
 export default function UsersView() {
@@ -73,16 +82,31 @@ export default function UsersView() {
     setFilter,
     setSearch,
     refresh,
+    columnOrder,
+    columnVisibility,
+    columnSizing,
+    columnSettingItems,
+    setColumnOrder,
+    setColumnVisibility,
+    setColumnSizing,
+    resetColumnSettings,
   } = useDataTableQuery<AdminUser, UserFilters>({
     queryKey: USERS_QUERY_KEY,
     queryFn: (page, pageSize, filters, options) =>
       adminAPI.users.list(page, pageSize, filters, options),
+    tableKey: 'admin-users',
+    columnMeta: USERS_COLUMN_META,
   })
+
+  // Row selection
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const selectedCount = Object.keys(rowSelection).length
 
   // Dialog state
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
 
   // ==================== Mutations ====================
@@ -148,6 +172,35 @@ export default function UsersView() {
     onSuccess: () => showSuccess(t('User status updated')),
     onError: (err) => {
       showError(extractErrorMessage(err, t('Failed to toggle status')))
+    },
+  })
+
+  const bulkDeleteMutation = useTableMutation({
+    mutationFn: async (ids: number[]) => {
+      let failed = 0
+      for (const id of ids) {
+        try {
+          await adminAPI.users.delete(id)
+        } catch {
+          failed++
+        }
+      }
+      return { total: ids.length, failed }
+    },
+    queryKey: USERS_QUERY_KEY,
+    onSuccess: (result) => {
+      if (result.failed > 0) {
+        showError(`${result.failed} user(s) failed to delete`)
+      } else {
+        showSuccess(t('admin.users.bulkDeleted', `${result.total} user(s) deleted`))
+      }
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err))
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
     },
   })
 
@@ -265,45 +318,40 @@ export default function UsersView() {
         </span>
       ),
     },
-    {
-      id: 'actions',
-      header: () => <span className="text-right block">{t('Actions')}</span>,
-      size: 200,
-      cell: ({ row }) => {
-        const user = row.original
-        return (
-          <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
-              {t('Edit')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                toggleStatusMutation.mutate({
-                  id: user.id,
-                  status: user.status === 'active' ? 'disabled' : 'active',
-                })
-              }
-            >
-              {user.status === 'active' ? t('Disable') : t('Enable')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-500 hover:text-red-700"
-              onClick={() => {
-                setSelectedUser(user)
-                setShowDeleteDialog(true)
-              }}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        )
-      },
-    },
   ]
+
+  function renderRowActions(user: AdminUser) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
+          {t('Edit')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            toggleStatusMutation.mutate({
+              id: user.id,
+              status: user.status === 'active' ? 'disabled' : 'active',
+            })
+          }
+        >
+          {user.status === 'active' ? t('Disable') : t('Enable')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-red-500 hover:text-red-700"
+          onClick={() => {
+            setSelectedUser(user)
+            setShowDeleteDialog(true)
+          }}
+        >
+          <TrashIcon className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
 
   // ==================== Render ====================
 
@@ -316,9 +364,22 @@ export default function UsersView() {
           <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
         </h1>
         <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('common.delete', 'Delete')} ({selectedCount})
+            </Button>
+          )}
           <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
             <RefreshIcon className="h-4 w-4" />
           </Button>
+          <ColumnSettings
+            columns={columnSettingItems}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+            onVisibilityChange={setColumnVisibility}
+            onReset={resetColumnSettings}
+          />
           <Button
             onClick={() => {
               createForm.reset()
@@ -383,6 +444,16 @@ export default function UsersView() {
         loading={isLoading}
         pagination={pagination}
         onPageChange={setPage}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        getRowId={(row) => String(row.id)}
+        columnOrder={columnOrder}
+        columnVisibility={columnVisibility}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+        renderRowActions={renderRowActions}
+        actionsColumnSize={200}
+        spreadsheetTitle="Users"
       />
 
       {/* Create Dialog */}
@@ -601,6 +672,29 @@ export default function UsersView() {
               className="bg-red-600 hover:bg-red-700"
             >
               {t('Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDelete', 'Confirm Delete')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('admin.users.bulkDeleteConfirm', 'Are you sure you want to delete')}{' '}
+              <strong>{selectedCount}</strong> {t('admin.users.usersCount', 'user(s)')}?{' '}
+              {t('common.cannotUndo', 'This action cannot be undone.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Object.keys(rowSelection).map(Number))}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t('common.delete', 'Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

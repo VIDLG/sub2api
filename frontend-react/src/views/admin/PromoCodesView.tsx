@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm } from '@tanstack/react-form'
-import { type ColumnDef } from '@tanstack/react-table'
+import { type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
 import { useUpdateEffect } from 'ahooks'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
@@ -48,8 +48,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/data-table'
-import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+import { DataTable, ColumnSettings } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Types ====================
 
@@ -116,6 +116,15 @@ const defaultForm = {
 
 const PROMO_QUERY_KEY = ['admin', 'promo']
 
+const PROMO_COLUMN_META: ColumnMeta[] = [
+  { id: 'code', label: 'Code' },
+  { id: 'bonus_amount', label: 'Bonus Amount' },
+  { id: 'max_uses', label: 'Max Uses' },
+  { id: 'used_count', label: 'Used Count' },
+  { id: 'computed_status', label: 'Status' },
+  { id: 'expires_at', label: 'Expires' },
+]
+
 // ==================== Component ====================
 
 export default function PromoCodesView() {
@@ -134,14 +143,29 @@ export default function PromoCodesView() {
     setFilter,
     setSearch,
     refresh,
+    columnOrder,
+    columnVisibility,
+    columnSizing,
+    columnSettingItems,
+    setColumnOrder,
+    setColumnVisibility,
+    setColumnSizing,
+    resetColumnSettings,
   } = useDataTableQuery<PromoCode, PromoFilters>({
     queryKey: PROMO_QUERY_KEY,
     queryFn: (page, pageSize, filters) => adminAPI.promo.list(page, pageSize, filters),
+    tableKey: 'admin-promo',
+    columnMeta: PROMO_COLUMN_META,
   })
+
+  // Row selection
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const selectedCount = Object.keys(rowSelection).length
 
   // Dialog state
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
   const [showUsagesDialog, setShowUsagesDialog] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [selectedPromo, setSelectedPromo] = useState<PromoCode | null>(null)
@@ -210,6 +234,35 @@ export default function PromoCodesView() {
     },
     onError: (err) => {
       showError(extractErrorMessage(err, t('Failed to delete promo code')))
+    },
+  })
+
+  const bulkDeleteMutation = useTableMutation({
+    mutationFn: async (ids: number[]) => {
+      let failed = 0
+      for (const id of ids) {
+        try {
+          await adminAPI.promo.delete(id)
+        } catch {
+          failed++
+        }
+      }
+      return { total: ids.length, failed }
+    },
+    queryKey: PROMO_QUERY_KEY,
+    onSuccess: (result) => {
+      if (result.failed > 0) {
+        showError(`${result.failed} promo code(s) failed to delete`)
+      } else {
+        showSuccess(`${result.total} promo code(s) deleted`)
+      }
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err))
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
     },
   })
 
@@ -378,33 +431,28 @@ export default function PromoCodesView() {
         </span>
       ),
     },
-    {
-      id: 'actions',
-      header: () => <span className="text-right block">{t('Actions')}</span>,
-      size: 140,
-      cell: ({ row }) => {
-        const promo = row.original
-        return (
-          <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="sm" onClick={() => openEdit(promo)}>
-              {t('Edit')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-500 hover:text-red-700"
-              onClick={() => {
-                setSelectedPromo(promo)
-                setShowDeleteDialog(true)
-              }}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        )
-      },
-    },
   ]
+
+  function renderRowActions(promo: PromoCode) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <Button variant="ghost" size="sm" onClick={() => openEdit(promo)}>
+          {t('Edit')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-red-500 hover:text-red-700"
+          onClick={() => {
+            setSelectedPromo(promo)
+            setShowDeleteDialog(true)
+          }}
+        >
+          <TrashIcon className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
 
   // ==================== Render ====================
 
@@ -417,9 +465,22 @@ export default function PromoCodesView() {
           <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
         </h1>
         <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('Delete')} ({selectedCount})
+            </Button>
+          )}
           <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
             <RefreshIcon className="h-4 w-4" />
           </Button>
+          <ColumnSettings
+            columns={columnSettingItems}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+            onVisibilityChange={setColumnVisibility}
+            onReset={resetColumnSettings}
+          />
           <Button onClick={openCreate}>
             <PlusIcon className="mr-2 h-4 w-4" />
             {t('Create Promo Code')}
@@ -462,6 +523,16 @@ export default function PromoCodesView() {
         loading={isLoading}
         pagination={pagination}
         onPageChange={setPage}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        getRowId={(row) => String(row.id)}
+        columnOrder={columnOrder}
+        columnVisibility={columnVisibility}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+        renderRowActions={renderRowActions}
+        actionsColumnSize={140}
+        spreadsheetTitle="Promo Codes"
       />
 
       {/* Create/Edit Dialog */}
@@ -683,6 +754,29 @@ export default function PromoCodesView() {
             <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => selectedPromo && deleteMutation.mutate(selectedPromo.id)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t('Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Delete Promo Code')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('Are you sure you want to delete')}{' '}
+              <strong>{selectedCount}</strong> {t('promo code(s)')}?{' '}
+              {t('This action cannot be undone.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Object.keys(rowSelection).map(Number))}
               className="bg-red-600 hover:bg-red-700"
             >
               {t('Delete')}

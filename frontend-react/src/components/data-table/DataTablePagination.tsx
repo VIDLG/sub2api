@@ -4,7 +4,10 @@ interface DataTablePaginationProps {
   page: number
   totalPages: number
   total: number
+  pageSize: number
   onPageChange?: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
+  pageSizeOptions?: number[]
   selectedCount?: number
 }
 
@@ -12,19 +15,21 @@ export function DataTablePagination({
   page,
   totalPages,
   total,
+  pageSize,
   onPageChange,
+  onPageSizeChange,
+  pageSizeOptions,
   selectedCount,
 }: DataTablePaginationProps) {
-  // Derive pageSize from total and totalPages
-  const pageSize = totalPages > 0 ? Math.ceil(total / totalPages) : 20
-
   return (
     <Pagination
       page={page}
       total={total}
       pageSize={pageSize}
       onPageChange={(p) => onPageChange?.(p)}
-      showPageSizeSelector={false}
+      showPageSizeSelector={!!onPageSizeChange}
+      onPageSizeChange={onPageSizeChange}
+      pageSizeOptions={pageSizeOptions}
       selectedCount={selectedCount}
     />
   )

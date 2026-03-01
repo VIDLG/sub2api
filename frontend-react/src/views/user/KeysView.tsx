@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
-import { type ColumnDef } from '@tanstack/react-table'
+import { type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { keysAPI } from '@/api/keys'
 import { usageAPI, type BatchApiKeysUsageResponse } from '@/api/usage'
@@ -37,8 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/data-table'
-import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+import { DataTable, ColumnSettings } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Helpers ====================
 
@@ -78,6 +78,15 @@ function statusColor(status: string): string {
 
 const KEYS_QUERY_KEY = ['user', 'keys']
 
+const KEYS_COLUMN_META: ColumnMeta[] = [
+  { id: 'name', label: 'Name' },
+  { id: 'key', label: 'Key' },
+  { id: 'group_id', label: 'Group' },
+  { id: 'usage', label: 'Usage' },
+  { id: 'quota', label: 'Quota' },
+  { id: 'status', label: 'Status' },
+]
+
 // ==================== Component ====================
 
 export default function KeysView() {
@@ -92,10 +101,20 @@ export default function KeysView() {
     isLoading,
     setPage,
     refresh,
+    columnOrder,
+    columnVisibility,
+    columnSizing,
+    columnSettingItems,
+    setColumnOrder,
+    setColumnVisibility,
+    setColumnSizing,
+    resetColumnSettings,
   } = useDataTableQuery<ApiKey, Record<string, never>>({
     queryKey: KEYS_QUERY_KEY,
     queryFn: (page, pageSize, _filters, options) => keysAPI.list(page, pageSize, options),
     pageSize: 10,
+    tableKey: 'user-keys',
+    columnMeta: KEYS_COLUMN_META,
   })
 
   // Batch usage stats — depends on keys data
@@ -112,10 +131,15 @@ export default function KeysView() {
     queryFn: () => userGroupsAPI.getAvailable(),
   })
 
+  // Row selection
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const selectedCount = Object.keys(rowSelection).length
+
   // Dialog state
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
   const [selectedKey, setSelectedKey] = useState<ApiKey | null>(null)
   const [copiedId, setCopiedId] = useState<number | null>(null)
 
@@ -142,6 +166,35 @@ export default function KeysView() {
     onSuccess: () => showSuccess(t('keys.statusUpdated', 'Status updated')),
     onError: (err) =>
       showError(extractErrorMessage(err, t('keys.statusUpdateFailed', 'Failed to update status'))),
+  })
+
+  const bulkDeleteMutation = useTableMutation({
+    mutationFn: async (ids: number[]) => {
+      let failed = 0
+      for (const id of ids) {
+        try {
+          await keysAPI.delete(id)
+        } catch {
+          failed++
+        }
+      }
+      return { total: ids.length, failed }
+    },
+    queryKey: KEYS_QUERY_KEY,
+    onSuccess: (result) => {
+      if (result.failed > 0) {
+        showError(`${result.failed} key(s) failed to delete`)
+      } else {
+        showSuccess(`${result.total} key(s) deleted`)
+      }
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err))
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
+    },
   })
 
   // Forms
@@ -396,34 +449,28 @@ export default function KeysView() {
         )
       },
     },
-    {
-      id: 'actions',
-      header: () => t('common.actions', 'Actions'),
-      size: 100,
-      cell: ({ row }) => {
-        const key = row.original
-        return (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => openEdit(key)}
-              className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
-            >
-              {t('common.edit', 'Edit')}
-            </button>
-            <button
-              onClick={() => {
-                setSelectedKey(key)
-                setShowDeleteDialog(true)
-              }}
-              className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400"
-            >
-              <TrashIcon className="h-4 w-4" />
-            </button>
-          </div>
-        )
-      },
-    },
   ]
+
+  function renderRowActions(key: ApiKey) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <Button variant="ghost" size="sm" onClick={() => openEdit(key)}>
+          {t('common.edit', 'Edit')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-red-500 hover:text-red-700"
+          onClick={() => {
+            setSelectedKey(key)
+            setShowDeleteDialog(true)
+          }}
+        >
+          <TrashIcon className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
 
   // ==================== Render ====================
 
@@ -439,6 +486,12 @@ export default function KeysView() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('common.delete', 'Delete')} ({selectedCount})
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -447,6 +500,13 @@ export default function KeysView() {
           >
             <RefreshIcon className="h-5 w-5" />
           </Button>
+          <ColumnSettings
+            columns={columnSettingItems}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+            onVisibilityChange={setColumnVisibility}
+            onReset={resetColumnSettings}
+          />
           <Button
             onClick={() => {
               createForm.reset()
@@ -465,6 +525,16 @@ export default function KeysView() {
         loading={isLoading}
         pagination={pagination}
         onPageChange={setPage}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        getRowId={(row) => String(row.id)}
+        columnOrder={columnOrder}
+        columnVisibility={columnVisibility}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+        renderRowActions={renderRowActions}
+        actionsColumnSize={120}
+        spreadsheetTitle="API Keys"
       />
 
       {/* Create Dialog */}
@@ -728,6 +798,29 @@ export default function KeysView() {
               ) : (
                 t('common.delete', 'Delete')
               )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('keys.deleteTitle', 'Delete API Key')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('keys.bulkDeleteConfirm', 'Are you sure you want to delete')}{' '}
+              <strong>{selectedCount}</strong> {t('keys.keysCount', 'key(s)')}?{' '}
+              {t('common.cannotUndo', 'This action cannot be undone.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Object.keys(rowSelection).map(Number))}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t('common.delete', 'Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -34,8 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/data-table'
-import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+import { DataTable, ColumnSettings } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Types ====================
 
@@ -83,6 +83,17 @@ const STATUS_COLORS: Record<string, string> = {
 
 const SUBSCRIPTIONS_QUERY_KEY = ['admin', 'subscriptions']
 
+const SUBSCRIPTIONS_COLUMN_META: ColumnMeta[] = [
+  { id: 'user', label: 'User' },
+  { id: 'group', label: 'Group' },
+  { id: 'status', label: 'Status' },
+  { id: 'daily_usage_usd', label: 'Daily Usage' },
+  { id: 'weekly_usage_usd', label: 'Weekly Usage' },
+  { id: 'monthly_usage_usd', label: 'Monthly Usage' },
+  { id: 'expires_at', label: 'Expires' },
+  { id: 'remaining', label: 'Remaining' },
+]
+
 // ==================== Component ====================
 
 export default function SubscriptionsView() {
@@ -100,10 +111,20 @@ export default function SubscriptionsView() {
     setPage,
     setFilter,
     refresh,
+    columnOrder,
+    columnVisibility,
+    columnSizing,
+    columnSettingItems,
+    setColumnOrder,
+    setColumnVisibility,
+    setColumnSizing,
+    resetColumnSettings,
   } = useDataTableQuery<UserSubscription, SubscriptionFilters>({
     queryKey: SUBSCRIPTIONS_QUERY_KEY,
     queryFn: (page, pageSize, filters, options) =>
       adminAPI.subscriptions.list(page, pageSize, filters, options),
+    tableKey: 'admin-subscriptions',
+    columnMeta: SUBSCRIPTIONS_COLUMN_META,
   })
 
   // ==================== Groups ====================
@@ -333,40 +354,35 @@ export default function SubscriptionsView() {
         </span>
       ),
     },
-    {
-      id: 'actions',
-      header: () => <span className="text-right block">{t('Actions')}</span>,
-      size: 160,
-      cell: ({ row }) => {
-        const sub = row.original
-        return (
-          <div className="flex items-center justify-end gap-1">
-            {sub.status === 'active' && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openExtend(sub)}
-                  title={t('Extend')}
-                >
-                  {t('Extend')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => confirmRevoke(sub)}
-                  className="text-red-500 hover:text-red-700"
-                  title={t('Revoke')}
-                >
-                  {t('Revoke')}
-                </Button>
-              </>
-            )}
-          </div>
-        )
-      },
-    },
   ]
+
+  function renderRowActions(sub: UserSubscription) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        {sub.status === 'active' && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openExtend(sub)}
+              title={t('Extend')}
+            >
+              {t('Extend')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => confirmRevoke(sub)}
+              className="text-red-500 hover:text-red-700"
+              title={t('Revoke')}
+            >
+              {t('Revoke')}
+            </Button>
+          </>
+        )}
+      </div>
+    )
+  }
 
   // ==================== Render ====================
 
@@ -382,6 +398,13 @@ export default function SubscriptionsView() {
           <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
             <RefreshIcon className="h-4 w-4" />
           </Button>
+          <ColumnSettings
+            columns={columnSettingItems}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+            onVisibilityChange={setColumnVisibility}
+            onReset={resetColumnSettings}
+          />
           <Button
             onClick={() => {
               setAssignForm({ user_id: 0, group_id: 0, validity_days: 30 })
@@ -440,6 +463,13 @@ export default function SubscriptionsView() {
         loading={isLoading}
         pagination={pagination}
         onPageChange={setPage}
+        columnOrder={columnOrder}
+        columnVisibility={columnVisibility}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+        renderRowActions={renderRowActions}
+        actionsColumnSize={160}
+        spreadsheetTitle="Subscriptions"
       />
 
       {/* Assign Subscription Dialog */}

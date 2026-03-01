@@ -32,6 +32,7 @@ import {
   MoonIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
+  SparklesIcon,
 } from '@/components/icons'
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>
@@ -132,10 +133,17 @@ export default function AppSidebar() {
   const adminNavItems = ((): NavItem[] => {
     const baseItems: NavItem[] = [
       { path: '/admin/dashboard', label: t('nav.dashboard'), icon: DashboardIcon },
+      { path: '/admin/usage', label: t('nav.usage'), icon: ChartIcon },
       ...(opsMonitoringEnabled
         ? [{ path: '/admin/ops', label: t('nav.ops'), icon: ChartIcon }]
         : []),
-      { path: '/admin/users', label: t('nav.users'), icon: UsersIcon, hideInSimpleMode: true },
+      { path: '/admin/ai', label: t('nav.aiAnalyzer'), icon: SparklesIcon },
+      {
+        path: '/admin/accounts',
+        label: t('nav.accounts'),
+        icon: GlobeIcon,
+        id: 'sidebar-channel-manage',
+      },
       {
         path: '/admin/groups',
         label: t('nav.groups'),
@@ -143,20 +151,13 @@ export default function AppSidebar() {
         hideInSimpleMode: true,
         id: 'sidebar-group-manage',
       },
+      { path: '/admin/users', label: t('nav.users'), icon: UsersIcon, hideInSimpleMode: true },
       {
         path: '/admin/subscriptions',
         label: t('nav.subscriptions'),
         icon: CreditCardIcon,
         hideInSimpleMode: true,
       },
-      {
-        path: '/admin/accounts',
-        label: t('nav.accounts'),
-        icon: GlobeIcon,
-        id: 'sidebar-channel-manage',
-      },
-      { path: '/admin/announcements', label: t('nav.announcements'), icon: BellIcon },
-      { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
       {
         path: '/admin/redeem',
         label: t('nav.redeemCodes'),
@@ -170,7 +171,8 @@ export default function AppSidebar() {
         icon: GiftIcon,
         hideInSimpleMode: true,
       },
-      { path: '/admin/usage', label: t('nav.usage'), icon: ChartIcon },
+      { path: '/admin/announcements', label: t('nav.announcements'), icon: BellIcon },
+      { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
     ]
 
     if (isSimpleMode) {

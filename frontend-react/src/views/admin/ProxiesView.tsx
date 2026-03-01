@@ -5,7 +5,7 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type ColumnDef } from '@tanstack/react-table'
+import { type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type {
@@ -44,12 +44,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { DataTable } from '@/components/data-table'
-import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+import { DataTable, ColumnSettings } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Constants ====================
 
 const PROXIES_QUERY_KEY = ['admin', 'proxies']
+
+const PROXIES_COLUMN_META: ColumnMeta[] = [
+  { id: 'name', label: 'Name' },
+  { id: 'protocol', label: 'Protocol' },
+  { id: 'hostPort', label: 'Host:Port' },
+  { id: 'status', label: 'Status' },
+  { id: 'latency_ms', label: 'Latency' },
+  { id: 'quality', label: 'Quality' },
+  { id: 'accounts', label: 'Accounts' },
+]
 
 const PROTOCOLS: { value: ProxyProtocol; label: string }[] = [
   { value: 'http', label: 'HTTP' },
@@ -108,6 +118,14 @@ export default function ProxiesView() {
     setFilter,
     setSearch,
     refresh,
+    columnOrder,
+    columnVisibility,
+    columnSizing,
+    columnSettingItems,
+    setColumnOrder,
+    setColumnVisibility,
+    setColumnSizing,
+    resetColumnSettings,
   } = useDataTableQuery<Proxy, ProxyFilters>({
     queryKey: PROXIES_QUERY_KEY,
     queryFn: (page, pageSize, filters, options) =>
@@ -117,7 +135,14 @@ export default function ProxiesView() {
         filters as { protocol?: string; status?: 'active' | 'inactive'; search?: string },
         options,
       ),
+    tableKey: 'admin-proxies',
+    columnMeta: PROXIES_COLUMN_META,
   })
+
+  // Row selection
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const selectedCount = Object.keys(rowSelection).length
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
 
   // Dialogs
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -202,6 +227,35 @@ export default function ProxiesView() {
     },
     onError: (err) => {
       showError(extractErrorMessage(err, t('admin.proxies.deleteFailed', 'Failed to delete proxy')))
+    },
+  })
+
+  const bulkDeleteMutation = useTableMutation({
+    mutationFn: async (ids: number[]) => {
+      let failed = 0
+      for (const id of ids) {
+        try {
+          await adminAPI.proxies.delete(id)
+        } catch {
+          failed++
+        }
+      }
+      return { total: ids.length, failed }
+    },
+    queryKey: PROXIES_QUERY_KEY,
+    onSuccess: (result) => {
+      if (result.failed > 0) {
+        showError(`${result.failed} proxy(s) failed to delete`)
+      } else {
+        showSuccess(t('admin.proxies.bulkDeleted', `${result.total} proxy(s) deleted`))
+      }
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err))
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
     },
   })
 
@@ -416,104 +470,98 @@ export default function ProxiesView() {
         <span className="text-sm text-center block">{row.original.account_count ?? 0}</span>
       ),
     },
-    {
-      id: 'actions',
-      header: () => (
-        <span className="text-right block">{t('admin.proxies.actions', 'Actions')}</span>
-      ),
-      cell: ({ row }) => {
-        const proxy = row.original
-        return (
-          <div>
-            <div className="flex items-center justify-end gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs"
-                onClick={() => handleEdit(proxy)}
-              >
-                {t('common.edit', 'Edit')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs"
-                onClick={() => handleTest(proxy.id)}
-                disabled={testingId === proxy.id}
-              >
-                {testingId === proxy.id ? (
-                  <span className="spinner h-3 w-3" />
-                ) : (
-                  t('common.test', 'Test')
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs"
-                onClick={() => handleQualityCheck(proxy.id)}
-                disabled={qualityCheckingId === proxy.id}
-                title={t('admin.proxies.qualityCheck', 'Quality Check')}
-              >
-                {qualityCheckingId === proxy.id ? (
-                  <span className="spinner h-3 w-3" />
-                ) : (
-                  <ShieldIcon className="h-3.5 w-3.5" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-red-500 hover:text-red-700"
-                onClick={() => setDeleteTarget(proxy)}
-              >
-                {t('common.delete', 'Delete')}
-              </Button>
-            </div>
-            {testResult && testResult.id === proxy.id && (
-              <div
-                className={`text-xs mt-1 text-right ${testResult.success ? 'text-emerald-600' : 'text-red-500'}`}
-              >
-                {testResult.message}
-              </div>
-            )}
-            {qualityResult && qualityResult.id === proxy.id && (
-              <div className="mt-2 rounded-lg bg-gray-50 dark:bg-dark-800 p-2 text-xs space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className={`font-bold ${qualityGradeColor(qualityResult.result.grade)}`}>
-                    Grade: {qualityResult.result.grade}
-                  </span>
-                  <span className="text-gray-500">Score: {qualityResult.result.score}</span>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400">{qualityResult.result.summary}</p>
-                {qualityResult.result.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <span
-                      className={
-                        item.status === 'pass'
-                          ? 'text-emerald-600'
-                          : item.status === 'warn'
-                            ? 'text-amber-600'
-                            : item.status === 'challenge'
-                              ? 'text-orange-600'
-                              : 'text-red-600'
-                      }
-                    >
-                      [{item.status}]
-                    </span>
-                    <span>{item.target}</span>
-                    {item.latency_ms != null && (
-                      <span className="text-gray-500">{item.latency_ms}ms</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )
-      },
-    },
   ]
+
+  function renderRowActions(proxy: Proxy) {
+    return (
+      <div>
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs"
+            onClick={() => handleEdit(proxy)}
+          >
+            {t('common.edit', 'Edit')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs"
+            onClick={() => handleTest(proxy.id)}
+            disabled={testingId === proxy.id}
+          >
+            {testingId === proxy.id ? (
+              <span className="spinner h-3 w-3" />
+            ) : (
+              t('common.test', 'Test')
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs"
+            onClick={() => handleQualityCheck(proxy.id)}
+            disabled={qualityCheckingId === proxy.id}
+            title={t('admin.proxies.qualityCheck', 'Quality Check')}
+          >
+            {qualityCheckingId === proxy.id ? (
+              <span className="spinner h-3 w-3" />
+            ) : (
+              <ShieldIcon className="h-3.5 w-3.5" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs text-red-500 hover:text-red-700"
+            onClick={() => setDeleteTarget(proxy)}
+          >
+            {t('common.delete', 'Delete')}
+          </Button>
+        </div>
+        {testResult && testResult.id === proxy.id && (
+          <div
+            className={`text-xs mt-1 text-right ${testResult.success ? 'text-emerald-600' : 'text-red-500'}`}
+          >
+            {testResult.message}
+          </div>
+        )}
+        {qualityResult && qualityResult.id === proxy.id && (
+          <div className="mt-2 rounded-lg bg-gray-50 dark:bg-dark-800 p-2 text-xs space-y-1">
+            <div className="flex items-center gap-2">
+              <span className={`font-bold ${qualityGradeColor(qualityResult.result.grade)}`}>
+                Grade: {qualityResult.result.grade}
+              </span>
+              <span className="text-gray-500">Score: {qualityResult.result.score}</span>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400">{qualityResult.result.summary}</p>
+            {qualityResult.result.items.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span
+                  className={
+                    item.status === 'pass'
+                      ? 'text-emerald-600'
+                      : item.status === 'warn'
+                        ? 'text-amber-600'
+                        : item.status === 'challenge'
+                          ? 'text-orange-600'
+                          : 'text-red-600'
+                  }
+                >
+                  [{item.status}]
+                </span>
+                <span>{item.target}</span>
+                {item.latency_ms != null && (
+                  <span className="text-gray-500">{item.latency_ms}ms</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   // ==================== Render ====================
 
@@ -528,6 +576,12 @@ export default function ProxiesView() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('common.delete', 'Delete')} ({selectedCount})
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -536,7 +590,14 @@ export default function ProxiesView() {
           >
             <RefreshIcon className="h-4 w-4" />
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => setShowBatchDialog(true)}>
+          <ColumnSettings
+            columns={columnSettingItems}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+            onVisibilityChange={setColumnVisibility}
+            onReset={resetColumnSettings}
+          />
+          <Button variant="ghost" size="sm" onClick={() => setShowBatchDialog(true)}>
             {t('admin.proxies.batchCreate', 'Batch Create')}
           </Button>
           <Button
@@ -605,7 +666,15 @@ export default function ProxiesView() {
         loading={isLoading}
         pagination={pagination}
         onPageChange={setPage}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
         getRowId={(row) => String(row.id)}
+        columnOrder={columnOrder}
+        columnVisibility={columnVisibility}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+        renderRowActions={renderRowActions}
+        spreadsheetTitle="Proxies"
       />
 
       {/* Create/Edit Dialog */}
@@ -791,6 +860,29 @@ export default function ProxiesView() {
               className="bg-red-600 hover:bg-red-700"
             >
               <TrashIcon className="h-4 w-4" />
+              {t('common.delete', 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDelete', 'Confirm Delete')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('admin.proxies.bulkDeleteConfirm', 'Are you sure you want to delete')}{' '}
+              <strong>{selectedCount}</strong> {t('admin.proxies.proxiesCount', 'proxy(s)')}?{' '}
+              {t('common.cannotUndo', 'This action cannot be undone.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Object.keys(rowSelection).map(Number))}
+              className="bg-red-600 hover:bg-red-700"
+            >
               {t('common.delete', 'Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>

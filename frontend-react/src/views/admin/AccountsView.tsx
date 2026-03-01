@@ -40,13 +40,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { DataTable } from '@/components/data-table'
-import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+import { DataTable, ColumnSettings } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Constants ====================
 
 const ACCOUNTS_QUERY_KEY = ['admin', 'accounts']
+
+const ACCOUNTS_COLUMN_META: ColumnMeta[] = [
+  { id: 'name', label: 'Name' },
+  { id: 'platformType', label: 'Platform / Type' },
+  { id: 'status', label: 'Status' },
+  { id: 'schedulable', label: 'Schedulable' },
+  { id: 'groups', label: 'Groups' },
+  { id: 'proxy', label: 'Proxy' },
+  { id: 'priority', label: 'Priority' },
+  { id: 'last_used_at', label: 'Last Used' },
+]
 
 const PLATFORMS: { value: AccountPlatform; label: string }[] = [
   { value: 'anthropic', label: 'Anthropic' },
@@ -126,10 +136,20 @@ export default function AccountsView() {
     setFilter,
     setSearch,
     refresh,
+    columnOrder,
+    columnVisibility,
+    columnSizing,
+    columnSettingItems,
+    setColumnOrder,
+    setColumnVisibility,
+    setColumnSizing,
+    resetColumnSettings,
   } = useDataTableQuery<Account, AccountFilters>({
     queryKey: ACCOUNTS_QUERY_KEY,
     queryFn: (page, pageSize, filters, options) =>
       adminAPI.accounts.list(page, pageSize, filters, options),
+    tableKey: 'admin-accounts',
+    columnMeta: ACCOUNTS_COLUMN_META,
   })
 
   // Row selection
@@ -324,24 +344,6 @@ export default function AccountsView() {
 
   const columns: ColumnDef<Account>[] = [
     {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      size: 40,
-    },
-    {
       accessorKey: 'name',
       header: () => t('admin.accounts.columns.name', 'Name'),
       cell: ({ row }) => (
@@ -451,55 +453,49 @@ export default function AccountsView() {
         <span className="text-xs text-gray-500">{formatDate(row.original.last_used_at)}</span>
       ),
     },
-    {
-      id: 'actions',
-      header: () => (
-        <span className="text-right block">{t('admin.accounts.actions', 'Actions')}</span>
-      ),
-      cell: ({ row }) => {
-        const account = row.original
-        return (
-          <div>
-            <div className="flex items-center justify-end gap-1">
-              <Button variant="ghost" size="sm" onClick={() => openEdit(account)}>
-                {t('common.edit', 'Edit')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleTest(account.id)}
-                disabled={testingId === account.id}
-              >
-                {testingId === account.id ? (
-                  <span className="spinner h-3 w-3" />
-                ) : (
-                  t('common.test', 'Test')
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-700"
-                onClick={() => {
-                  setDeleteTarget(account)
-                  setShowDeleteDialog(true)
-                }}
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
-            </div>
-            {testResult && testResult.id === account.id && (
-              <div
-                className={`text-xs mt-1 text-right ${testResult.success ? 'text-emerald-600' : 'text-red-500'}`}
-              >
-                {testResult.message}
-              </div>
-            )}
-          </div>
-        )
-      },
-    },
   ]
+
+  function renderRowActions(account: Account) {
+    return (
+      <div>
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="sm" onClick={() => openEdit(account)}>
+            {t('common.edit', 'Edit')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleTest(account.id)}
+            disabled={testingId === account.id}
+          >
+            {testingId === account.id ? (
+              <span className="spinner h-3 w-3" />
+            ) : (
+              t('common.test', 'Test')
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-500 hover:text-red-700"
+            onClick={() => {
+              setDeleteTarget(account)
+              setShowDeleteDialog(true)
+            }}
+          >
+            <TrashIcon className="h-4 w-4" />
+          </Button>
+        </div>
+        {testResult && testResult.id === account.id && (
+          <div
+            className={`text-xs mt-1 text-right ${testResult.success ? 'text-emerald-600' : 'text-red-500'}`}
+          >
+            {testResult.message}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   // ==================== Render ====================
 
@@ -528,6 +524,13 @@ export default function AccountsView() {
           >
             <RefreshIcon className="h-4 w-4" />
           </Button>
+          <ColumnSettings
+            columns={columnSettingItems}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+            onVisibilityChange={setColumnVisibility}
+            onReset={resetColumnSettings}
+          />
           <Button
             onClick={() => {
               createForm.reset()
@@ -615,6 +618,13 @@ export default function AccountsView() {
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
         getRowId={(row) => String(row.id)}
+        columnOrder={columnOrder}
+        columnVisibility={columnVisibility}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+        renderRowActions={renderRowActions}
+        actionsColumnSize={200}
+        spreadsheetTitle="Accounts"
       />
 
       {/* Create Dialog */}

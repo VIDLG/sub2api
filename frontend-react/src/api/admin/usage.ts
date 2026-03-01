@@ -75,6 +75,7 @@ export interface AdminUsageQueryParams extends UsageQueryParams {
   user_id?: number
   user_search?: string
   api_key?: string
+  request_type?: string
 }
 
 // ==================== API Functions ====================

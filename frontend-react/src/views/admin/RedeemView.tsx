@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { type ColumnDef } from '@tanstack/react-table'
+import { type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type { RedeemCode, RedeemCodeType, AdminGroup } from '@/types'
@@ -41,8 +41,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/data-table'
-import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+import { DataTable, ColumnSettings } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Types ====================
 
@@ -84,6 +84,15 @@ const STATUS_COLORS: Record<string, string> = {
 
 const REDEEM_QUERY_KEY = ['admin', 'redeem']
 
+const REDEEM_COLUMN_META: ColumnMeta[] = [
+  { id: 'code', label: 'Code' },
+  { id: 'type', label: 'Type' },
+  { id: 'value', label: 'Value' },
+  { id: 'status', label: 'Status' },
+  { id: 'used_by', label: 'Used By' },
+  { id: 'used_at', label: 'Used At' },
+]
+
 // ==================== Component ====================
 
 export default function RedeemView() {
@@ -102,10 +111,20 @@ export default function RedeemView() {
     setFilter,
     setSearch,
     refresh,
+    columnOrder,
+    columnVisibility,
+    columnSizing,
+    columnSettingItems,
+    setColumnOrder,
+    setColumnVisibility,
+    setColumnSizing,
+    resetColumnSettings,
   } = useDataTableQuery<RedeemCode, RedeemFilters>({
     queryKey: REDEEM_QUERY_KEY,
     queryFn: (page, pageSize, filters, options) =>
       adminAPI.redeem.list(page, pageSize, filters, options),
+    tableKey: 'admin-redeem',
+    columnMeta: REDEEM_COLUMN_META,
   })
 
   // Groups for subscription type
@@ -113,6 +132,11 @@ export default function RedeemView() {
     queryKey: ['admin', 'groups', 'all'],
     queryFn: () => adminAPI.groups.getAll(),
   })
+
+  // Row selection
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const selectedCount = Object.keys(rowSelection).length
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
 
   // ==================== Dialog State ====================
   const [showGenerateDialog, setShowGenerateDialog] = useState(false)
@@ -171,6 +195,21 @@ export default function RedeemView() {
     },
     onError: (err) => {
       showError(extractErrorMessage(err, t('Failed to delete unused codes')))
+    },
+  })
+
+  const bulkDeleteMutation = useTableMutation({
+    mutationFn: async (ids: number[]) => adminAPI.redeem.batchDelete(ids),
+    queryKey: REDEEM_QUERY_KEY,
+    onSuccess: (result) => {
+      showSuccess(t('Deleted') + ` ${result.deleted} ` + t('codes'))
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err, t('Failed to delete codes')))
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
     },
   })
 
@@ -353,31 +392,29 @@ export default function RedeemView() {
         </span>
       ),
     },
-    {
-      id: 'actions',
-      header: () => <span className="text-right block">{t('Actions')}</span>,
-      size: 80,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end">
-          {row.original.status === 'unused' ? (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSelectedCode(row.original)
-                setShowDeleteDialog(true)
-              }}
-              className="text-red-500 hover:text-red-700 p-1 h-auto"
-              title={t('Delete')}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </Button>
-          ) : (
-            <span className="text-gray-400">-</span>
-          )}
-        </div>
-      ),
-    },
   ]
+
+  function renderRowActions(code: RedeemCode) {
+    return (
+      <div className="flex items-center justify-end">
+        {code.status === 'unused' ? (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSelectedCode(code)
+              setShowDeleteDialog(true)
+            }}
+            className="text-red-500 hover:text-red-700 p-1 h-auto"
+            title={t('Delete')}
+          >
+            <TrashIcon className="h-4 w-4" />
+          </Button>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
+      </div>
+    )
+  }
 
   // ==================== Render ====================
 
@@ -428,6 +465,12 @@ export default function RedeemView() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('common.delete', 'Delete')} ({selectedCount})
+            </Button>
+          )}
           <Button
             variant="ghost"
             onClick={handleExportCodes}
@@ -440,6 +483,13 @@ export default function RedeemView() {
           <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
             <RefreshIcon className="h-4 w-4" />
           </Button>
+          <ColumnSettings
+            columns={columnSettingItems}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+            onVisibilityChange={setColumnVisibility}
+            onReset={resetColumnSettings}
+          />
           <Button
             onClick={() => {
               setGenForm({ type: 'balance', value: 1, count: 1, group_id: 0, validity_days: 30 })
@@ -460,6 +510,16 @@ export default function RedeemView() {
         loading={isLoading}
         pagination={pagination}
         onPageChange={setPage}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        getRowId={(row) => String(row.id)}
+        columnOrder={columnOrder}
+        columnVisibility={columnVisibility}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+        renderRowActions={renderRowActions}
+        actionsColumnSize={80}
+        spreadsheetTitle="Redeem Codes"
       />
 
       {/* Batch Actions - show when filtering by unused */}
@@ -493,6 +553,30 @@ export default function RedeemView() {
               className="bg-red-600 hover:bg-red-700"
             >
               {deleteAllUnusedMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Delete All')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Selected Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Delete Selected Codes')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('Are you sure you want to delete')}{' '}
+              <strong>{selectedCount}</strong> {t('selected code(s)?')}{' '}
+              {t('This action cannot be undone.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Object.keys(rowSelection).map(Number))}
+              disabled={bulkDeleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {bulkDeleteMutation.isPending ? <div className="spinner h-4 w-4" /> : t('Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

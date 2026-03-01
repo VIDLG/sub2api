@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm } from '@tanstack/react-form'
-import { type ColumnDef } from '@tanstack/react-table'
+import { type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type {
@@ -39,8 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/data-table'
-import { useDataTableQuery, useTableMutation, extractErrorMessage } from '@/hooks/useDataTableQuery'
+import { DataTable, ColumnSettings } from '@/components/data-table'
+import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Types ====================
 
@@ -82,6 +82,14 @@ const STATUS_COLORS: Record<AnnouncementStatus, string> = {
 
 const ANNOUNCEMENTS_QUERY_KEY = ['admin', 'announcements']
 
+const ANNOUNCEMENTS_COLUMN_META: ColumnMeta[] = [
+  { id: 'title', label: 'Title' },
+  { id: 'status', label: 'Status' },
+  { id: 'starts_at', label: 'Start Date' },
+  { id: 'ends_at', label: 'End Date' },
+  { id: 'created_at', label: 'Created' },
+]
+
 // ==================== Component ====================
 
 export default function AnnouncementsView() {
@@ -100,14 +108,29 @@ export default function AnnouncementsView() {
     setFilter,
     setSearch,
     refresh,
+    columnOrder,
+    columnVisibility,
+    columnSizing,
+    columnSettingItems,
+    setColumnOrder,
+    setColumnVisibility,
+    setColumnSizing,
+    resetColumnSettings,
   } = useDataTableQuery<Announcement, AnnouncementFilters>({
     queryKey: ANNOUNCEMENTS_QUERY_KEY,
     queryFn: (page, pageSize, filters) => adminAPI.announcements.list(page, pageSize, filters),
+    tableKey: 'admin-announcements',
+    columnMeta: ANNOUNCEMENTS_COLUMN_META,
   })
+
+  // Row selection state
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const selectedCount = Object.keys(rowSelection).length
 
   // Dialog state
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
 
@@ -152,6 +175,35 @@ export default function AnnouncementsView() {
     },
     onError: (err) => {
       showError(extractErrorMessage(err, t('Failed to delete announcement')))
+    },
+  })
+
+  const bulkDeleteMutation = useTableMutation({
+    mutationFn: async (ids: number[]) => {
+      let failed = 0
+      for (const id of ids) {
+        try {
+          await adminAPI.announcements.delete(id)
+        } catch {
+          failed++
+        }
+      }
+      return { total: ids.length, failed }
+    },
+    queryKey: ANNOUNCEMENTS_QUERY_KEY,
+    onSuccess: (result) => {
+      if (result.failed > 0) {
+        showError(`${result.failed} item(s) failed to delete`)
+      } else {
+        showSuccess(`${result.total} item(s) deleted`)
+      }
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err))
+      setRowSelection({})
+      setShowBulkDeleteDialog(false)
     },
   })
 
@@ -261,33 +313,30 @@ export default function AnnouncementsView() {
         </span>
       ),
     },
-    {
-      id: 'actions',
-      header: () => <span className="text-right block">{t('Actions')}</span>,
-      size: 120,
-      cell: ({ row }) => {
-        const ann = row.original
-        return (
-          <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="sm" onClick={() => openEdit(ann)}>
-              {t('Edit')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-500 hover:text-red-700"
-              onClick={() => {
-                setSelectedAnnouncement(ann)
-                setShowDeleteDialog(true)
-              }}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        )
-      },
-    },
   ]
+
+  // ==================== Row Actions ====================
+
+  function renderRowActions(ann: Announcement) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <Button variant="ghost" size="sm" onClick={() => openEdit(ann)}>
+          {t('Edit')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-red-500 hover:text-red-700"
+          onClick={() => {
+            setSelectedAnnouncement(ann)
+            setShowDeleteDialog(true)
+          }}
+        >
+          <TrashIcon className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
 
   // ==================== Render ====================
 
@@ -303,6 +352,19 @@ export default function AnnouncementsView() {
           <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
             <RefreshIcon className="h-4 w-4" />
           </Button>
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('common.delete', 'Delete')} ({selectedCount})
+            </Button>
+          )}
+          <ColumnSettings
+            columns={columnSettingItems}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+            onVisibilityChange={setColumnVisibility}
+            onReset={resetColumnSettings}
+          />
           <Button onClick={openCreate}>
             <PlusIcon className="mr-2 h-4 w-4" />
             {t('Create Announcement')}
@@ -346,6 +408,16 @@ export default function AnnouncementsView() {
         loading={isLoading}
         pagination={pagination}
         onPageChange={setPage}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        getRowId={(row) => String(row.id)}
+        columnOrder={columnOrder}
+        columnVisibility={columnVisibility}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+        renderRowActions={renderRowActions}
+        actionsColumnSize={120}
+        spreadsheetTitle="Announcements"
       />
 
       {/* Form Dialog (Create / Edit) */}
@@ -479,6 +551,28 @@ export default function AnnouncementsView() {
               className="bg-red-600 hover:bg-red-700"
             >
               {t('Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDelete', 'Confirm Delete')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{selectedCount}</strong> item(s)?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Object.keys(rowSelection).map(Number))}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t('common.delete', 'Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -861,6 +861,8 @@ export interface AdminDataImportResult {
 
 export type RedeemCodeType = 'balance' | 'concurrency' | 'subscription' | 'invitation'
 
+export type UsageRequestType = 'unknown' | 'sync' | 'stream' | 'ws_v2'
+
 export interface UsageLog {
   id: number
   user_id: number
@@ -889,6 +891,7 @@ export interface UsageLog {
   rate_multiplier: number
   billing_type: number
 
+  request_type?: string | null
   stream: boolean
   duration_ms: number
   first_token_ms: number | null

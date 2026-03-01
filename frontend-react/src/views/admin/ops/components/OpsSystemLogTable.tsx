@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDebounce } from 'ahooks'
+import type { ColumnDef } from '@tanstack/react-table'
 import { opsAPI } from '@/api/admin/ops'
 import type { OpsRuntimeLogConfig, OpsSystemLogQuery } from '@/api/admin/ops'
 import { LoaderCircleIcon } from 'lucide-react'
@@ -20,10 +21,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pagination } from '@/components/common/Pagination'
 import { TimeRangePicker, SYSTEM_LOG_PRESETS } from '@/components/common/TimeRangePicker'
+import { DataTable } from '@/components/data-table/DataTable'
 import { useAppStore } from '@/stores/app'
 import { cn } from '@/lib/utils'
+
+// ==================== Types ====================
+
+interface SystemLogRow {
+  id: number
+  level: string
+  message?: string
+  component?: string
+  request_id?: string
+  client_request_id?: string
+  user_id?: number | null
+  account_id?: number | null
+  platform?: string
+  model?: string
+  extra?: Record<string, unknown>
+  created_at: string
+}
 
 // ==================== Helpers ====================
 
@@ -43,16 +61,7 @@ function fmtTime(s: string) {
   return Number.isNaN(d.getTime()) ? s : d.toLocaleString()
 }
 
-function formatLogDetail(row: {
-  message?: string
-  request_id?: string
-  client_request_id?: string
-  user_id?: number | null
-  account_id?: number | null
-  platform?: string
-  model?: string
-  extra?: Record<string, unknown>
-}): string {
+function formatLogDetail(row: SystemLogRow): string {
   const parts: string[] = []
   const msg = String(row.message || '').trim()
   if (msg) parts.push(msg)
@@ -98,6 +107,45 @@ function formatLogDetail(row: {
   return parts.join('  ')
 }
 
+// ==================== Columns ====================
+
+const logColumns: ColumnDef<SystemLogRow>[] = [
+  {
+    accessorKey: 'created_at',
+    header: 'Time',
+    size: 170,
+    cell: ({ row }) => (
+      <span className="text-xs text-gray-600 dark:text-gray-400">
+        {fmtTime(row.original.created_at)}
+      </span>
+    ),
+  },
+  {
+    accessorKey: 'level',
+    header: 'Level',
+    size: 70,
+    cell: ({ row }) => (
+      <span
+        className={cn(
+          'inline-block rounded-full px-1.5 py-0.5 text-xs font-semibold',
+          levelClass(row.original.level),
+        )}
+      >
+        {row.original.level}
+      </span>
+    ),
+  },
+  {
+    id: 'detail',
+    header: 'Detail',
+    cell: ({ row }) => (
+      <span className="break-all text-xs text-gray-700 dark:text-gray-300">
+        {formatLogDetail(row.original)}
+      </span>
+    ),
+  },
+]
+
 // ==================== Defaults ====================
 
 const defaultFilters: OpsSystemLogQuery = {
@@ -126,6 +174,7 @@ const defaultRuntimeConfig: OpsRuntimeLogConfig = {
 const LOG_LEVELS = ['debug', 'info', 'warn', 'error']
 const STACKTRACE_LEVELS = ['none', 'error', 'fatal']
 const DEFAULT_PAGE_SIZE = 20
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200]
 
 // ==================== Component ====================
 
@@ -293,8 +342,12 @@ export function OpsSystemLogTable({ platformFilter, opsEnabled }: Props) {
 
   // ---- Derived data ----
 
-  const logs = logsQuery.data?.items ?? []
+  const logs: SystemLogRow[] = logsQuery.data?.items ?? []
   const total = logsQuery.data?.total ?? 0
+  const totalPages = (() => {
+    if (total === 0) return 1
+    return Math.ceil(total / pageSize)
+  })()
   const health = healthQuery.data
   const isPending = saveMutation.isPending || resetMutation.isPending
 
@@ -653,67 +706,24 @@ export function OpsSystemLogTable({ platformFilter, opsEnabled }: Props) {
       </div>
 
       {/* Table */}
-      {logsQuery.isLoading ? (
-        <div className="flex h-32 items-center justify-center">
-          <div className="spinner" />
-        </div>
-      ) : logs.length === 0 ? (
-        <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-          {t('admin.ops.systemLog.empty', 'No system logs')}
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-dark-700">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50 dark:border-dark-700 dark:bg-dark-900">
-                <th className="w-[170px] px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
-                  {t('admin.ops.systemLog.colTime', 'Time')}
-                </th>
-                <th className="w-[70px] px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
-                  {t('admin.ops.systemLog.colLevel', 'Level')}
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
-                  {t('admin.ops.systemLog.colDetail', 'Detail')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-dark-800">
-              {logs.map((row) => (
-                <tr key={row.id} className="align-top">
-                  <td className="px-3 py-1.5 text-gray-600 dark:text-gray-400">
-                    {fmtTime(row.created_at)}
-                  </td>
-                  <td className="px-3 py-1.5">
-                    <span
-                      className={cn(
-                        'inline-block rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                        levelClass(row.level),
-                      )}
-                    >
-                      {row.level}
-                    </span>
-                  </td>
-                  <td className="break-all px-3 py-1.5 text-gray-700 dark:text-gray-300">
-                    {formatLogDetail(row)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Pagination */}
-      <Pagination
-        page={page}
-        total={total}
-        pageSize={pageSize}
+      <DataTable
+        columns={logColumns}
+        data={logs}
+        loading={logsQuery.isLoading}
+        pagination={{
+          page,
+          pageSize,
+          total,
+          totalPages,
+        }}
         onPageChange={setPage}
         onPageSizeChange={(size) => {
           setPageSize(size)
           setPage(1)
         }}
-        pageSizeOptions={[10, 20, 50, 100, 200]}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
+        getRowId={(row) => String(row.id)}
+        spreadsheetTitle="System Logs"
       />
     </div>
   )

@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import type { ColumnDef } from '@tanstack/react-table'
 import { useAppStore } from '@/stores/app'
 import { usageAPI } from '@/api/usage'
 import { keysAPI } from '@/api/keys'
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { TimeRangePicker, DASHBOARD_PRESETS } from '@/components/common/TimeRangePicker'
+import { DataTable } from '@/components/data-table/DataTable'
 
 // ==================== Helpers ====================
 
@@ -51,6 +53,87 @@ function formatLocalDate(d: Date): string {
 }
 
 const PAGE_SIZE = 20
+
+// ==================== Columns ====================
+
+const columns: ColumnDef<UsageLog>[] = [
+  {
+    accessorKey: 'model',
+    header: 'Model',
+    size: 200,
+    cell: ({ row }) => (
+      <span className="font-medium text-gray-900 dark:text-white">{row.original.model}</span>
+    ),
+  },
+  {
+    accessorKey: 'input_tokens',
+    header: 'Input',
+    size: 100,
+    cell: ({ row }) => (
+      <span className="text-gray-600 dark:text-gray-400">
+        {formatTokens(row.original.input_tokens)}
+      </span>
+    ),
+  },
+  {
+    accessorKey: 'output_tokens',
+    header: 'Output',
+    size: 100,
+    cell: ({ row }) => (
+      <span className="text-gray-600 dark:text-gray-400">
+        {formatTokens(row.original.output_tokens)}
+      </span>
+    ),
+  },
+  {
+    id: 'cost',
+    header: 'Cost',
+    size: 150,
+    cell: ({ row }) => (
+      <>
+        <span className="text-green-600 dark:text-green-400">
+          ${formatCost(row.original.actual_cost)}
+        </span>
+        <span className="text-gray-400"> / ${formatCost(row.original.total_cost)}</span>
+      </>
+    ),
+  },
+  {
+    accessorKey: 'duration_ms',
+    header: 'Duration',
+    size: 100,
+    cell: ({ row }) => (
+      <span className="text-gray-600 dark:text-gray-400">
+        {formatDuration(row.original.duration_ms)}
+      </span>
+    ),
+  },
+  {
+    accessorKey: 'stream',
+    header: 'Stream',
+    size: 80,
+    cell: ({ row }) =>
+      row.original.stream ? (
+        <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+          SSE
+        </span>
+      ) : (
+        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+          REST
+        </span>
+      ),
+  },
+  {
+    accessorKey: 'created_at',
+    header: 'Time',
+    size: 180,
+    cell: ({ row }) => (
+      <span className="text-xs text-gray-500 dark:text-gray-400">
+        {formatDateTime(row.original.created_at)}
+      </span>
+    ),
+  },
+]
 
 // ==================== Component ====================
 
@@ -281,120 +364,20 @@ export default function UsageView() {
       </div>
 
       {/* Logs Table */}
-      <div className="card overflow-hidden">
-        {loadingLogs && logs.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="spinner" />
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="py-12 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('usage.noLogs', 'No usage logs found for this period.')}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-medium uppercase text-gray-500 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-400">
-                  <th className="px-4 py-3">{t('usage.model', 'Model')}</th>
-                  <th className="px-4 py-3">{t('usage.inputTokens', 'Input')}</th>
-                  <th className="px-4 py-3">{t('usage.outputTokens', 'Output')}</th>
-                  <th className="px-4 py-3">{t('usage.cost', 'Cost')}</th>
-                  <th className="px-4 py-3">{t('usage.duration', 'Duration')}</th>
-                  <th className="px-4 py-3">{t('usage.stream', 'Stream')}</th>
-                  <th className="px-4 py-3">{t('usage.time', 'Time')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="border-b border-gray-50 transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-800/50"
-                  >
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-gray-900 dark:text-white">{log.model}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                      {formatTokens(log.input_tokens)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                      {formatTokens(log.output_tokens)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-green-600 dark:text-green-400">
-                        ${formatCost(log.actual_cost)}
-                      </span>
-                      <span className="text-gray-400"> / ${formatCost(log.total_cost)}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                      {formatDuration(log.duration_ms)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {log.stream ? (
-                        <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                          SSE
-                        </span>
-                      ) : (
-                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                          REST
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
-                      {formatDateTime(log.created_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-dark-700">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {t('common.showing', 'Showing')} {(page - 1) * PAGE_SIZE + 1}-
-              {Math.min(page * PAGE_SIZE, total)} {t('common.of', 'of')} {total}
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                {t('common.prev', 'Prev')}
-              </Button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
-                .map((p, idx, arr) => (
-                  <span key={p}>
-                    {idx > 0 && arr[idx - 1] !== p - 1 && (
-                      <span className="px-1 text-gray-400">...</span>
-                    )}
-                    <Button
-                      variant={p === page ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setPage(p)}
-                    >
-                      {p}
-                    </Button>
-                  </span>
-                ))}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-              >
-                {t('common.next', 'Next')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={logs}
+        loading={loadingLogs}
+        pagination={{
+          page,
+          pageSize: PAGE_SIZE,
+          total,
+          totalPages,
+        }}
+        onPageChange={setPage}
+        getRowId={(row) => String(row.id)}
+        spreadsheetTitle="Usage Logs"
+      />
     </div>
   )
 }
