@@ -70,6 +70,9 @@ export default {
     // PostCSS 嵌套支持
     'nesting-selector-no-missing-scoping-root': null,
 
+    // 防止 stylelint 将 @import "tailwindcss" 转为 url() 形式（会导致 TW v4 无法加载默认主题）
+    'import-notation': null,
+
     // 其他优化
     'declaration-block-no-redundant-longhand-properties': null,
     'no-duplicate-selectors': null,

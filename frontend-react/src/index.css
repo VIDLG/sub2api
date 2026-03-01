@@ -1,6 +1,6 @@
-@import url('tailwindcss');
-@import url('tw-animate-css');
-@import url('shadcn/tailwind.css');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
