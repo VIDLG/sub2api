@@ -6,15 +6,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "just fmt-react 2>&1 | tail -5"
-          },
+            "command": "fp=$(cat | jq -r '.tool_input.file_path // empty'); case \"$fp\" in *.go) just fmt-go 2>&1 | tail -5;; *.tsx|*.ts|*.jsx|*.js|*.css) just fmt-react 2>&1 | tail -5;; esac"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
           {
             "type": "command",
             "command": "just check-react 2>&1 | tail -20"
-          },
-          {
-            "type": "command",
-            "command": "just fmt-go 2>&1 | tail -5"
           },
           {
             "type": "command",
