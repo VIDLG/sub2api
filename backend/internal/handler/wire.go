@@ -30,6 +30,7 @@ func ProvideAdminHandlers(
 	userAttributeHandler *admin.UserAttributeHandler,
 	errorPassthroughHandler *admin.ErrorPassthroughHandler,
 	apiKeyHandler *admin.AdminAPIKeyHandler,
+	queryHandler *admin.QueryHandler,
 ) *AdminHandlers {
 	return &AdminHandlers{
 		Dashboard:        dashboardHandler,
@@ -53,6 +54,7 @@ func ProvideAdminHandlers(
 		UserAttribute:    userAttributeHandler,
 		ErrorPassthrough: errorPassthroughHandler,
 		APIKey:           apiKeyHandler,
+		Query:            queryHandler,
 	}
 }
 
@@ -116,6 +118,7 @@ var ProviderSet = wire.NewSet(
 	NewGatewayHandler,
 	NewOpenAIGatewayHandler,
 	NewSoraGatewayHandler,
+	NewSoraClientHandler,
 	NewTotpHandler,
 	ProvideSettingHandler,
 
@@ -141,6 +144,7 @@ var ProviderSet = wire.NewSet(
 	admin.NewUserAttributeHandler,
 	admin.NewErrorPassthroughHandler,
 	admin.NewAdminAPIKeyHandler,
+	admin.NewQueryHandler,
 
 	// AdminHandlers and Handlers constructors
 	ProvideAdminHandlers,

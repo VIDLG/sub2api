@@ -78,6 +78,9 @@ func RegisterAdminRoutes(
 
 		// API Key 管理
 		registerAdminAPIKeyRoutes(admin, h)
+
+		// SQL 查询（AI Analyzer 用）
+		registerQueryRoutes(admin, h)
 	}
 }
 
@@ -483,4 +486,8 @@ func registerErrorPassthroughRoutes(admin *gin.RouterGroup, h *handler.Handlers)
 		rules.PUT("/:id", h.Admin.ErrorPassthrough.Update)
 		rules.DELETE("/:id", h.Admin.ErrorPassthrough.Delete)
 	}
+}
+
+func registerQueryRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	admin.POST("/query", h.Admin.Query.ExecuteAdmin)
 }

@@ -87,5 +87,8 @@ func RegisterUserRoutes(
 			subscriptions.GET("/progress", h.Subscription.GetProgress)
 			subscriptions.GET("/summary", h.Subscription.GetSummary)
 		}
+
+		// SQL 查询（AI Analyzer 用）
+		authenticated.POST("/query", h.Admin.Query.ExecuteUser)
 	}
 }

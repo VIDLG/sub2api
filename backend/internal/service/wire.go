@@ -361,4 +361,7 @@ var ProviderSet = wire.NewSet(
 	ProvideIdempotencyCoordinator,
 	ProvideSystemOperationLockService,
 	ProvideIdempotencyCleanupService,
+	NewSoraS3Storage,
+	NewSoraQuotaService,
+	NewSoraGenerationService,
 )
