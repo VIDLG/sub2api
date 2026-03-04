@@ -90,34 +90,14 @@ export default function SubscriptionsView() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            {t('subscriptions.title', 'Subscriptions')}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t('subscriptions.description', 'View your active subscriptions and usage limits.')}
-          </p>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="spinner" />
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="spinner" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {t('subscriptions.title', 'Subscriptions')}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t('subscriptions.description', 'View your active subscriptions and usage limits.')}
-        </p>
-      </div>
-
       {/* Empty State */}
       {subscriptions.length === 0 ? (
         <div className="card py-16 text-center">

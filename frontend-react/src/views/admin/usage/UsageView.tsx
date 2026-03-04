@@ -12,6 +12,8 @@ import type { ColumnSizingState, VisibilityState } from '@tanstack/react-table'
 import { adminAPI } from '@/api/admin'
 import type { AdminUsageQueryParams } from '@/api/admin/usage'
 import type { AdminUsageLog } from '@/types'
+import { RefreshIcon, DownloadIcon } from '@/components/icons'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -320,19 +322,8 @@ export default function UsageView() {
         dateTo={dateTo}
         onDateChange={handleDateChange}
         onReset={handleReset}
-        onRefresh={handleRefresh}
-        onExport={() => setExportOpen(true)}
         onCleanup={() => setCleanupOpen(true)}
-        exporting={false}
-      >
-        <ColumnSettings
-          columns={columnSettingItems}
-          columnOrder={columnOrder}
-          onColumnOrderChange={handleColumnOrderChange}
-          onVisibilityChange={handleColumnVisibilityChange}
-          onReset={handleColumnReset}
-        />
-      </UsageFilters>
+      />
 
       {/* Table — uses shared DataTable with column visibility */}
       <DataTable<AdminUsageLog>
@@ -345,6 +336,30 @@ export default function UsageView() {
         onColumnSizingChange={handleColumnSizingChange}
         getRowId={(row) => String(row.id)}
         spreadsheetTitle="Usage Logs"
+        toolbar={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExportOpen(true)}
+              className="flex items-center gap-1 text-sm h-7 px-2"
+              title={t('admin.usage.exportExcel', 'Export Excel')}
+            >
+              <DownloadIcon className="h-3.5 w-3.5" />
+              {t('admin.usage.exportExcel', 'Export Excel')}
+            </Button>
+            <Button variant="ghost" size="icon-xs" onClick={handleRefresh} title={t('common.refresh', 'Refresh')}>
+              <RefreshIcon className="h-4 w-4" />
+            </Button>
+            <ColumnSettings
+              columns={columnSettingItems}
+              columnOrder={columnOrder}
+              onColumnOrderChange={handleColumnOrderChange}
+              onVisibilityChange={handleColumnVisibilityChange}
+              onReset={handleColumnReset}
+            />
+          </>
+        }
       />
 
       {/* Pagination — separate from DataTable for page size control */}

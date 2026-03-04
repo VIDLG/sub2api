@@ -234,38 +234,6 @@ export default function UsageView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            {t('usage.title', 'Usage')}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t('usage.description', 'View your API usage statistics and logs.')}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            onClick={exportCSV}
-            disabled={logs.length === 0}
-            className="flex items-center gap-2 text-sm"
-            title={t('usage.export', 'Export CSV')}
-          >
-            <DownloadIcon className="h-4 w-4" />
-            {t('usage.export', 'Export CSV')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            title={t('common.refresh', 'Refresh')}
-          >
-            <RefreshIcon className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -321,32 +289,26 @@ export default function UsageView() {
       )}
 
       {/* Filters */}
-      <div className="card p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('usage.apiKey', 'API Key')}:
-            </label>
-            <Select
-              value={selectedKeyId != null ? String(selectedKeyId) : 'all'}
-              onValueChange={(v) => {
-                setSelectedKeyId(v === 'all' ? undefined : Number(v))
-                setPage(1)
-              }}
-            >
-              <SelectTrigger className="w-48 text-sm">
-                <SelectValue placeholder={t('usage.allKeys', 'All Keys')} />
-              </SelectTrigger>
-              <SelectContent position="popper">
-                <SelectItem value="all">{t('usage.allKeys', 'All Keys')}</SelectItem>
-                {apiKeys.map((k) => (
-                  <SelectItem key={k.id} value={String(k.id)}>
-                    {k.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="flex flex-wrap items-center gap-4">
+          <Select
+            value={selectedKeyId != null ? String(selectedKeyId) : 'all'}
+            onValueChange={(v) => {
+              setSelectedKeyId(v === 'all' ? undefined : Number(v))
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="w-48 text-sm">
+              <SelectValue placeholder={t('usage.allKeys', 'All Keys')} />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">{t('usage.allKeys', 'All Keys')}</SelectItem>
+              {apiKeys.map((k) => (
+                <SelectItem key={k.id} value={String(k.id)}>
+                  {k.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <TimeRangePicker
             value={datePreset}
             onChange={(v, range) => {
@@ -360,7 +322,6 @@ export default function UsageView() {
             presets={DASHBOARD_PRESETS}
             customRange={{ from: startDate, to: endDate }}
           />
-        </div>
       </div>
 
       {/* Logs Table */}
@@ -377,6 +338,24 @@ export default function UsageView() {
         onPageChange={setPage}
         getRowId={(row) => String(row.id)}
         spreadsheetTitle="Usage Logs"
+        toolbar={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={exportCSV}
+              disabled={logs.length === 0}
+              className="flex items-center gap-1 text-sm h-7 px-2"
+              title={t('usage.export', 'Export CSV')}
+            >
+              <DownloadIcon className="h-3.5 w-3.5" />
+              {t('usage.export', 'Export CSV')}
+            </Button>
+            <Button variant="ghost" size="icon-xs" onClick={handleRefresh} title={t('common.refresh', 'Refresh')}>
+              <RefreshIcon className="h-4 w-4" />
+            </Button>
+          </>
+        }
       />
     </div>
   )

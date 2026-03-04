@@ -84,15 +84,6 @@ export default function ProfileView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {t('profile.title', 'Profile')}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t('profile.description', 'Manage your account settings and security.')}
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="card p-4">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400">

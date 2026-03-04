@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DataTable, ColumnSettings } from '@/components/data-table'
+import { DevTools } from '@/components/dev/DevTools'
 import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Types ====================
@@ -397,21 +398,17 @@ export default function RedeemView() {
   function renderRowActions(code: RedeemCode) {
     return (
       <div className="flex items-center justify-end">
-        {code.status === 'unused' ? (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setSelectedCode(code)
-              setShowDeleteDialog(true)
-            }}
-            className="text-red-500 hover:text-red-700 p-1 h-auto"
-            title={t('Delete')}
-          >
-            <TrashIcon className="h-4 w-4" />
-          </Button>
-        ) : (
-          <span className="text-gray-400">-</span>
-        )}
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setSelectedCode(code)
+            setShowDeleteDialog(true)
+          }}
+          className="text-red-500 hover:text-red-700 p-1 h-auto"
+          title={t('Delete')}
+        >
+          <TrashIcon className="h-4 w-4" />
+        </Button>
       </div>
     )
   }
@@ -472,25 +469,6 @@ export default function RedeemView() {
             </Button>
           )}
           <Button
-            variant="ghost"
-            onClick={handleExportCodes}
-            className="flex items-center gap-1 text-sm"
-            title={t('Export CSV')}
-          >
-            <DownloadIcon className="h-4 w-4" />
-            {t('Export')}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
-            <RefreshIcon className="h-4 w-4" />
-          </Button>
-          <ColumnSettings
-            columns={columnSettingItems}
-            columnOrder={columnOrder}
-            onColumnOrderChange={setColumnOrder}
-            onVisibilityChange={setColumnVisibility}
-            onReset={resetColumnSettings}
-          />
-          <Button
             onClick={() => {
               setGenForm({ type: 'balance', value: 1, count: 1, group_id: 0, validity_days: 30 })
               setShowGenerateDialog(true)
@@ -520,6 +498,30 @@ export default function RedeemView() {
         renderRowActions={renderRowActions}
         actionsColumnSize={80}
         spreadsheetTitle="Redeem Codes"
+        toolbar={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExportCodes}
+              className="flex items-center gap-1 text-sm h-7 px-2"
+              title={t('Export CSV')}
+            >
+              <DownloadIcon className="h-3.5 w-3.5" />
+              {t('Export')}
+            </Button>
+            <Button variant="ghost" size="icon-xs" onClick={refresh} title={t('Refresh')}>
+              <RefreshIcon className="h-4 w-4" />
+            </Button>
+            <ColumnSettings
+              columns={columnSettingItems}
+              columnOrder={columnOrder}
+              onColumnOrderChange={setColumnOrder}
+              onVisibilityChange={setColumnVisibility}
+              onReset={resetColumnSettings}
+            />
+          </>
+        }
       />
 
       {/* Batch Actions - show when filtering by unused */}
@@ -781,6 +783,9 @@ export default function RedeemView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dev Tools */}
+      <DevTools onSeedComplete={refresh} />
     </div>
   )
 }

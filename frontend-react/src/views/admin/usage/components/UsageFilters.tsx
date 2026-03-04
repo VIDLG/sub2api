@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { SearchIcon, RefreshIcon, DownloadIcon, TrashIcon, XMarkIcon } from '@/components/icons'
+import { SearchIcon, TrashIcon, XMarkIcon } from '@/components/icons'
 import { TimeRangePicker, DASHBOARD_PRESETS } from '@/components/common/TimeRangePicker'
 import { adminAPI } from '@/api/admin'
 import { REQUEST_TYPE_OPTIONS, BILLING_TYPE_OPTIONS } from '../utils/usageConstants'
@@ -45,12 +45,8 @@ interface Props {
   dateTo: string
   onDateChange: (preset: string, range?: { from: string; to: string }) => void
   onReset: () => void
-  onRefresh: () => void
-  onExport: () => void
   onCleanup: () => void
-  exporting: boolean
   showActions?: boolean
-  children?: React.ReactNode
 }
 
 export default function UsageFilters({
@@ -61,12 +57,8 @@ export default function UsageFilters({
   dateTo,
   onDateChange,
   onReset,
-  onRefresh,
-  onExport,
   onCleanup,
-  exporting,
   showActions = true,
-  children,
 }: Props) {
   const { t } = useTranslation()
 
@@ -210,10 +202,6 @@ export default function UsageFilters({
 
         {showActions && (
           <div className="ml-auto flex items-center gap-1.5">
-            {children}
-            <Button variant="ghost" size="sm" onClick={onRefresh} className="h-8 gap-1 text-xs">
-              <RefreshIcon className="h-3.5 w-3.5" />
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -222,20 +210,6 @@ export default function UsageFilters({
             >
               <TrashIcon className="h-3.5 w-3.5" />
               {t('admin.usage.cleanup', 'Cleanup')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onExport}
-              disabled={exporting}
-              className="h-8 gap-1 text-xs"
-            >
-              {exporting ? (
-                <span className="spinner h-3.5 w-3.5" />
-              ) : (
-                <DownloadIcon className="h-3.5 w-3.5" />
-              )}
-              {t('admin.usage.exportExcel', 'Export Excel')}
             </Button>
           </div>
         )}

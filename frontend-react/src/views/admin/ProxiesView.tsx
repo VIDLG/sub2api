@@ -14,8 +14,19 @@ import type {
   CreateProxyRequest,
   UpdateProxyRequest,
   ProxyQualityCheckResult,
+  AdminDataPayload,
+  AdminDataImportResult,
 } from '@/types'
-import { PlusIcon, TrashIcon, SearchIcon, RefreshIcon, ShieldIcon } from '@/components/icons'
+import {
+  PlusIcon,
+  TrashIcon,
+  SearchIcon,
+  RefreshIcon,
+  ShieldIcon,
+  PlayIcon,
+  DownloadIcon,
+  UploadIcon,
+} from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -45,6 +56,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { DataTable, ColumnSettings } from '@/components/data-table'
+import { DevTools } from '@/components/dev/DevTools'
 import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Constants ====================
@@ -182,6 +194,19 @@ export default function ProxiesView() {
     id: number
     result: ProxyQualityCheckResult
   } | null>(null)
+
+  // Batch test / batch quality check
+  const [batchTestingIds, setBatchTestingIds] = useState<Set<number>>(new Set())
+  const [batchQualityIds, setBatchQualityIds] = useState<Set<number>>(new Set())
+  const [isBatchTesting, setIsBatchTesting] = useState(false)
+  const [isBatchQualityChecking, setIsBatchQualityChecking] = useState(false)
+
+  // Export / Import
+  const [isExporting, setIsExporting] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [importResult, setImportResult] = useState<AdminDataImportResult | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
 
   // ==================== Helpers ====================
 
@@ -331,6 +356,133 @@ export default function ProxiesView() {
       showError(extractErrorMessage(err as Error, 'Quality check failed'))
     } finally {
       setQualityCheckingId(null)
+    }
+  }
+
+  // Batch test: run tests concurrently (concurrency=5) on selected or all proxies
+  const handleBatchTest = async () => {
+    if (isBatchTesting) return
+    setIsBatchTesting(true)
+    try {
+      const ids =
+        selectedCount > 0
+          ? Object.keys(rowSelection).map(Number)
+          : proxies.map((p) => p.id)
+      if (ids.length === 0) return
+
+      const concurrency = 5
+      let idx = 0
+      const worker = async () => {
+        while (idx < ids.length) {
+          const id = ids[idx++]
+          setBatchTestingIds((prev) => new Set([...prev, id]))
+          try {
+            await adminAPI.proxies.testProxy(id)
+          } catch {
+            // ignore individual failures
+          } finally {
+            setBatchTestingIds((prev) => {
+              const next = new Set(prev)
+              next.delete(id)
+              return next
+            })
+          }
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(concurrency, ids.length) }, () => worker()))
+      showSuccess(t('admin.proxies.batchTestDone', `Tested ${ids.length} proxy(s)`))
+      refresh()
+    } catch (err) {
+      showError(extractErrorMessage(err as Error, 'Batch test failed'))
+    } finally {
+      setIsBatchTesting(false)
+      setBatchTestingIds(new Set())
+    }
+  }
+
+  // Batch quality check: concurrency=3
+  const handleBatchQualityCheck = async () => {
+    if (isBatchQualityChecking) return
+    setIsBatchQualityChecking(true)
+    try {
+      const ids =
+        selectedCount > 0
+          ? Object.keys(rowSelection).map(Number)
+          : proxies.map((p) => p.id)
+      if (ids.length === 0) return
+
+      const concurrency = 3
+      let idx = 0
+      const worker = async () => {
+        while (idx < ids.length) {
+          const id = ids[idx++]
+          setBatchQualityIds((prev) => new Set([...prev, id]))
+          try {
+            await adminAPI.proxies.checkProxyQuality(id)
+          } catch {
+            // ignore individual failures
+          } finally {
+            setBatchQualityIds((prev) => {
+              const next = new Set(prev)
+              next.delete(id)
+              return next
+            })
+          }
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(concurrency, ids.length) }, () => worker()))
+      showSuccess(t('admin.proxies.batchQualityDone', `Quality checked ${ids.length} proxy(s)`))
+      refresh()
+    } catch (err) {
+      showError(extractErrorMessage(err as Error, 'Batch quality check failed'))
+    } finally {
+      setIsBatchQualityChecking(false)
+      setBatchQualityIds(new Set())
+    }
+  }
+
+  // Export: download JSON
+  const handleExport = async () => {
+    if (isExporting) return
+    setIsExporting(true)
+    try {
+      const payload: AdminDataPayload = await adminAPI.proxies.exportData(
+        selectedCount > 0
+          ? { ids: Object.keys(rowSelection).map(Number) }
+          : { filters: { protocol: filters.protocol, status: filters.status, search } },
+      )
+      const now = new Date()
+      const pad = (n: number) => String(n).padStart(2, '0')
+      const ts = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `sub2api-proxy-${ts}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      showSuccess(t('admin.proxies.dataExported', 'Exported successfully'))
+    } catch (err) {
+      showError(extractErrorMessage(err as Error, 'Export failed'))
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  // Import: read JSON file and call importData
+  const handleImport = async () => {
+    if (!importFile || isImporting) return
+    setIsImporting(true)
+    try {
+      const text = await importFile.text()
+      const payload: AdminDataPayload = JSON.parse(text)
+      const result: AdminDataImportResult = await adminAPI.proxies.importData({ data: payload })
+      setImportResult(result)
+      refresh()
+    } catch (err) {
+      showError(extractErrorMessage(err as Error, 'Import failed'))
+    } finally {
+      setIsImporting(false)
     }
   }
 
@@ -489,9 +641,9 @@ export default function ProxiesView() {
             size="sm"
             className="text-xs"
             onClick={() => handleTest(proxy.id)}
-            disabled={testingId === proxy.id}
+            disabled={testingId === proxy.id || batchTestingIds.has(proxy.id)}
           >
-            {testingId === proxy.id ? (
+            {testingId === proxy.id || batchTestingIds.has(proxy.id) ? (
               <span className="spinner h-3 w-3" />
             ) : (
               t('common.test', 'Test')
@@ -502,10 +654,10 @@ export default function ProxiesView() {
             size="sm"
             className="text-xs"
             onClick={() => handleQualityCheck(proxy.id)}
-            disabled={qualityCheckingId === proxy.id}
+            disabled={qualityCheckingId === proxy.id || batchQualityIds.has(proxy.id)}
             title={t('admin.proxies.qualityCheck', 'Quality Check')}
           >
-            {qualityCheckingId === proxy.id ? (
+            {qualityCheckingId === proxy.id || batchQualityIds.has(proxy.id) ? (
               <span className="spinner h-3 w-3" />
             ) : (
               <ShieldIcon className="h-3.5 w-3.5" />
@@ -567,55 +719,18 @@ export default function ProxiesView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="page-title">{t('admin.proxies.title', 'Proxies')}</h1>
-          <p className="page-description">
-            {t('admin.proxies.description', 'Manage proxy servers')}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {selectedCount > 0 && (
-            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
-              <TrashIcon className="h-4 w-4 mr-1" />
-              {t('common.delete', 'Delete')} ({selectedCount})
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={refresh}
-            title={t('common.refresh', 'Refresh')}
-          >
-            <RefreshIcon className="h-4 w-4" />
-          </Button>
-          <ColumnSettings
-            columns={columnSettingItems}
-            columnOrder={columnOrder}
-            onColumnOrderChange={setColumnOrder}
-            onVisibilityChange={setColumnVisibility}
-            onReset={resetColumnSettings}
-          />
-          <Button variant="ghost" size="sm" onClick={() => setShowBatchDialog(true)}>
-            {t('admin.proxies.batchCreate', 'Batch Create')}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              resetForm()
-              setShowCreateDialog(true)
-            }}
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t('common.create', 'Create')}
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="card p-4">
-        <div className="flex flex-wrap items-center gap-3">
+      {/* Filters & Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+          <div className="relative flex-1 min-w-[200px]">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('admin.proxies.searchPlaceholder', 'Search by name or host...')}
+              className="pl-9 text-sm"
+            />
+          </div>
           <Select
             value={filters.protocol ?? 'all'}
             onValueChange={(v) => setFilter('protocol', v === 'all' ? undefined : v)}
@@ -647,15 +762,82 @@ export default function ProxiesView() {
               <SelectItem value="inactive">{t('common.inactive', 'Inactive')}</SelectItem>
             </SelectContent>
           </Select>
-          <div className="relative flex-1 min-w-[200px]">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t('admin.proxies.searchPlaceholder', 'Search by name or host...')}
-              className="pl-9 text-sm"
-            />
-          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('common.delete', 'Delete')} ({selectedCount})
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBatchTest}
+            disabled={isBatchTesting}
+            title={t('admin.proxies.testConnection', 'Test Connection')}
+          >
+            {isBatchTesting ? (
+              <span className="spinner h-4 w-4" />
+            ) : (
+              <PlayIcon className="h-4 w-4" />
+            )}
+            {t('admin.proxies.testConnection', 'Test Connection')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBatchQualityCheck}
+            disabled={isBatchQualityChecking}
+            title={t('admin.proxies.batchQualityCheck', 'Batch Quality Check')}
+          >
+            {isBatchQualityChecking ? (
+              <span className="spinner h-4 w-4" />
+            ) : (
+              <ShieldIcon className="h-4 w-4" />
+            )}
+            {t('admin.proxies.batchQualityCheck', 'Quality Check')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setImportFile(null)
+              setImportResult(null)
+              setShowImportDialog(true)
+            }}
+          >
+            <UploadIcon className="h-4 w-4" />
+            {t('admin.proxies.dataImport', 'Import')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <span className="spinner h-4 w-4" />
+            ) : (
+              <DownloadIcon className="h-4 w-4" />
+            )}
+            {selectedCount > 0
+              ? t('admin.proxies.dataExportSelected', 'Export Selected')
+              : t('admin.proxies.dataExport', 'Export')}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowBatchDialog(true)}>
+            {t('admin.proxies.batchCreate', 'Batch Create')}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              resetForm()
+              setShowCreateDialog(true)
+            }}
+          >
+            <PlusIcon className="h-4 w-4" />
+            {t('common.create', 'Create')}
+          </Button>
         </div>
       </div>
 
@@ -675,6 +857,20 @@ export default function ProxiesView() {
         onColumnSizingChange={setColumnSizing}
         renderRowActions={renderRowActions}
         spreadsheetTitle="Proxies"
+        toolbar={
+          <>
+            <Button variant="ghost" size="icon-xs" onClick={refresh} title={t('common.refresh', 'Refresh')}>
+              <RefreshIcon className="h-4 w-4" />
+            </Button>
+            <ColumnSettings
+              columns={columnSettingItems}
+              columnOrder={columnOrder}
+              onColumnOrderChange={setColumnOrder}
+              onVisibilityChange={setColumnVisibility}
+              onReset={resetColumnSettings}
+            />
+          </>
+        }
       />
 
       {/* Create/Edit Dialog */}
@@ -888,6 +1084,83 @@ export default function ProxiesView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Dialog */}
+      <Dialog
+        open={showImportDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowImportDialog(false)
+            setImportFile(null)
+            setImportResult(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('admin.proxies.dataImport', 'Import Proxies')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {!importResult ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {t(
+                    'admin.proxies.importHint',
+                    'Select a JSON file exported from this system to import proxies.',
+                  )}
+                </p>
+                <input
+                  type="file"
+                  accept=".json"
+                  className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-muted/80"
+                  onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+                />
+                {importFile && (
+                  <p className="text-xs text-muted-foreground">
+                    {importFile.name} ({(importFile.size / 1024).toFixed(1)} KB)
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="rounded-lg border p-4 space-y-2 text-sm">
+                <p className="font-medium">{t('admin.proxies.importResult', 'Import Result')}</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
+                  <span>{t('admin.proxies.importProxyCreated', 'Proxies created')}:</span>
+                  <span className="text-foreground font-medium">{importResult.proxy_created}</span>
+                  <span>{t('admin.proxies.importProxyReused', 'Proxies reused')}:</span>
+                  <span className="text-foreground font-medium">{importResult.proxy_reused}</span>
+                  <span>{t('admin.proxies.importProxyFailed', 'Proxies failed')}:</span>
+                  <span className="text-foreground font-medium">{importResult.proxy_failed}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowImportDialog(false)
+                setImportFile(null)
+                setImportResult(null)
+              }}
+            >
+              {importResult ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
+            </Button>
+            {!importResult && (
+              <Button onClick={handleImport} disabled={!importFile || isImporting}>
+                {isImporting ? (
+                  <span className="spinner h-4 w-4" />
+                ) : (
+                  <UploadIcon className="h-4 w-4" />
+                )}
+                {t('admin.proxies.importConfirm', 'Import')}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <DevTools page="proxies" />
     </div>
   )
 }

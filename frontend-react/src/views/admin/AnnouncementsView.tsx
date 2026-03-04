@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DataTable, ColumnSettings } from '@/components/data-table'
+import { DevTools } from '@/components/dev/DevTools'
 import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Types ====================
@@ -342,40 +343,10 @@ export default function AnnouncementsView() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Filters & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {t('Announcement Management')}{' '}
-          <span className="ml-2 text-sm font-normal text-gray-500">({pagination?.total ?? 0})</span>
-        </h1>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={refresh} title={t('Refresh')}>
-            <RefreshIcon className="h-4 w-4" />
-          </Button>
-          {selectedCount > 0 && (
-            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
-              <TrashIcon className="h-4 w-4 mr-1" />
-              {t('common.delete', 'Delete')} ({selectedCount})
-            </Button>
-          )}
-          <ColumnSettings
-            columns={columnSettingItems}
-            columnOrder={columnOrder}
-            onColumnOrderChange={setColumnOrder}
-            onVisibilityChange={setColumnVisibility}
-            onReset={resetColumnSettings}
-          />
-          <Button onClick={openCreate}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            {t('Create Announcement')}
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="card p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[200px] flex-1">
+        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+          <div className="relative flex-1 min-w-[200px]">
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               value={search}
@@ -399,6 +370,18 @@ export default function AnnouncementsView() {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('common.delete', 'Delete')} ({selectedCount})
+            </Button>
+          )}
+          <Button onClick={openCreate}>
+            <PlusIcon className="mr-2 h-4 w-4" />
+            {t('Create Announcement')}
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -418,6 +401,20 @@ export default function AnnouncementsView() {
         renderRowActions={renderRowActions}
         actionsColumnSize={120}
         spreadsheetTitle="Announcements"
+        toolbar={
+          <>
+            <Button variant="ghost" size="icon-xs" onClick={refresh} title={t('Refresh')}>
+              <RefreshIcon className="h-4 w-4" />
+            </Button>
+            <ColumnSettings
+              columns={columnSettingItems}
+              columnOrder={columnOrder}
+              onColumnOrderChange={setColumnOrder}
+              onVisibilityChange={setColumnVisibility}
+              onReset={resetColumnSettings}
+            />
+          </>
+        }
       />
 
       {/* Form Dialog (Create / Edit) */}
@@ -577,6 +574,8 @@ export default function AnnouncementsView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DevTools page="announcements" />
     </div>
   )
 }

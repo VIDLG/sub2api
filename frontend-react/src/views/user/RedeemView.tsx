@@ -133,16 +133,6 @@ export default function RedeemView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          {t('redeem.title', 'Redeem Code')}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t('redeem.description', 'Redeem a code to add balance, concurrency, or subscriptions.')}
-        </p>
-      </div>
-
       {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="card p-4">

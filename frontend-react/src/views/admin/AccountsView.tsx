@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DataTable, ColumnSettings } from '@/components/data-table'
+import { DevTools } from '@/components/dev/DevTools'
 import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Constants ====================
@@ -501,51 +502,18 @@ export default function AccountsView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="page-title">{t('admin.accounts.title', 'Accounts')}</h1>
-          <p className="page-description">
-            {t('admin.accounts.description', 'Manage cloud service accounts')}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {selectedCount > 0 && (
-            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
-              <TrashIcon className="h-4 w-4 mr-1" />
-              {t('common.delete', 'Delete')} ({selectedCount})
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={refresh}
-            title={t('common.refresh', 'Refresh')}
-          >
-            <RefreshIcon className="h-4 w-4" />
-          </Button>
-          <ColumnSettings
-            columns={columnSettingItems}
-            columnOrder={columnOrder}
-            onColumnOrderChange={setColumnOrder}
-            onVisibilityChange={setColumnVisibility}
-            onReset={resetColumnSettings}
-          />
-          <Button
-            onClick={() => {
-              createForm.reset()
-              setShowCreateDialog(true)
-            }}
-          >
-            <PlusIcon className="h-4 w-4 mr-1" />
-            {t('common.create', 'Create')}
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="card p-4">
-        <div className="flex flex-wrap items-center gap-3">
+      {/* Filters & Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+          <div className="relative flex-1 min-w-[200px]">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('admin.accounts.searchPlaceholder', 'Search by name...')}
+              className="pl-9"
+            />
+          </div>
           <Select
             value={filters.platform ?? 'all'}
             onValueChange={(v) => setFilter('platform', v === 'all' ? undefined : v)}
@@ -596,15 +564,23 @@ export default function AccountsView() {
               ))}
             </SelectContent>
           </Select>
-          <div className="relative flex-1 min-w-[200px]">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t('admin.accounts.searchPlaceholder', 'Search by name...')}
-              className="pl-9"
-            />
-          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+              <TrashIcon className="h-4 w-4 mr-1" />
+              {t('common.delete', 'Delete')} ({selectedCount})
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              createForm.reset()
+              setShowCreateDialog(true)
+            }}
+          >
+            <PlusIcon className="h-4 w-4 mr-1" />
+            {t('common.create', 'Create')}
+          </Button>
         </div>
       </div>
 
@@ -625,6 +601,20 @@ export default function AccountsView() {
         renderRowActions={renderRowActions}
         actionsColumnSize={200}
         spreadsheetTitle="Accounts"
+        toolbar={
+          <>
+            <Button variant="ghost" size="icon-xs" onClick={refresh} title={t('common.refresh', 'Refresh')}>
+              <RefreshIcon className="h-4 w-4" />
+            </Button>
+            <ColumnSettings
+              columns={columnSettingItems}
+              columnOrder={columnOrder}
+              onColumnOrderChange={setColumnOrder}
+              onVisibilityChange={setColumnVisibility}
+              onReset={resetColumnSettings}
+            />
+          </>
+        }
       />
 
       {/* Create Dialog */}
@@ -883,6 +873,8 @@ export default function AccountsView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DevTools page="accounts" />
     </div>
   )
 }

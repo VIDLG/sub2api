@@ -476,47 +476,23 @@ export default function KeysView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            {t('keys.title', 'API Keys')}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t('keys.description', 'Manage your API keys for accessing the service.')}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {selectedCount > 0 && (
-            <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
-              <TrashIcon className="h-4 w-4 mr-1" />
-              {t('common.delete', 'Delete')} ({selectedCount})
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={refresh}
-            title={t('common.refresh', 'Refresh')}
-          >
-            <RefreshIcon className="h-5 w-5" />
+      {/* Filters & Actions */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {selectedCount > 0 && (
+          <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)}>
+            <TrashIcon className="h-4 w-4 mr-1" />
+            {t('common.delete', 'Delete')} ({selectedCount})
           </Button>
-          <ColumnSettings
-            columns={columnSettingItems}
-            columnOrder={columnOrder}
-            onColumnOrderChange={setColumnOrder}
-            onVisibilityChange={setColumnVisibility}
-            onReset={resetColumnSettings}
-          />
-          <Button
-            onClick={() => {
-              createForm.reset()
-              setShowCreateDialog(true)
-            }}
-          >
-            <PlusIcon className="mr-2 h-4 w-4" />
-            {t('keys.create', 'Create Key')}
-          </Button>
-        </div>
+        )}
+        <Button
+          onClick={() => {
+            createForm.reset()
+            setShowCreateDialog(true)
+          }}
+        >
+          <PlusIcon className="mr-2 h-4 w-4" />
+          {t('keys.create', 'Create Key')}
+        </Button>
       </div>
 
       <DataTable
@@ -535,6 +511,20 @@ export default function KeysView() {
         renderRowActions={renderRowActions}
         actionsColumnSize={120}
         spreadsheetTitle="API Keys"
+        toolbar={
+          <>
+            <Button variant="ghost" size="icon-xs" onClick={refresh} title={t('common.refresh', 'Refresh')}>
+              <RefreshIcon className="h-4 w-4" />
+            </Button>
+            <ColumnSettings
+              columns={columnSettingItems}
+              columnOrder={columnOrder}
+              onColumnOrderChange={setColumnOrder}
+              onVisibilityChange={setColumnVisibility}
+              onReset={resetColumnSettings}
+            />
+          </>
+        }
       />
 
       {/* Create Dialog */}

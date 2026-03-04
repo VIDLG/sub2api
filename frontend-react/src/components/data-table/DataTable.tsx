@@ -56,6 +56,8 @@ interface DataTableProps<TData> {
   actionsColumnSize?: number
   /** When provided, shows a spreadsheet icon button that opens an AG Grid full-screen dialog. The value is used as the dialog title. */
   spreadsheetTitle?: string
+  /** Extra content rendered on the right side of the table toolbar (above the column headers). */
+  toolbar?: ReactNode
 }
 
 // ---------- Sticky helpers ----------
@@ -102,6 +104,7 @@ export function DataTable<TData>({
   renderRowActions,
   actionsColumnSize,
   spreadsheetTitle,
+  toolbar,
 }: DataTableProps<TData>) {
   const { t } = useTranslation()
   const [spreadsheetOpen, setSpreadsheetOpen] = useState(false)
@@ -203,8 +206,9 @@ export function DataTable<TData>({
 
   return (
     <div className="card overflow-clip">
-      {(spreadsheetTitle || onColumnSizingChange) && (
-        <div className="flex justify-end gap-0.5 px-2 pt-1.5 pb-0">
+      {(spreadsheetTitle || onColumnSizingChange || toolbar) && (
+        <div className="flex items-center justify-end gap-0.5 px-2 pt-1.5 pb-0">
+          {toolbar && <div className="flex items-center gap-1 mr-1">{toolbar}</div>}
           <Button
             variant="ghost"
             size="icon-xs"
