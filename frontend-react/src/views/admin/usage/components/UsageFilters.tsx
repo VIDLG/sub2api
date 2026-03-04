@@ -196,12 +196,11 @@ export default function UsageFilters({
           customRange={{ from: dateFrom, to: dateTo }}
         />
 
-        <Button variant="ghost" size="sm" onClick={onReset}>
-          {t('common.clear', 'Clear')}
-        </Button>
-
         {showActions && (
           <div className="ml-auto flex items-center gap-1.5">
+            <Button variant="secondary" size="sm" onClick={onReset}>
+              {t('common.reset', 'Reset')}
+            </Button>
             <Button
               variant="ghost"
               size="sm"

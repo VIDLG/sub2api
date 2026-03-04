@@ -76,6 +76,7 @@ export interface AdminUsageQueryParams extends UsageQueryParams {
   user_search?: string
   api_key?: string
   request_type?: string
+  timezone?: string
 }
 
 // ==================== API Functions ====================

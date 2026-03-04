@@ -297,17 +297,22 @@ export default function UsageView() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="card p-4">
             <h3 className="mb-2 text-sm font-medium">
-              {t('admin.dashboard.tokenTrend', 'Token Usage Trend')}
-            </h3>
-            <TokenTrendChart data={trendQuery.data?.trend ?? []} loading={trendQuery.isLoading} />
-          </div>
-          <div className="card p-4">
-            <h3 className="mb-2 text-sm font-medium">
               {t('admin.dashboard.modelDistribution', 'Model Distribution')}
             </h3>
             <ModelDistributionChart
               data={modelStatsQuery.data?.models ?? []}
               loading={modelStatsQuery.isLoading}
+              emptyText={t('admin.dashboard.noDataAvailable', 'No data available')}
+            />
+          </div>
+          <div className="card p-4">
+            <h3 className="mb-2 text-sm font-medium">
+              {t('admin.dashboard.tokenTrend', 'Token Usage Trend')}
+            </h3>
+            <TokenTrendChart
+              data={trendQuery.data?.trend ?? []}
+              loading={trendQuery.isLoading}
+              emptyText={t('admin.dashboard.noDataAvailable', 'No data available')}
             />
           </div>
         </div>

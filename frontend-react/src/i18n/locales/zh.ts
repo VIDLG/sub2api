@@ -409,6 +409,7 @@ export default {
     hour: '按小时',
     modelDistribution: '模型分布',
     tokenUsageTrend: 'Token 使用趋势',
+    tokenTrend: 'Token 使用趋势',
     noDataAvailable: '暂无数据',
     model: '模型',
     requests: '请求',
@@ -2624,7 +2625,7 @@ export default {
       allBillingTypes: '全部计费类型',
       billingTypeBalance: '钱包余额',
       billingTypeSubscription: '订阅套餐',
-      ipAddress: 'IP 地址',
+      ipAddress: 'IP',
       // Table columns
       modelCol: '模型',
       apiKey: 'API 密钥',
@@ -2635,7 +2636,7 @@ export default {
       firstToken: '首 Token',
       duration: '耗时',
       time: '时间',
-      userAgent: 'User Agent',
+      userAgent: 'User-Agent',
       // Filter labels
       allBilling: '全部计费',
       billingBalance: '余额',
@@ -2649,11 +2650,11 @@ export default {
       // Stats
       totalRequests: '总请求数',
       totalTokens: '总 Token',
-      totalCost: '总费用',
+      totalCost: '总消费',
       avgDuration: '平均耗时',
       tokenBreakdown: '入: {input} / 出: {output}',
-      userBilledLabel: '用户计费',
-      accountCostLabel: '账户费用',
+      userBilledLabel: '用户扣费',
+      accountCostLabel: '账号计费',
       // Export
       exportExcel: '导出 Excel',
       exporting: '导出中',
@@ -2668,8 +2669,8 @@ export default {
       rateMultiplier: '倍率',
       accountMultiplier: '账户倍率',
       originalCost: '原始费用',
-      userBilled: '用户计费',
-      accountBilled: '账户计费',
+      userBilled: '用户扣费',
+      accountBilled: '账号计费',
       requestIdCol: '请求 ID',
       // Column visibility
       columnSettings: '列设置',
