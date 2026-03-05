@@ -95,10 +95,13 @@ export function OpsRequestDetailsModal({
   }
 
   const rangeMinutes = parseTimeRangeMinutes(timeRange)
-  const rangeLabel =
+  const rangeInner =
     rangeMinutes >= 60
-      ? t('admin.ops.requestDetails.rangeHours', '{{hours}} hours', { hours: rangeMinutes / 60 })
-      : t('admin.ops.requestDetails.rangeMinutes', '{{minutes}} minutes', { minutes: rangeMinutes })
+      ? t('admin.ops.requestDetails.rangeHours', '{n} hours', { n: rangeMinutes / 60 })
+      : t('admin.ops.requestDetails.rangeMinutes', '{n} minutes', { n: rangeMinutes })
+  const rangeLabel = t('admin.ops.requestDetails.rangeLabel', 'Window: {range}', {
+    range: rangeInner,
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,9 +110,7 @@ export function OpsRequestDetailsModal({
           <div className="flex items-center justify-between pr-6">
             <div>
               <DialogTitle className="text-sm">{preset.title}</DialogTitle>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t('admin.ops.requestDetails.rangeLabel', 'Window')}: {rangeLabel}
-              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{rangeLabel}</p>
             </div>
             <Button
               variant="ghost"

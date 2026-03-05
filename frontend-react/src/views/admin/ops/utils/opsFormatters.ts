@@ -165,7 +165,7 @@ export function getDBRedisLabel(
   usagePct: number | null | undefined,
   t: TFunction,
 ): string {
-  if (ok === false) return 'FAIL'
+  if (ok === false) return t('common.critical', 'Critical')
   if (usagePct != null) return `${usagePct.toFixed(1)}%`
   if (ok === true) return t('admin.ops.ok', 'OK')
   return t('admin.ops.noData', 'No Data')
@@ -180,8 +180,8 @@ export function getGoroutineClass(count: number | null | undefined): string {
 
 export function getGoroutineLabel(count: number | null | undefined, t: TFunction): string {
   if (count == null) return t('admin.ops.noData', 'No Data')
-  if (count >= 15000) return 'Critical'
-  if (count >= 8000) return 'Warning'
+  if (count >= 15000) return t('common.critical', 'Critical')
+  if (count >= 8000) return t('common.warning', 'Warning')
   return t('admin.ops.ok', 'OK')
 }
 

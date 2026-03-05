@@ -3028,9 +3028,9 @@ export default {
       requestDetails: {
         title: 'Request Details',
         details: 'Details',
-        rangeLabel: 'Window: {range}',
-        rangeMinutes: '{n} minutes',
-        rangeHours: '{n} hours',
+        rangeLabel: 'Window: {{range}}',
+        rangeMinutes: '{{n}} minutes',
+        rangeHours: '{{n}} hours',
         empty: 'No requests in this window.',
         emptyHint: 'Try a different time range or remove filters.',
         failedToLoad: 'Failed to load request details',
@@ -3315,6 +3315,10 @@ export default {
         emailPlaceholder: 'Enter email address',
         recipientsHint: 'If empty, the system will use the first admin email as default recipient',
         minSeverity: 'Minimum Severity',
+        alertRecipientsRequired:
+          'Alert is enabled but no recipient emails are configured. Please add at least one recipient.',
+        minSeverityRequired:
+          'No minimum severity set. All alert levels will trigger notifications.',
         reportConfig: 'Report Configuration',
         enableReport: 'Enable Reports',
         reportRecipients: 'Report Recipient Emails',

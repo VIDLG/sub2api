@@ -91,7 +91,7 @@ export default function OpsDashboard() {
   const [opsEnabled, setOpsEnabled] = useState(false)
   const [firstLoad, setFirstLoad] = useState(true)
 
-  const [timeRange, setTimeRange] = useState('1h')
+  const [timeRange, setTimeRange] = useState<'5m' | '30m' | '1h' | '6h' | '24h' | 'custom'>('1h')
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>()
   const [platform, setPlatform] = useState<GroupPlatform | ''>('')
   const [groupId, setGroupId] = useState<number | null>(null)
@@ -208,7 +208,7 @@ export default function OpsDashboard() {
           group_id: groupId ?? undefined,
         }
       : {
-          time_range: timeRange,
+          time_range: timeRange as '5m' | '30m' | '1h' | '6h' | '24h',
           mode: queryMode,
           platform: platform || undefined,
           group_id: groupId ?? undefined,
@@ -445,7 +445,7 @@ export default function OpsDashboard() {
                   <TimeRangePicker
                     value={timeRange}
                     onChange={(v, range) => {
-                      setTimeRange(v)
+                      setTimeRange(v as '5m' | '30m' | '1h' | '6h' | '24h' | 'custom')
                       setCustomRange(range)
                     }}
                     presets={OPS_DASHBOARD_PRESETS}
@@ -459,7 +459,7 @@ export default function OpsDashboard() {
                     <SelectContent position="popper">
                       {queryModes.map((m) => (
                         <SelectItem key={m} value={m}>
-                          {m}
+                          {t(`admin.ops.queryMode.${m}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -491,56 +491,62 @@ export default function OpsDashboard() {
 
                   <div className="mx-1 hidden h-4 w-[1px] bg-gray-200 dark:bg-dark-700 sm:block" />
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-1.5 bg-blue-50 text-xs text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
-                    onClick={() => setAlertRulesOpen(true)}
-                  >
-                    <svg
-                      className="size-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-                      />
-                    </svg>
-                    <span className="hidden sm:inline">
-                      {t('admin.ops.alertRules.manage', 'Alert Rules')}
-                    </span>
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                        onClick={() => setAlertRulesOpen(true)}
+                      >
+                        <svg
+                          className="size-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+                          />
+                        </svg>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('admin.ops.alertRules.manage', 'Alert Rules')}</TooltipContent>
+                  </Tooltip>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-1.5 bg-gray-100 text-xs text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
-                    onClick={() => setSettingsDialogOpen(true)}
-                  >
-                    <svg
-                      className="size-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <span className="hidden sm:inline">{t('common.settings', 'Settings')}</span>
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
+                        onClick={() => setSettingsDialogOpen(true)}
+                      >
+                        <svg
+                          className="size-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('common.settings', 'Settings')}</TooltipContent>
+                  </Tooltip>
                 </div>
               </>
             }
