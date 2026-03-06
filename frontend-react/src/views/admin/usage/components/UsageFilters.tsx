@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ChevronDown } from 'lucide-react'
 import { SearchIcon, TrashIcon, XMarkIcon } from '@/components/icons'
 import { TimeRangePicker, DASHBOARD_PRESETS } from '@/components/common/TimeRangePicker'
 import { adminAPI } from '@/api/admin'
@@ -268,60 +269,102 @@ function UserAutocomplete({
   const { keyword, setKeyword, results, open, setOpen, handleChange } = useAutocompleteSearch(
     (kw) => adminAPI.usage.searchUsers(kw),
   )
+  const [listOpen, setListOpen] = useState(false)
+
+  const { data: allUsersData } = useQuery({
+    queryKey: ['admin', 'users', 'filter-list'],
+    queryFn: () => adminAPI.users.list(1, 200),
+    staleTime: 120_000,
+  })
+  const allUsers = allUsersData?.items ?? []
 
   const displayValue = value || keyword
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            value={displayValue}
-            onChange={(e) => {
-              if (userId) onClear()
-              handleChange(e.target.value)
-            }}
-            placeholder={t('admin.usage.userSearch', 'Search user...')}
-            className="pl-9 pr-8 text-sm"
-          />
-          {(userId || keyword) && (
-            <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              onClick={() => {
-                onClear()
-                setKeyword('')
-                setOpen(false)
+    <div className="flex">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverAnchor asChild>
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              id="usage-filter-user"
+              value={displayValue}
+              onChange={(e) => {
+                if (userId) onClear()
+                handleChange(e.target.value)
               }}
-            >
-              <XMarkIcon className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-64 p-0"
-        align="start"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <div className="max-h-48 overflow-auto">
-          {results.map((u) => (
-            <button
-              key={u.id}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
-              onClick={() => {
-                onSelect(u.id, u.email)
-                setKeyword('')
-                setOpen(false)
-              }}
-            >
-              <span className="truncate">{u.email}</span>
-              <span className="text-xs text-muted-foreground">#{u.id}</span>
-            </button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+              placeholder={t('admin.usage.userSearch', 'Search user...')}
+              className="rounded-r-none pl-9 pr-8 text-sm"
+            />
+            {(userId || keyword) && (
+              <button
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                onClick={() => {
+                  onClear()
+                  setKeyword('')
+                  setOpen(false)
+                }}
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </PopoverAnchor>
+        <PopoverContent
+          className="w-64 p-0"
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <div className="max-h-48 overflow-auto">
+            {results.map((u) => (
+              <button
+                key={u.id}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                onClick={() => {
+                  onSelect(u.id, u.email)
+                  setKeyword('')
+                  setOpen(false)
+                }}
+              >
+                <span className="truncate">{u.email}</span>
+                <span className="text-xs text-muted-foreground">#{u.id}</span>
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <Popover open={listOpen} onOpenChange={setListOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-8 shrink-0 rounded-l-none border-l-0"
+            title={t('admin.usage.browseUsers', 'Browse users')}
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-0" align="end" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <div className="max-h-60 overflow-auto">
+            {allUsers.map((u) => (
+              <button
+                key={u.id}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                onClick={() => {
+                  onSelect(u.id, u.email)
+                  setKeyword('')
+                  setListOpen(false)
+                }}
+              >
+                <span className="truncate">{u.email}</span>
+                <span className="text-xs text-muted-foreground">#{u.id}</span>
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }
 
@@ -340,9 +383,10 @@ function ApiKeyAutocomplete({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverAnchor asChild>
         <div className="relative">
           <Input
+            id="usage-filter-api-key"
             value={displayValue}
             onChange={(e) => {
               if (value) onClear()
@@ -364,7 +408,7 @@ function ApiKeyAutocomplete({
             </button>
           )}
         </div>
-      </PopoverTrigger>
+      </PopoverAnchor>
       <PopoverContent
         className="w-64 p-0"
         align="start"
@@ -399,58 +443,100 @@ function AccountAutocomplete({ value, onSelect, onClear }: AutocompleteProps) {
       return (data.items ?? []).map((a) => ({ id: a.id, name: a.name }))
     },
   )
+  const [listOpen, setListOpen] = useState(false)
+
+  const { data: allAccountsData } = useQuery({
+    queryKey: ['admin', 'accounts', 'filter-list'],
+    queryFn: () => adminAPI.accounts.list(1, 200),
+    staleTime: 120_000,
+  })
+  const allAccounts = (allAccountsData?.items ?? []).map((a) => ({ id: a.id, name: a.name }))
 
   const displayValue = value || keyword
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative">
-          <Input
-            value={displayValue}
-            onChange={(e) => {
-              if (value) onClear()
-              handleChange(e.target.value)
-            }}
-            placeholder={t('admin.usage.accountSearch', 'Account name...')}
-            className="pr-8 text-sm"
-          />
-          {(value || keyword) && (
-            <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              onClick={() => {
-                onClear()
-                setKeyword('')
-                setOpen(false)
+    <div className="flex">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverAnchor asChild>
+          <div className="relative flex-1">
+            <Input
+              id="usage-filter-account"
+              value={displayValue}
+              onChange={(e) => {
+                if (value) onClear()
+                handleChange(e.target.value)
               }}
-            >
-              <XMarkIcon className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-64 p-0"
-        align="start"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <div className="max-h-48 overflow-auto">
-          {results.map((a) => (
-            <button
-              key={a.id}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
-              onClick={() => {
-                onSelect(a.id, a.name)
-                setKeyword('')
-                setOpen(false)
-              }}
-            >
-              <span className="truncate">{a.name}</span>
-              <span className="text-xs text-muted-foreground">#{a.id}</span>
-            </button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+              placeholder={t('admin.usage.accountSearch', 'Account name...')}
+              className="rounded-r-none pr-8 text-sm"
+            />
+            {(value || keyword) && (
+              <button
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                onClick={() => {
+                  onClear()
+                  setKeyword('')
+                  setOpen(false)
+                }}
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </PopoverAnchor>
+        <PopoverContent
+          className="w-64 p-0"
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <div className="max-h-48 overflow-auto">
+            {results.map((a) => (
+              <button
+                key={a.id}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                onClick={() => {
+                  onSelect(a.id, a.name)
+                  setKeyword('')
+                  setOpen(false)
+                }}
+              >
+                <span className="truncate">{a.name}</span>
+                <span className="text-xs text-muted-foreground">#{a.id}</span>
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <Popover open={listOpen} onOpenChange={setListOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-8 shrink-0 rounded-l-none border-l-0"
+            title={t('admin.usage.browseAccounts', 'Browse accounts')}
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-0" align="end" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <div className="max-h-60 overflow-auto">
+            {allAccounts.map((a) => (
+              <button
+                key={a.id}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                onClick={() => {
+                  onSelect(a.id, a.name)
+                  setKeyword('')
+                  setListOpen(false)
+                }}
+              >
+                <span className="truncate">{a.name}</span>
+                <span className="text-xs text-muted-foreground">#{a.id}</span>
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }
