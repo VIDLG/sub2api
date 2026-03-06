@@ -13,7 +13,8 @@ import { useAppStore } from '@/stores/app'
 import { usageAPI } from '@/api/usage'
 import { keysAPI } from '@/api/keys'
 import type { UsageLog, UsageStatsResponse, ApiKey, UsageQueryParams } from '@/types'
-import { RefreshIcon, DownloadIcon } from '@/components/icons'
+import { RefreshIcon, DownloadIcon, CubeIcon, ClockIcon, DollarIcon } from '@/components/icons'
+import { FileText as DocumentIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -238,42 +239,76 @@ export default function UsageView() {
       {stats && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div className="card p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {t('usage.totalRequests', 'Total Requests')}
-            </p>
-            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-              {stats.total_requests.toLocaleString()}
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
+                <DocumentIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {t('usage.totalRequests', 'Total Requests')}
+                </p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {stats.total_requests.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('usage.inSelectedRange', 'In selected range')}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="card p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {t('usage.totalTokens', 'Total Tokens')}
-            </p>
-            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-              {formatTokens(stats.total_tokens)}
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
+                <CubeIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {t('usage.totalTokens', 'Total Tokens')}
+                </p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {formatTokens(stats.total_tokens)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('usage.in', 'In')}: {formatTokens(stats.total_input_tokens)} / {t('usage.out', 'Out')}: {formatTokens(stats.total_output_tokens)}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="card p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {t('usage.totalCost', 'Total Cost')}
-            </p>
-            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-              <span className="text-green-600 dark:text-green-400">
-                ${formatCost(stats.total_actual_cost)}
-              </span>
-              <span className="text-sm font-normal text-gray-400">
-                {' '}
-                / ${formatCost(stats.total_cost)}
-              </span>
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
+                <DollarIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {t('usage.totalCost', 'Total Cost')}
+                </p>
+                <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                  ${formatCost(stats.total_actual_cost)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('usage.actualCost', 'Actual')} / <span className="line-through">${formatCost(stats.total_cost)}</span> {t('usage.standardCost', 'Standard')}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="card p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {t('usage.avgDuration', 'Avg Duration')}
-            </p>
-            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-              {formatDuration(stats.average_duration_ms)}
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/30">
+                <ClockIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {t('usage.avgDuration', 'Avg Duration')}
+                </p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {formatDuration(stats.average_duration_ms)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('usage.perRequest', 'Per request')}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

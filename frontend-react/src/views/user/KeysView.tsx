@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -83,8 +84,10 @@ const KEYS_COLUMN_META: ColumnMeta[] = [
   { id: 'key', label: 'Key' },
   { id: 'group_id', label: 'Group' },
   { id: 'usage', label: 'Usage' },
-  { id: 'quota', label: 'Quota' },
+  { id: 'expires_at', label: 'Expires' },
   { id: 'status', label: 'Status' },
+  { id: 'last_used_at', label: 'Last Used' },
+  { id: 'created_at', label: 'Created' },
 ]
 
 // ==================== Component ====================
@@ -147,6 +150,17 @@ export default function KeysView() {
   const [creating, setCreating] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  // Create dialog toggle states
+  const [createUseCustomKey, setCreateUseCustomKey] = useState(false)
+  const [createUseIpRestriction, setCreateUseIpRestriction] = useState(false)
+  const [createUseExpiration, setCreateUseExpiration] = useState(false)
+  const [createExpirationDate, setCreateExpirationDate] = useState('')
+
+  // Edit dialog toggle states
+  const [editUseIpRestriction, setEditUseIpRestriction] = useState(false)
+  const [editUseExpiration, setEditUseExpiration] = useState(false)
+  const [editExpirationDate, setEditExpirationDate] = useState('')
+
   // Mutations
   const deleteMutation = useTableMutation<number>({
     mutationFn: (id) => keysAPI.delete(id),
@@ -203,8 +217,9 @@ export default function KeysView() {
       name: '',
       groupId: null as number | null,
       quota: 0,
-      expiresInDays: 0,
       customKey: '',
+      ipWhitelist: '',
+      ipBlacklist: '',
     },
   })
 
@@ -239,6 +254,26 @@ export default function KeysView() {
     }
   }
 
+  // Helpers for expiration date <-> days conversion
+  const setExpirationPreset = (days: number, setter: (v: string) => void) => {
+    const d = new Date()
+    d.setDate(d.getDate() + days)
+    // datetime-local format: YYYY-MM-DDTHH:MM
+    setter(d.toISOString().slice(0, 16))
+  }
+
+  const expirationDateToApiDays = (dateStr: string): number | undefined => {
+    if (!dateStr) return undefined
+    const ms = new Date(dateStr).getTime() - Date.now()
+    const days = Math.ceil(ms / 86400000)
+    return days > 0 ? days : undefined
+  }
+
+  const expirationDateToIso = (dateStr: string): string | null => {
+    if (!dateStr) return null
+    return new Date(dateStr).toISOString()
+  }
+
   // Create handler (manual async — form-based)
   const handleCreate = async () => {
     const values = createForm.store.state.values
@@ -251,15 +286,23 @@ export default function KeysView() {
       await keysAPI.create(
         values.name.trim(),
         values.groupId,
-        values.customKey.trim() || undefined,
-        undefined,
-        undefined,
+        createUseCustomKey && values.customKey.trim() ? values.customKey.trim() : undefined,
+        createUseIpRestriction && values.ipWhitelist.trim()
+          ? values.ipWhitelist.trim().split('\n').map((s) => s.trim()).filter(Boolean)
+          : undefined,
+        createUseIpRestriction && values.ipBlacklist.trim()
+          ? values.ipBlacklist.trim().split('\n').map((s) => s.trim()).filter(Boolean)
+          : undefined,
         values.quota > 0 ? values.quota : undefined,
-        values.expiresInDays > 0 ? values.expiresInDays : undefined,
+        createUseExpiration ? expirationDateToApiDays(createExpirationDate) : undefined,
       )
-      showSuccess(t('keys.created', 'API key created successfully'))
+      showSuccess(t('keys.keyCreatedSuccess', 'API key created successfully'))
       setShowCreateDialog(false)
       createForm.reset()
+      setCreateUseCustomKey(false)
+      setCreateUseIpRestriction(false)
+      setCreateUseExpiration(false)
+      setCreateExpirationDate('')
       refresh()
     } catch (err: unknown) {
       showError(
@@ -273,6 +316,11 @@ export default function KeysView() {
   // Edit handler (manual async — form-based)
   const openEdit = (key: ApiKey) => {
     setSelectedKey(key)
+    const hasIp = (key.ip_whitelist?.length ?? 0) > 0 || (key.ip_blacklist?.length ?? 0) > 0
+    const hasExpiry = !!key.expires_at
+    setEditUseIpRestriction(hasIp)
+    setEditUseExpiration(hasExpiry)
+    setEditExpirationDate(hasExpiry ? new Date(key.expires_at!).toISOString().slice(0, 16) : '')
     editForm.reset({
       name: key.name,
       groupId: key.group_id,
@@ -294,20 +342,13 @@ export default function KeysView() {
         group_id: values.groupId,
         status: values.status,
         quota: values.quota,
-        ip_whitelist: values.ipWhitelist.trim()
-          ? values.ipWhitelist
-              .trim()
-              .split('\n')
-              .map((s: string) => s.trim())
-              .filter(Boolean)
+        ip_whitelist: editUseIpRestriction && values.ipWhitelist.trim()
+          ? values.ipWhitelist.trim().split('\n').map((s: string) => s.trim()).filter(Boolean)
           : [],
-        ip_blacklist: values.ipBlacklist.trim()
-          ? values.ipBlacklist
-              .trim()
-              .split('\n')
-              .map((s: string) => s.trim())
-              .filter(Boolean)
+        ip_blacklist: editUseIpRestriction && values.ipBlacklist.trim()
+          ? values.ipBlacklist.trim().split('\n').map((s: string) => s.trim()).filter(Boolean)
           : [],
+        expires_at: editUseExpiration ? expirationDateToIso(editExpirationDate) : null,
       })
       showSuccess(t('keys.updated', 'API key updated'))
       setShowEditDialog(false)
@@ -379,59 +420,61 @@ export default function KeysView() {
       id: 'usage',
       header: () => t('keys.usage', 'Usage'),
       cell: ({ row }) => {
-        const usage = usageStats[String(row.original.id)]
+        const key = row.original
+        const usage = usageStats[String(key.id)]
         return (
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {usage ? (
-              <>
-                <div>
-                  {t('keys.today', 'Today')}: ${formatCost(usage.today_actual_cost || 0)}
+          <div className="text-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-500 dark:text-gray-400">{t('keys.today', 'Today')}:</span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                ${formatCost(usage?.today_actual_cost || 0)}
+              </span>
+            </div>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <span className="text-gray-500 dark:text-gray-400">{t('keys.total', 'Total')}:</span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                ${formatCost(usage?.total_actual_cost || 0)}
+              </span>
+            </div>
+            {key.quota > 0 && (
+              <div className="mt-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500 dark:text-gray-400">{t('keys.quota', 'Quota')}:</span>
+                  <span className={key.quota_used >= key.quota ? 'font-medium text-red-500' : key.quota_used >= key.quota * 0.8 ? 'font-medium text-amber-500' : 'font-medium text-gray-900 dark:text-white'}>
+                    ${formatCost(key.quota_used)} / ${formatCost(key.quota)}
+                  </span>
                 </div>
-                <div>
-                  {t('common.total', 'Total')}: ${formatCost(usage.total_actual_cost || 0)}
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div
+                    className={`h-full rounded-full transition-all ${key.quota_used >= key.quota ? 'bg-red-500' : key.quota_used >= key.quota * 0.8 ? 'bg-amber-500' : 'bg-green-500'}`}
+                    style={{ width: `${Math.min((key.quota_used / key.quota) * 100, 100)}%` }}
+                  />
                 </div>
-              </>
-            ) : (
-              <span>-</span>
+              </div>
             )}
           </div>
         )
       },
     },
     {
-      accessorKey: 'quota',
-      header: () => t('keys.quota', 'Quota'),
+      accessorKey: 'expires_at',
+      header: () => t('keys.expiresAt', 'Expires'),
       cell: ({ row }) => {
-        const key = row.original
-        if (key.quota <= 0) {
-          return (
-            <span className="text-xs text-gray-400 dark:text-gray-500">
-              {t('keys.unlimited', 'Unlimited')}
-            </span>
-          )
+        const val = row.original.expires_at
+        if (!val) {
+          return <span className="text-sm text-gray-400 dark:text-gray-500">{t('keys.noExpiration', 'Never')}</span>
         }
-        const quotaPercent = Math.min(100, (key.quota_used / key.quota) * 100)
+        const isExpired = new Date(val) < new Date()
         return (
-          <div className="w-24">
-            <div className="mb-1 flex justify-between text-xs">
-              <span className="text-gray-500 dark:text-gray-400">
-                ${formatCost(key.quota_used)}
-              </span>
-              <span className="text-gray-400 dark:text-gray-500">${formatCost(key.quota)}</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-dark-700">
-              <div
-                className={`h-full rounded-full transition-all ${quotaPercent >= 90 ? 'bg-red-500' : quotaPercent >= 70 ? 'bg-amber-500' : 'bg-green-500'}`}
-                style={{ width: `${quotaPercent}%` }}
-              />
-            </div>
-          </div>
+          <span className={`text-sm ${isExpired ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+            {formatDate(val)}
+          </span>
         )
       },
     },
     {
       accessorKey: 'status',
-      header: () => t('keys.status', 'Status'),
+      header: () => t('common.status', 'Status'),
       cell: ({ row }) => {
         const key = row.original
         return (
@@ -444,10 +487,29 @@ export default function KeysView() {
             }
             className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor(key.status)}`}
           >
-            {t(`keys.status_${key.status}`, key.status)}
+            {t(`keys.status.${key.status}`, key.status)}
           </button>
         )
       },
+    },
+    {
+      accessorKey: 'last_used_at',
+      header: () => t('keys.lastUsedAt', 'Last Used'),
+      cell: ({ row }) => {
+        const val = row.original.last_used_at
+        return val
+          ? <span className="text-sm text-gray-500 dark:text-gray-400">{formatDate(val)}</span>
+          : <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+      },
+    },
+    {
+      accessorKey: 'created_at',
+      header: () => t('keys.created', 'Created'),
+      cell: ({ row }) => (
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {formatDate(row.original.created_at)}
+        </span>
+      ),
     },
   ]
 
@@ -528,12 +590,22 @@ export default function KeysView() {
       />
 
       {/* Create Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={showCreateDialog} onOpenChange={(open) => {
+        setShowCreateDialog(open)
+        if (!open) {
+          createForm.reset()
+          setCreateUseCustomKey(false)
+          setCreateUseIpRestriction(false)
+          setCreateUseExpiration(false)
+          setCreateExpirationDate('')
+        }
+      }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('keys.createTitle', 'Create API Key')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-2">
+            {/* Name */}
             <CreateForm_Field name="name">
               {(field) => (
                 <div className="space-y-2">
@@ -546,6 +618,8 @@ export default function KeysView() {
                 </div>
               )}
             </CreateForm_Field>
+
+            {/* Group */}
             <CreateForm_Field name="groupId">
               {(field) => (
                 <div className="space-y-2">
@@ -569,49 +643,135 @@ export default function KeysView() {
                 </div>
               )}
             </CreateForm_Field>
-            <div className="grid grid-cols-2 gap-5">
-              <CreateForm_Field name="quota">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label>{t('keys.quota', 'Quota')} (USD)</Label>
+
+            {/* Quota */}
+            <CreateForm_Field name="quota">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label>{t('keys.quotaLimit', 'Quota Limit')} (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                     <Input
                       type="number"
+                      className="pl-7"
                       value={field.state.value}
                       onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)}
                       min={0}
                       step={0.01}
-                      placeholder="0 = unlimited"
+                      placeholder={t('keys.quotaAmountPlaceholder', 'Enter quota limit in USD')}
                     />
                   </div>
-                )}
-              </CreateForm_Field>
-              <CreateForm_Field name="expiresInDays">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label>{t('keys.expiresInDays', 'Expires (days)')}</Label>
-                    <Input
-                      type="number"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(parseInt(e.target.value) || 0)}
-                      min={0}
-                      placeholder="0 = never"
-                    />
-                  </div>
-                )}
-              </CreateForm_Field>
-            </div>
-            <CreateForm_Field name="customKey">
-              {(field) => (
-                <div className="space-y-2">
-                  <Label>{t('keys.customKey', 'Custom Key')}</Label>
-                  <Input
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder={t('keys.customKeyPlaceholder', 'Leave empty for auto-generated')}
-                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('keys.quotaAmountHint', 'Set the maximum amount this key can spend. 0 = unlimited.')}</p>
                 </div>
               )}
             </CreateForm_Field>
+
+            {/* Custom Key — toggle */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="mb-0">{t('keys.customKeyLabel', 'Custom Key')}</Label>
+                <Switch
+                  checked={createUseCustomKey}
+                  onCheckedChange={setCreateUseCustomKey}
+                />
+              </div>
+              {createUseCustomKey && (
+                <CreateForm_Field name="customKey">
+                  {(field) => (
+                    <div className="space-y-1">
+                      <Input
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder={t('keys.customKeyPlaceholder', 'Leave empty for auto-generated')}
+                        className="font-mono"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('keys.customKeyHint', 'Only letters, numbers, underscores and hyphens allowed. Minimum 16 characters.')}</p>
+                    </div>
+                  )}
+                </CreateForm_Field>
+              )}
+            </div>
+
+            {/* IP Restriction — toggle */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="mb-0">{t('keys.ipRestriction', 'IP Restriction')}</Label>
+                <Switch
+                  checked={createUseIpRestriction}
+                  onCheckedChange={setCreateUseIpRestriction}
+                />
+              </div>
+              {createUseIpRestriction && (
+                <div className="space-y-4 pt-1">
+                  <CreateForm_Field name="ipWhitelist">
+                    {(field) => (
+                      <div className="space-y-1">
+                        <Label>{t('keys.ipWhitelist', 'IP Whitelist')}</Label>
+                        <Textarea
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          rows={3}
+                          placeholder={t('keys.ipWhitelistPlaceholder', '192.168.1.100\n10.0.0.0/8')}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('keys.ipWhitelistHint', 'One IP or CIDR per line. Only these IPs can use this key when set.')}</p>
+                      </div>
+                    )}
+                  </CreateForm_Field>
+                  <CreateForm_Field name="ipBlacklist">
+                    {(field) => (
+                      <div className="space-y-1">
+                        <Label>{t('keys.ipBlacklist', 'IP Blacklist')}</Label>
+                        <Textarea
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          rows={3}
+                          placeholder={t('keys.ipBlacklistPlaceholder', '1.2.3.4\n5.6.0.0/16')}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('keys.ipBlacklistHint', 'One IP or CIDR per line. These IPs will be blocked from using this key.')}</p>
+                      </div>
+                    )}
+                  </CreateForm_Field>
+                </div>
+              )}
+            </div>
+
+            {/* Expiration — toggle */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="mb-0">{t('keys.expiration', 'Expiration')}</Label>
+                <Switch
+                  checked={createUseExpiration}
+                  onCheckedChange={setCreateUseExpiration}
+                />
+              </div>
+              {createUseExpiration && (
+                <div className="space-y-3 pt-1">
+                  <div className="flex flex-wrap gap-2">
+                    {(['7', '30', '90'] as const).map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => setExpirationPreset(Number(days), setCreateExpirationDate)}
+                        className="rounded-lg px-3 py-1.5 text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-400 dark:hover:bg-dark-600 transition-colors"
+                      >
+                        {t('keys.expiresInDays', { days })}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="space-y-1">
+                    <Label>{t('keys.expirationDate', 'Expiration Date')}</Label>
+                    <Input
+                      type="datetime-local"
+                      value={createExpirationDate}
+                      onChange={(e) => setCreateExpirationDate(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('keys.expirationDateHint', 'Select when this API key should expire.')}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
@@ -636,11 +796,12 @@ export default function KeysView() {
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('keys.editTitle', 'Edit API Key')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-2">
+            {/* Name */}
             <EditForm_Field name="name">
               {(field) => (
                 <div className="space-y-2">
@@ -652,6 +813,8 @@ export default function KeysView() {
                 </div>
               )}
             </EditForm_Field>
+
+            {/* Group + Status */}
             <div className="grid grid-cols-2 gap-5">
               <EditForm_Field name="groupId">
                 {(field) => (
@@ -679,7 +842,7 @@ export default function KeysView() {
               <EditForm_Field name="status">
                 {(field) => (
                   <div className="space-y-2">
-                    <Label>{t('keys.status', 'Status')}</Label>
+                    <Label>{t('common.status', 'Status')}</Label>
                     <Select
                       value={field.state.value}
                       onValueChange={(v) => field.handleChange(v as 'active' | 'inactive')}
@@ -688,9 +851,9 @@ export default function KeysView() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent position="popper">
-                        <SelectItem value="active">{t('keys.status_active', 'Active')}</SelectItem>
+                        <SelectItem value="active">{t('keys.status.active', 'Active')}</SelectItem>
                         <SelectItem value="inactive">
-                          {t('keys.status_inactive', 'Inactive')}
+                          {t('keys.status.inactive', 'Inactive')}
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -698,46 +861,112 @@ export default function KeysView() {
                 )}
               </EditForm_Field>
             </div>
+
+            {/* Quota */}
             <EditForm_Field name="quota">
               {(field) => (
                 <div className="space-y-2">
-                  <Label>{t('keys.quota', 'Quota')} (USD)</Label>
-                  <Input
-                    type="number"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)}
-                    min={0}
-                    step={0.01}
-                  />
+                  <Label>{t('keys.quotaLimit', 'Quota Limit')} (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <Input
+                      type="number"
+                      className="pl-7"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)}
+                      min={0}
+                      step={0.01}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('keys.quotaAmountHint', 'Set the maximum amount this key can spend. 0 = unlimited.')}</p>
                 </div>
               )}
             </EditForm_Field>
-            <EditForm_Field name="ipWhitelist">
-              {(field) => (
-                <div className="space-y-2">
-                  <Label>{t('keys.ipWhitelist', 'IP Whitelist')}</Label>
-                  <Textarea
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    rows={3}
-                    placeholder={t('keys.ipPlaceholder', 'One IP per line')}
-                  />
+
+            {/* IP Restriction — toggle */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="mb-0">{t('keys.ipRestriction', 'IP Restriction')}</Label>
+                <Switch
+                  checked={editUseIpRestriction}
+                  onCheckedChange={setEditUseIpRestriction}
+                />
+              </div>
+              {editUseIpRestriction && (
+                <div className="space-y-4 pt-1">
+                  <EditForm_Field name="ipWhitelist">
+                    {(field) => (
+                      <div className="space-y-1">
+                        <Label>{t('keys.ipWhitelist', 'IP Whitelist')}</Label>
+                        <Textarea
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          rows={3}
+                          placeholder={t('keys.ipWhitelistPlaceholder', '192.168.1.100\n10.0.0.0/8')}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('keys.ipWhitelistHint', 'One IP or CIDR per line. Only these IPs can use this key when set.')}</p>
+                      </div>
+                    )}
+                  </EditForm_Field>
+                  <EditForm_Field name="ipBlacklist">
+                    {(field) => (
+                      <div className="space-y-1">
+                        <Label>{t('keys.ipBlacklist', 'IP Blacklist')}</Label>
+                        <Textarea
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          rows={3}
+                          placeholder={t('keys.ipBlacklistPlaceholder', '1.2.3.4\n5.6.0.0/16')}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('keys.ipBlacklistHint', 'One IP or CIDR per line. These IPs will be blocked from using this key.')}</p>
+                      </div>
+                    )}
+                  </EditForm_Field>
                 </div>
               )}
-            </EditForm_Field>
-            <EditForm_Field name="ipBlacklist">
-              {(field) => (
-                <div className="space-y-2">
-                  <Label>{t('keys.ipBlacklist', 'IP Blacklist')}</Label>
-                  <Textarea
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    rows={3}
-                    placeholder={t('keys.ipPlaceholder', 'One IP per line')}
-                  />
+            </div>
+
+            {/* Expiration — toggle */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="mb-0">{t('keys.expiration', 'Expiration')}</Label>
+                <Switch
+                  checked={editUseExpiration}
+                  onCheckedChange={setEditUseExpiration}
+                />
+              </div>
+              {editUseExpiration && (
+                <div className="space-y-3 pt-1">
+                  <div className="flex flex-wrap gap-2">
+                    {(['7', '30', '90'] as const).map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => setExpirationPreset(Number(days), setEditExpirationDate)}
+                        className="rounded-lg px-3 py-1.5 text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-400 dark:hover:bg-dark-600 transition-colors"
+                      >
+                        {t('keys.extendDays', { days })}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="space-y-1">
+                    <Label>{t('keys.expirationDate', 'Expiration Date')}</Label>
+                    <Input
+                      type="datetime-local"
+                      value={editExpirationDate}
+                      onChange={(e) => setEditExpirationDate(e.target.value)}
+                    />
+                    {selectedKey?.expires_at && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('keys.currentExpiration', 'Current expiration')}: {formatDate(selectedKey.expires_at)}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
-            </EditForm_Field>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
