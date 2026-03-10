@@ -30,14 +30,14 @@ just test-backend
 just test-react
 ```
 
-## 详细规则目录
+## 详细规则
 
-- `.claude/rules/01-dev-cmds.md` — 开发命令详解
-- `.claude/rules/02-frontend-react.md` — React 前端开发规范
-- `.claude/rules/03-backend-arch.md` — 后端架构与代码生成
-- `.claude/rules/04-git-workflow.md` — Git 工作流与仓库管理
-- `.claude/rules/05-known-issues.md` — 已知问题与解决方法
-- `.claude/rules/06-deployment.md` — 部署配置与内嵌前端构建
+- `docs/standards/01-dev-cmds.md` — 开发命令详解 @docs/standards/01-dev-cmds.md
+- `docs/standards/02-frontend-react.md` — React 前端开发规范 @docs/standards/02-frontend-react.md
+- `docs/standards/03-backend-arch.md` — 后端架构与代码生成 @docs/standards/03-backend-arch.md
+- `docs/standards/04-git-workflow.md` — Git 工作流与仓库管理 @docs/standards/04-git-workflow.md
+- `docs/standards/05-known-issues.md` — 已知问题与解决方法 @docs/standards/05-known-issues.md
+- `docs/standards/06-deployment.md` — 部署配置与内嵌前端构建 @docs/standards/06-deployment.md
 
 ## 文档
 
