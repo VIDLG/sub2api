@@ -1,0 +1,40 @@
+{
+  "id": "admin-users-basic",
+  "description": "Permanent baseline data for admin user/group related tests.",
+  "operations": [
+    {
+      "type": "ensure_group",
+      "name": "tc_users_anthropic",
+      "description": "Permanent group for users test cases",
+      "platform": "anthropic",
+      "status": "active",
+      "rate_multiplier": 1
+    },
+    {
+      "type": "ensure_user",
+      "email": "tc_users_owner@example.com",
+      "password": "TcUsers123!",
+      "role": "admin",
+      "status": "active",
+      "balance": 200,
+      "concurrency": 5,
+      "notes": "Permanent admin regression user",
+      "allowed_group_names": [
+        "tc_users_anthropic"
+      ]
+    },
+    {
+      "type": "ensure_user",
+      "email": "tc_users_member@example.com",
+      "password": "TcUsers123!",
+      "role": "user",
+      "status": "active",
+      "balance": 50,
+      "concurrency": 2,
+      "notes": "Permanent user regression account",
+      "allowed_group_names": [
+        "tc_users_anthropic"
+      ]
+    }
+  ]
+}

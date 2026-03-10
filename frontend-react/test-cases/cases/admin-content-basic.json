@@ -1,0 +1,21 @@
+{
+  "id": "admin-content-basic",
+  "description": "Permanent baseline data for announcements and promo code related tests.",
+  "operations": [
+    {
+      "type": "ensure_announcement",
+      "title": "tc_announcement_global_active",
+      "content": "Permanent announcement fixture for admin announcements view testing.",
+      "status": "active",
+      "targeting": {}
+    },
+    {
+      "type": "ensure_promo_code",
+      "code": "TC_PROMO_GLOBAL_10",
+      "bonus_amount": 10,
+      "max_uses": 1000,
+      "status": "active",
+      "notes": "Permanent promo fixture for admin promo view testing"
+    }
+  ]
+}

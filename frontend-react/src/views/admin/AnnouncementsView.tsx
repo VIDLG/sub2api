@@ -40,7 +40,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DataTable, ColumnSettings } from '@/components/data-table'
-import { DevTools } from '@/components/dev/DevTools'
 import { useDataTableQuery, useTableMutation, extractErrorMessage, type ColumnMeta } from '@/hooks/useDataTableQuery'
 
 // ==================== Types ====================
@@ -574,8 +573,7 @@ export default function AnnouncementsView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <DevTools page="announcements" />
     </div>
   )
 }
+
