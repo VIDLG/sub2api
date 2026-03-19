@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { EyeIcon, EyeSlashIcon } from '@/components/icons'
+import ProfileInfoCard from '@/components/user/profile/ProfileInfoCard'
 
 function formatBalance(b: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -111,9 +112,11 @@ export default function ProfileView() {
         </div>
       </div>
 
+      <ProfileInfoCard user={user} />
+
       <div className="card p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          {t('profile.accountInfo', 'Account Information')}
+          {t('profile.editProfile', 'Edit Profile')}
         </h2>
         <form
           onSubmit={(e) => {
