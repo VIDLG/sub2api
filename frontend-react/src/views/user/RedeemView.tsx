@@ -11,6 +11,8 @@ import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { redeemAPI, type RedeemHistoryItem } from '@/api/redeem'
 import { DollarIcon, BoltIcon } from '@/components/icons'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { CircleHelp } from 'lucide-react'
 
 // ==================== Helpers ====================
 
@@ -169,9 +171,38 @@ export default function RedeemView() {
 
       {/* Redeem Form */}
       <div className="card p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          {t('redeem.enterCode', 'Enter Redeem Code')}
-        </h2>
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t('redeem.enterCode', 'Enter Redeem Code')}
+          </h2>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-5 w-5 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 dark:text-gray-500 dark:hover:text-gray-300"
+                aria-label={t('redeem.aboutCodes', 'About Redeem Codes')}
+              >
+                <CircleHelp className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs text-xs">
+              <p className="mb-2 font-medium">{t('redeem.aboutCodes', 'About Redeem Codes')}</p>
+              <ul className="space-y-1">
+                <li>{t('redeem.codeRule1', 'Each code can only be used once')}</li>
+                <li>
+                  {t(
+                    'redeem.codeRule2',
+                    'Codes may add balance, increase concurrency, or grant trial access',
+                  )}
+                </li>
+                <li>
+                  {t('redeem.codeRule3', 'Contact support if you have issues redeeming a code')}
+                </li>
+                <li>{t('redeem.codeRule4', 'Balance and concurrency updates are immediate')}</li>
+              </ul>
+            </TooltipContent>
+          </Tooltip>
+        </div>
         <div className="flex gap-3">
           <input
             type="text"

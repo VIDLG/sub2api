@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "lint:css": "stylelint \"src/**/*.css\" --fix",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:case": "node ./scripts/test-cases/seed-case.mjs",
+    "seed:cases": "node ./scripts/test-cases/seed-case.mjs --all"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
